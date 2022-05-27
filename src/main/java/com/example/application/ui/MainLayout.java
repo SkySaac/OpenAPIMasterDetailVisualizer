@@ -1,22 +1,17 @@
-package com.example.application.views;
+package com.example.application.ui;
 
 
-import com.example.application.views.about.AboutView;
-import com.example.application.views.masterdetail.MasterDetailView;
+import com.example.application.ui.route.AboutRoute;
+import com.example.application.ui.route.MasterDetailRoute;
+import com.example.application.ui.view.AboutView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.NpmPackage;
-import com.vaadin.flow.component.html.Footer;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.html.ListItem;
-import com.vaadin.flow.component.html.Nav;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.html.UnorderedList;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 
 /**
@@ -35,7 +30,7 @@ public class MainLayout extends AppLayout {
             this.view = view;
             RouterLink link = new RouterLink();
             link.addClassNames("menu-item-link");
-            link.setRoute(view);
+            link.setRoute(view, new RouteParameters("tag", menuTitle));
 
             Span text = new Span(menuTitle);
             text.addClassNames("menu-item-text");
@@ -115,9 +110,11 @@ public class MainLayout extends AppLayout {
 
     private MenuItemInfo[] createMenuItems() {
         return new MenuItemInfo[]{ //
-                new MenuItemInfo("About", "la la-file", AboutView.class), //
+                new MenuItemInfo("About", "la la-file", AboutRoute.class), //
 
-                new MenuItemInfo("Master-Detail", "la la-columns", MasterDetailView.class), //
+                //TODO menuItemTitle mitgegebenen pfad syncronisieren mit einspeisung der presenter & abkoppleung des pfads von menuTitle
+                new MenuItemInfo("Artifact", "la la-columns", MasterDetailRoute.class), //
+                new MenuItemInfo("Contract", "la la-columns", MasterDetailRoute.class), //
 
         };
     }
