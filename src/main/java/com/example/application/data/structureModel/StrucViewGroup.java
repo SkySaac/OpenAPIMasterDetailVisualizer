@@ -1,0 +1,18 @@
+package com.example.application.data.structureModel;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.http.HttpMethod;
+
+import java.util.List;
+import java.util.Map;
+
+@Getter
+@AllArgsConstructor
+public class StrucViewGroup {
+    private String tagName;
+    private List<StrucPath> primaryPaths;
+    private Map<String, StrucSchema> strucSchemaMap;
+    private Map<String, Map<HttpMethod, StrucPath>> strucPathMap;
+
+}

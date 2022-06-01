@@ -10,8 +10,7 @@ import javax.annotation.PostConstruct;
 
 
 @PageTitle("MasterDetail")
-@Route(value="", layout = MainLayout.class)
-@RoutePrefix(value = "masterDetail/:tag")
+@Route(value="masterDetail/:tag", layout = MainLayout.class)
 @PreserveOnRefresh
 public class MasterDetailRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
 
@@ -26,7 +25,7 @@ public class MasterDetailRoute extends Div implements BeforeEnterObserver,Before
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent){
-        String tag = beforeEnterEvent.getRouteParameters().get("tag").get();
+        String tag = beforeEnterEvent.getRouteParameters().get("tag").get().replace("%20"," "); //replace spaces
         System.out.println("Route tag:"+ tag);
 
         activeView = presenter.getPresenter(tag).getView();

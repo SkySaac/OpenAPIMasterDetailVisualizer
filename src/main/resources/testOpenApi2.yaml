@@ -1,0 +1,444 @@
+openapi: 3.0.1
+info:
+  title: Dataspace Connector
+  description: IDS Connector reference implementation
+  contact:
+    name: Dataspace Connector
+    url: https://github.com/International-Data-Spaces-Association/DataspaceConnector
+    email: support@sovity.de
+  license:
+    name: "Apache License, Version 2.0"
+    url: https://www.apache.org/licenses/LICENSE-2.0.txt
+  version: 7.1.0
+servers:
+  - url: https://localhost:8080
+    description: Generated server url
+security:
+  - basicAuth: []
+tags:
+  - name: Catalogs
+    description: Endpoints for operations on catalogs.
+  - name: Artifacts
+    description: Endpoints for operations on artifacts.
+paths:
+  /api/catalogs/{id}:
+    get:
+      tags:
+        - Catalogs
+      summary: Get a base resource by id.
+      operationId: get_11
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+        "200":
+          description: Ok
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+    put:
+      tags:
+        - Catalogs
+      summary: Update a base resource by id.
+      operationId: update_11
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogDesc'
+        required: true
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+        "204":
+          description: No content
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+    delete:
+      tags:
+        - Catalogs
+      summary: Delete a base resource by id.
+      operationId: delete_11
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "401":
+          description: Unauthorized
+        "204":
+          description: No content
+  /api/catalogs:
+    get:
+      tags:
+        - Catalogs
+      summary: Get a list of base resources with pagination.
+      operationId: getAll_11
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 30
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+        "200":
+          description: Ok
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+    post:
+      tags:
+        - Catalogs
+      summary: Create a base resource.
+      operationId: create_10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogDesc'
+        required: true
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CatalogView'
+  /api/artifacts/{id}:
+    get:
+      tags:
+        - Artifacts
+      summary: Get a base resource by id.
+      operationId: get_13
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+        "200":
+          description: Ok
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+    put:
+      tags:
+        - Artifacts
+      summary: Update a base resource by id.
+      operationId: update_13
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactDesc'
+        required: true
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+        "204":
+          description: No content
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+    delete:
+      tags:
+        - Artifacts
+      summary: Delete a base resource by id.
+      operationId: delete_13
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "401":
+          description: Unauthorized
+        "204":
+          description: No content
+  /api/artifacts:
+    get:
+      tags:
+        - Artifacts
+      summary: Get a list of base resources with pagination.
+      operationId: getAll_13
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 30
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagedModelArtifactView'
+        "200":
+          description: Ok
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagedModelArtifactView'
+    post:
+      tags:
+        - Artifacts
+      summary: Create a base resource.
+      operationId: create_12
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactDesc'
+        required: true
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ArtifactView'
+components:
+  schemas:
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    JSONObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+      additionalProperties:
+        type: object
+    CatalogDesc:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+    CatalogView:
+      type: object
+      properties:
+        creationDate:
+          type: string
+          format: date-time
+        modificationDate:
+          type: string
+          format: date-time
+        title:
+          type: string
+        description:
+          type: string
+        additional:
+          type: object
+          additionalProperties:
+            type: string
+        _links:
+          $ref: '#/components/schemas/Links'
+    AuthenticationDesc:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ArtifactDesc:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        remoteId:
+          type: string
+          format: uri
+          readOnly: true
+        remoteAddress:
+          type: string
+          format: uri
+          readOnly: true
+        accessUrl:
+          type: string
+          format: url
+        basicAuth:
+          $ref: '#/components/schemas/AuthenticationDesc'
+        apiKey:
+          $ref: '#/components/schemas/AuthenticationDesc'
+        value:
+          type: string
+        automatedDownload:
+          type: boolean
+    PagedModelArtifactView:
+      type: object
+      properties:
+        _embedded:
+          type: object
+          properties:
+            artifacts:
+              type: array
+              items:
+                $ref: '#/components/schemas/ArtifactView'
+        _links:
+          $ref: '#/components/schemas/Links'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    ArtifactView:
+      type: object
+      properties:
+        creationDate:
+          type: string
+          format: date-time
+        modificationDate:
+          type: string
+          format: date-time
+        remoteId:
+          type: string
+          format: uri
+        title:
+          type: string
+        description:
+          type: string
+        numAccessed:
+          type: integer
+          format: int64
+        byteSize:
+          type: integer
+          format: int64
+        checkSum:
+          type: integer
+          format: int64
+        additional:
+          type: object
+          additionalProperties:
+            type: string
+        _links:
+          $ref: '#/components/schemas/Links'
+    RepresentationModelObject:
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        hreflang:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        deprecation:
+          type: string
+        profile:
+          type: string
+        name:
+          type: string
+        templated:
+          type: boolean
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
