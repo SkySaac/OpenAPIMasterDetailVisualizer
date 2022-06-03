@@ -5,8 +5,11 @@ import com.example.application.data.dataModel.DataValue;
 import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -22,7 +25,7 @@ import java.util.Map;
 @Slf4j
 public class ClientDataService {
     @Setter
-    private String SERVER_URL = "";
+    private String serverUrl = "";
     private final ClientRequestService clientRequestService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -43,20 +46,22 @@ public class ClientDataService {
 
     public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema) {
 
-        DataSchema dataSchema;
+        DataSchema dataSchema = null;
 
-        ResponseEntity<String> response = sendRequest(strucPath.getHttpMethod(), strucPath.getPath(), SERVER_URL);
-
-        //TODO
-        if (pageSchema == null) {
-            //Data is not paged -> just json or array or string
-            JsonNode node = objectMapper.valueToTree(response.getBody());
-            dataSchema = convertToDataSchema("-",node);
-        } else {
-            JsonNode node = objectMapper.valueToTree(response.getBody());
-
-            //TODO erst navigieren dann parsen
-            dataSchema = convertToDataSchema("-",node);
+        //TODO http bzw https -> url aus openapi doc ändern
+        ResponseEntity<String> response = sendRequest(strucPath.getHttpMethod(), serverUrl, strucPath.getPath());
+        try {
+            JsonNode node = objectMapper.readTree(response.getBody());
+            dataSchema = convertToDataSchema("-", node);
+            //TODO
+            if (pageSchema == null) {
+                //Data is not paged -> just json or array or string
+            } else { //TODO ABSTRAHIEREN
+                String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
+                dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
+            }
+        } catch (JsonProcessingException je) {
+            //TODO: error fetching data for this
         }
 
         return dataSchema;
@@ -64,25 +69,67 @@ public class ClientDataService {
 
     private DataSchema convertToDataSchema(String name, JsonNode node) {
         DataValue dataValue;
+
         switch (node.getNodeType()) {
+            case OBJECT -> { // object
+                Map<String, DataSchema> dataSchemas = new HashMap<>();
+                ObjectNode objectNode = (ObjectNode) node;
+                objectNode.fieldNames().forEachRemaining(fieldName -> dataSchemas.put(fieldName, convertToDataSchema(fieldName, objectNode.get(fieldName))));
+                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.OBJECT);
+                break;
+            }
             case ARRAY -> {
                 List<DataSchema> dataSchemas = new ArrayList<>();
-                node.fieldNames().forEachRemaining(fieldName -> {
-                    dataSchemas.add(convertToDataSchema(fieldName, node.get(fieldName)));
-                });
+                ArrayNode arrayNode = (ArrayNode) node;
+                arrayNode.forEach(elementNode -> dataSchemas.add(convertToDataSchema("-", elementNode)));
                 dataValue = new DataValue(dataSchemas, PropertyTypeEnum.ARRAY);
+                break;
             }
-            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
-            case BOOLEAN -> dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
-            case OBJECT -> {
-                Map<String, DataSchema> dataSchemas = new HashMap<>();
-                node.fieldNames().forEachRemaining(fieldName -> {
-                    dataSchemas.put(fieldName, convertToDataSchema(fieldName, node.get(fieldName)));
-                });
-                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.OBJECT);
+            case BOOLEAN -> {
+                dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
+                break;
             }
-            default -> dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
+            case NUMBER -> {
+                dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
+                break;
+            }
+            default -> {
+                dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
+                break;
+            }
         }
-        return new DataSchema(name,dataValue);
+        return new DataSchema(name, dataValue);
     }
+
+    private ObjectNode castToObjectNode(JsonNode node) {
+        return ((ObjectNode) node);
+    }
+
+    private ArrayNode castToArrayNode(JsonNode node) {
+        return ((ArrayNode) node);
+    }
+
+//    private DataSchema convertToDataSchema(String name, JsonNode node) {
+//        DataValue dataValue;
+//        switch (node.getNodeType()) {
+//            case ARRAY -> {
+//                List<DataSchema> dataSchemas = new ArrayList<>();
+//                node.fieldNames().forEachRemaining(fieldName -> {
+//                    dataSchemas.add(convertToDataSchema(fieldName, node.get(fieldName)));
+//                });
+//                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.ARRAY);
+//            }
+//            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
+//            case BOOLEAN -> dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
+//            case OBJECT -> {
+//                Map<String, DataSchema> dataSchemas = new HashMap<>();
+//                node.fieldNames().forEachRemaining(fieldName -> {
+//                    dataSchemas.put(fieldName, convertToDataSchema(fieldName, node.get(fieldName)));
+//                });
+//                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.OBJECT);
+//            }
+//            default -> dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
+//        }
+//        return new DataSchema(name,dataValue);
+//    }
 }

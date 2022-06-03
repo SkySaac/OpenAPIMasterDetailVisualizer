@@ -13,11 +13,6 @@ import java.util.Map;
 @Service
 public class StrucViewGroupConverterService {
 
-    private final StructureProviderService structureProviderService;
-
-    public StrucViewGroupConverterService(StructureProviderService structureProviderService){
-        this.structureProviderService = structureProviderService;
-    }
     public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
         if(!isMDVStructure(strucViewGroup)) return null;
         Map<HttpMethod, StrucPath> strucPathMap = new HashMap<>();
@@ -30,8 +25,8 @@ public class StrucViewGroupConverterService {
 
         //Add the paged Schema (if it exists)
         StrucSchema pagedStrucSchema = null;
-        if(structureProviderService.isPagedSchema(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())))
-            pagedStrucSchema = strucViewGroup.getStrucSchemaMap().get(structureProviderService.getPagedSchemaName(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())));
+        if(SchemaService.isPagedSchema(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())))
+            pagedStrucSchema = strucViewGroup.getStrucSchemaMap().get(SchemaService.getPagedSchemaName(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())));
 
         //GET (needs to exist)
         strucPathMap.put(HttpMethod.GET,primaryGetPath); //TODO PAGED Schema

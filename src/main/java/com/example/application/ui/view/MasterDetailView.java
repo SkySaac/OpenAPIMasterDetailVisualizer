@@ -6,6 +6,7 @@ import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import com.example.application.ui.conponents.PostDialog;
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -31,10 +32,10 @@ public class MasterDetailView extends Div {
 
     private final MDActionListener mdActionListener;
 
-    private Map<String, AbstractField> detailLayoutComponents = new HashMap<>();
-    private Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
+    private final Map<String, AbstractField> detailLayoutComponents = new HashMap<>();
+    private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
 
-    private PostDialog postDialog;
+    private final PostDialog postDialog;
 
     public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, StrucSchema postSchema, StrucSchema putSchema) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
@@ -61,8 +62,8 @@ public class MasterDetailView extends Div {
 
         if (isPaged) {
             Button backwards = new Button(VaadinIcon.ARROW_LEFT.create());
-            Button forewards = new Button(VaadinIcon.ARROW_RIGHT.create()); //TODO umbenennen
-            div.add(backwards, forewards);
+            Button forwards = new Button(VaadinIcon.ARROW_RIGHT.create());
+            div.add(backwards, forwards);
         }
 
         if (postSchema != null) {
@@ -81,8 +82,8 @@ public class MasterDetailView extends Div {
     public void configureGrid(StrucSchema getSchema) {
         getSchema.getProperties().keySet().forEach(property ->
                 grid.addColumn(
-                        dataSchema -> dataSchema.getProperties().get(property) != null ? dataSchema.getProperties().get(property).getValue() : "-"
-
+                        dataSchema -> dataSchema.getValue().getProperties().get(property) != null
+                                ? dataSchema.getValue().getProperties().get(property).getValue().getValue() : "-"
                 ).setHeader(property).setAutoWidth(true)
         );
 
@@ -99,8 +100,8 @@ public class MasterDetailView extends Div {
         });
     }
 
-    public void setData(List<DataSchema> data) {
-        grid.setItems(data);
+    public void setData(DataSchema data) {
+        grid.setItems(data.getValue().getDataSchemas());
     }
 
     private void createEditorLayout(SplitLayout splitLayout, StrucSchema getSchema) {
@@ -123,24 +124,13 @@ public class MasterDetailView extends Div {
     }
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
-        AbstractField editorComponent;
-        switch (type) {
-            case NUMBER:
-                editorComponent = new NumberField(title);
-                break;
-            case BOOLEAN:
-                editorComponent = new Checkbox(title);
-                break;
-            case STRING:
-                editorComponent = new TextField(title);
-                break;
-            case OBJECT: //TODO change, wenns n object is sindse ja ineinander verschachtelt
-                editorComponent = new TextField(title);
-                break;
-            default:
-                editorComponent = new TextField(title);
-                break;
-        }
+        AbstractField editorComponent = switch (type) {
+            case NUMBER -> new NumberField(title);
+            case BOOLEAN -> new Checkbox(title);
+            case STRING -> new TextField(title);
+            case OBJECT -> new TextField(title); //TODO change, wenns n object is sindse ja ineinander verschachtelt
+            default -> new TextField(title);
+        };
 
         editorComponent.setReadOnly(true);
 
@@ -157,26 +147,26 @@ public class MasterDetailView extends Div {
     }
 
     private void fillDetailLayout(DataSchema dataSchema) {
-        dataSchema.getProperties().keySet().forEach(key -> {
+        dataSchema.getValue().getProperties().keySet().forEach(key -> {
             if (detailLayoutComponents.get(key) != null) {
-                switch (dataSchema.getProperties().get(key).getPropertyTypeEnum()) {
+                switch (dataSchema.getValue().getProperties().get(key).getValue().getPropertyTypeEnum()) {
                     case NUMBER ->
-                            detailLayoutComponents.get(key).setValue(Double.parseDouble(dataSchema.getProperties().get(key).getValue()));
+                            detailLayoutComponents.get(key).setValue(Double.parseDouble(dataSchema.getValue().getProperties().get(key).getValue().getValue()));
                     case BOOLEAN ->
-                            detailLayoutComponents.get(key).setValue(Boolean.parseBoolean(dataSchema.getProperties().get(key).getValue()));
+                            detailLayoutComponents.get(key).setValue(Boolean.parseBoolean(dataSchema.getValue().getProperties().get(key).getValue().getValue()));
                     case STRING ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getProperties().get(key).getValue());
+                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().getValue());
                     case OBJECT ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getProperties().get(key).getValue().toString());
+                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().toString());
                     default ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getProperties().get(key).getValue().toString());
+                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().toString());
                 }
             }
         });
     }
 
     private void clearDetailLayout() {
-        detailLayoutComponents.values().forEach(component -> component.clear());
+        detailLayoutComponents.values().forEach(HasValue::clear);
     }
 
 }

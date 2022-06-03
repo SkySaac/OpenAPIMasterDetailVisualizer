@@ -29,4 +29,8 @@ public class DataValue {
         this.propertyTypeEnum = propertyTypeEnum;
         this.properties = properties;
     }
+
+    public DataSchema get(String key){
+        return properties.get(key);
+    }
 }

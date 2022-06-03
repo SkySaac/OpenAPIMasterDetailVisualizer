@@ -1,8 +1,8 @@
 package com.example.application.ui.presenter;
 
-import com.example.application.data.services.SampleDataProviderService;
-import com.example.application.data.services.StructureProviderService;
 import com.example.application.data.services.StrucViewGroupConverterService;
+import com.example.application.data.services.StructureProviderService;
+import com.example.application.data.structureModel.StrucOpenApi;
 import com.example.application.data.structureModel.StrucViewGroupMDV;
 import com.example.application.rest.client.ClientDataService;
 import com.example.application.ui.accesspoint.AccessPoint;
@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -17,28 +18,27 @@ import java.util.Map;
 public class TagPresenter {
     private final Map<String, MasterDetailPresenter> presenters;
     private final ClientDataService clientDataService;
-    private final SampleDataProviderService sampleDataProviderService;
     private final StructureProviderService structureProviderService;
-
     private final StrucViewGroupConverterService strucViewGroupConverterService;
 
-    public TagPresenter(ClientDataService clientDataService, StrucViewGroupConverterService strucViewGroupConverterService, StructureProviderService structureProviderService, SampleDataProviderService sampleDataProviderService) {
+    private StrucOpenApi strucOpenApi;
+
+    public TagPresenter(ClientDataService clientDataService, StrucViewGroupConverterService strucViewGroupConverterService, StructureProviderService structureProviderService) {
         this.clientDataService = clientDataService;
-        this.sampleDataProviderService = sampleDataProviderService;
         this.structureProviderService = structureProviderService;
         this.strucViewGroupConverterService = strucViewGroupConverterService;
         presenters = new HashMap<>();
     }
 
     private void clearOldPresenters() {
-        presenters.entrySet().forEach(presenterEntry -> AccessPoint.getMainLayout().removeNavigationTarget(presenterEntry.getKey()));
+        presenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
         presenters.clear();
     }
 
-    public void registerPresenters() {
+    public void registerPresenters(StrucOpenApi strucOpenApi) {
         clearOldPresenters();
         log.info("Registering presenters...");
-        structureProviderService.getStrucViewGroups().forEach(strucViewGroup -> {
+        strucOpenApi.getStrucViewGroups().forEach(strucViewGroup -> {
             if (strucViewGroupConverterService.isMDVStructure(strucViewGroup)) {
                 StrucViewGroupMDV strucViewGroupMDV = strucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(strucViewGroup.getTagName(), strucViewGroupMDV);
@@ -50,17 +50,23 @@ public class TagPresenter {
                 //registerListViewPresenter(strucViewGroup.getTagName(), strucViewGroupLV);
             }
         });
+        this.strucOpenApi = strucOpenApi;
+    }
 
+    public List<String> getServers() {
+        return strucOpenApi.getServers();
     }
 
     public void prepareStructure(String source) {
-        structureProviderService.generateApiStructure(source);
+        StrucOpenApi strucOpenApi = structureProviderService.generateApiStructure(source);
+        registerPresenters(strucOpenApi);
+
     }
 
     private void registerMasterDetailPresenter(String name, StrucViewGroupMDV strucViewGroupMDV) {
         //TODO check if presenter name already exists
         log.info("Registering Master-Detail Presenter for the {} view", name);
-        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(sampleDataProviderService, clientDataService, strucViewGroupMDV);
+        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(clientDataService, strucViewGroupMDV);
         presenters.put(name, masterDetailPresenter);
         AccessPoint.getMainLayout().addNavigationTarget(name);
     }
