@@ -1,10 +1,12 @@
 package com.example.application.ui.conponents;
 
 import com.example.application.data.dataModel.DataSchema;
+import com.example.application.data.dataModel.DataValue;
 import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -13,7 +15,9 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PostDialog extends Dialog {
@@ -24,14 +28,14 @@ public class PostDialog extends Dialog {
 
     private final PostActionListener actionListener;
 
-    private Map<String, AbstractField> inputFieldComponents = new HashMap<>();
+    private List<InputValueComponent> inputFieldComponents = new ArrayList<>();
     private Map<String, AbstractField> querryFieldComponents = new HashMap<>();
 
     public PostDialog(PostActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
-    public void open(StrucSchema schema, StrucPath strucPath){
+    public void open(StrucSchema schema, StrucPath strucPath) {
         createFields(schema);
         createQuerryParamFields(strucPath);
 
@@ -50,42 +54,54 @@ public class PostDialog extends Dialog {
 
     private void postAction() {
         //TODO collect query params
-        //TODO collect properties
+
+        Map<String, DataSchema> dataInputMap = new HashMap<>();
+        inputFieldComponents.forEach(inputValueComponent -> {
+            DataValue inputFieldValue = new DataValue(inputValueComponent.getComponent().getValue().toString(),inputValueComponent.getPropertyTypeEnum());
+            DataSchema inputFieldSchema = new DataSchema(inputValueComponent.getTitle(),inputFieldValue);
+            dataInputMap.put(inputValueComponent.getTitle(),inputFieldSchema);
+
+        });
+        DataValue dataValue = new DataValue(dataInputMap,PropertyTypeEnum.OBJECT);
+        DataSchema dataSchema = new DataSchema("post", dataValue);
+
         //TODO check if valid
-        actionListener.postAction(null, null);
+        actionListener.postAction(null, dataSchema);
     }
 
     private void createFields(StrucSchema schema) {
         VerticalLayout verticalLayout = new VerticalLayout();
-        schema.getProperties().keySet().forEach(key ->
-                verticalLayout.add(createEditorComponent(schema.getProperties().get(key).getType(), key))
+        schema.getProperties().keySet().forEach(key -> {
+                    AbstractField abstractField = createEditorComponent(schema.getProperties().get(key).getType(), key);
+                    verticalLayout.add(abstractField);
+                }
         );
         add(verticalLayout);
     }
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
-        AbstractField fieldComponent;
+        AbstractField inputComponent;
         switch (type) {
             case NUMBER:
-                fieldComponent = new NumberField(title);
+                inputComponent = new NumberField(title);
                 break;
             case BOOLEAN:
-                fieldComponent = new Checkbox(title);
+                inputComponent = new Checkbox(title);
                 break;
             case STRING:
-                fieldComponent = new TextField(title);
+                inputComponent = new TextField(title);
                 break;
             case OBJECT: //TODO change, wenns n object is sindse ja ineinander verschachtelt
-                fieldComponent = new TextField(title);
+                inputComponent = new TextField(title);
                 break;
             default:
-                fieldComponent = new TextField(title);
+                inputComponent = new TextField(title);
                 break;
         }
 
-        inputFieldComponents.put(title, fieldComponent);
+        inputFieldComponents.add(new InputValueComponent(title,inputComponent,type));
 
-        return fieldComponent;
+        return inputComponent;
     }
 
     private void createQuerryParamFields(StrucPath strucPath) {

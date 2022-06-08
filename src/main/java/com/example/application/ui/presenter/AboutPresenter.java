@@ -10,6 +10,9 @@ import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 @UIScope
 @Slf4j
@@ -19,6 +22,9 @@ public class AboutPresenter implements AboutView.ActionListener {
     private final ClientDataService clientDataService;
     private final TagPresenter tagPresenter;
 
+    private final List<String> serverList = new ArrayList<>();
+
+
     public AboutPresenter(ClientDataService clientDataService, TagPresenter tagPresenter) {
         this.clientDataService = clientDataService;
         this.tagPresenter = tagPresenter;
@@ -26,17 +32,28 @@ public class AboutPresenter implements AboutView.ActionListener {
 
     public AboutView getView() {
         view = new AboutView(this, StructureProviderService.PARSE_OBJECT);
+        view.setServers(serverList);
         return view;
     }
 
     @Override
     public void openApiAction(String source) {
         tagPresenter.prepareStructure(source);
-        view.setServers(tagPresenter.getServers());
+        serverList.clear();
+        serverList.addAll(tagPresenter.getServers());
+        view.setServers(serverList);
     }
 
     @Override
-    public void serverAction(String server) {
+    public void serverSelected(String server) {
         clientDataService.setServerUrl(server);
     }
+
+    @Override
+    public void addServerToSelection(String server) {
+        serverList.add(server);
+        view.setServers(serverList);
+    }
+
+
 }

@@ -9,7 +9,6 @@ import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -27,6 +26,7 @@ public class MasterDetailView extends Div {
 
     public interface MDActionListener extends PostDialog.PostActionListener {
         void openPostDialog();
+
         void deleteData();
     }
 
@@ -35,13 +35,11 @@ public class MasterDetailView extends Div {
     private final Map<String, AbstractField> detailLayoutComponents = new HashMap<>();
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
 
-    private final PostDialog postDialog;
+    private PostDialog postDialog;
 
     public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, StrucSchema postSchema, StrucSchema putSchema) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
-
-        postDialog  = new PostDialog(mdActionListener);
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
@@ -75,7 +73,8 @@ public class MasterDetailView extends Div {
         add(div);
     }
 
-    public void openDialog(StrucSchema schema, StrucPath strucPath){
+    public void openDialog(StrucSchema schema, StrucPath strucPath) {
+        postDialog = new PostDialog(mdActionListener);
         postDialog.open(schema, strucPath);
     }
 
@@ -101,7 +100,11 @@ public class MasterDetailView extends Div {
     }
 
     public void setData(DataSchema data) {
-        grid.setItems(data.getValue().getDataSchemas());
+        if (data.getValue().getDataSchemas() == null) {
+            grid.setItems(List.of(data));
+        } else {
+            grid.setItems(data.getValue().getDataSchemas());
+        }
     }
 
     private void createEditorLayout(SplitLayout splitLayout, StrucSchema getSchema) {

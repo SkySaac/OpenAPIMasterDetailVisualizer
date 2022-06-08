@@ -33,18 +33,17 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
         else
             view = new MasterDetailView(this, false, strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET), strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST), strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT)); //übergeben: pfade
 
-        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET)));
+        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
         return view;
     }
 
-    public void getData() {
-        DataSchema data = clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), null);
-    }
 
     @Override
     public void postAction(Map<String, String> queryParameters, DataSchema properties) {
-        //TODO tell service to collect data
-        //view.setData();
+        //TODO convert from DataSchema to json thing with jackson
+        if(strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)){
+            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST),properties);
+        }
     }
 
 

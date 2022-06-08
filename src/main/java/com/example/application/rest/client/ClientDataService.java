@@ -33,15 +33,28 @@ public class ClientDataService {
         this.clientRequestService = clientRequestService;
     }
 
-    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path) {
+    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path, String body) {
         final var requestWrapper = new ClientRequestWrapper(httpMethod, url);
 
         requestWrapper.requestBuilder()
                 .path(path);
 
+        if (body != null) {
+            requestWrapper.requestBuilder()
+                    .body(body);
+        }
+
         final var response = clientRequestService.request(requestWrapper);
         log.debug(response.getBody());
         return response;
+    }
+
+    public void postData(StrucPath strucPath, DataSchema bodyData) {
+        String body = convertToJson(bodyData).toString();
+        ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), body);
+        log.info(response.getStatusCode().toString());
+
+        //TODO what if 400
     }
 
     public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema) {
@@ -49,7 +62,7 @@ public class ClientDataService {
         DataSchema dataSchema = null;
 
         //TODO http bzw https -> url aus openapi doc ändern
-        ResponseEntity<String> response = sendRequest(strucPath.getHttpMethod(), serverUrl, strucPath.getPath());
+        ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), null);
         try {
             JsonNode node = objectMapper.readTree(response.getBody());
             dataSchema = convertToDataSchema("-", node);
@@ -65,6 +78,20 @@ public class ClientDataService {
         }
 
         return dataSchema;
+    }
+
+    private ObjectNode convertToJson(DataSchema dataSchema) {
+        //TODO make dynamic, get nested objects
+        ObjectNode node = objectMapper.createObjectNode();
+        dataSchema.getValue().getProperties().entrySet().forEach(entrySet -> {
+            switch (entrySet.getValue().getValue().getPropertyTypeEnum()){
+                case NUMBER -> node.put(entrySet.getKey(),Double.valueOf(entrySet.getValue().getValue().getValue()));
+                case BOOLEAN -> node.put(entrySet.getKey(),Boolean.valueOf(entrySet.getValue().getValue().getValue()));
+                default -> node.put(entrySet.getKey(),entrySet.getValue().getValue().getValue());
+            }
+
+        });
+        return node;
     }
 
     private DataSchema convertToDataSchema(String name, JsonNode node) {
@@ -100,36 +127,4 @@ public class ClientDataService {
         }
         return new DataSchema(name, dataValue);
     }
-
-    private ObjectNode castToObjectNode(JsonNode node) {
-        return ((ObjectNode) node);
-    }
-
-    private ArrayNode castToArrayNode(JsonNode node) {
-        return ((ArrayNode) node);
-    }
-
-//    private DataSchema convertToDataSchema(String name, JsonNode node) {
-//        DataValue dataValue;
-//        switch (node.getNodeType()) {
-//            case ARRAY -> {
-//                List<DataSchema> dataSchemas = new ArrayList<>();
-//                node.fieldNames().forEachRemaining(fieldName -> {
-//                    dataSchemas.add(convertToDataSchema(fieldName, node.get(fieldName)));
-//                });
-//                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.ARRAY);
-//            }
-//            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
-//            case BOOLEAN -> dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
-//            case OBJECT -> {
-//                Map<String, DataSchema> dataSchemas = new HashMap<>();
-//                node.fieldNames().forEachRemaining(fieldName -> {
-//                    dataSchemas.put(fieldName, convertToDataSchema(fieldName, node.get(fieldName)));
-//                });
-//                dataValue = new DataValue(dataSchemas, PropertyTypeEnum.OBJECT);
-//            }
-//            default -> dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
-//        }
-//        return new DataSchema(name,dataValue);
-//    }
 }
