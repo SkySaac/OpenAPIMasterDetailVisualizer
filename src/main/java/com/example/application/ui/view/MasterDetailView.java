@@ -1,43 +1,37 @@
 package com.example.application.ui.view;
 
 import com.example.application.data.dataModel.DataSchema;
-import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
-import com.example.application.ui.conponents.PostDialog;
-import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.HasValue;
+import com.example.application.ui.components.detaillayout.DetailLayout;
+import com.example.application.ui.components.PostDialog;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
-import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.textfield.TextField;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MasterDetailView extends Div {
 
     public interface MDActionListener extends PostDialog.PostActionListener {
         void openPostDialog();
 
-        void deleteData();
+        void deleteData(DataSchema dataSchema);
     }
 
     private final MDActionListener mdActionListener;
 
-    private final Map<String, AbstractField> detailLayoutComponents = new HashMap<>();
+
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
+    private final DetailLayout detailLayout;
 
     private PostDialog postDialog;
 
-    public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, StrucSchema postSchema, StrucSchema putSchema) { //change to 2 schemas 1 create 1 get
+    public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, StrucSchema postSchema, StrucSchema putSchema, boolean hasDelete) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
 
@@ -46,13 +40,15 @@ public class MasterDetailView extends Div {
 
         addPageButtons(isPaged, postSchema);
 
-        createGridLayout(splitLayout);
-        createEditorLayout(splitLayout, getSchema);
+        splitLayout.addToPrimary(createGridLayout());
+
+        detailLayout = new DetailLayout(getSchema);
+        splitLayout.addToSecondary(detailLayout);
 
         add(splitLayout);
 
         // Configure Grid
-        configureGrid(getSchema);
+        configureGrid(getSchema, hasDelete);
     }
 
     public void addPageButtons(boolean isPaged, StrucSchema postSchema) {
@@ -78,13 +74,27 @@ public class MasterDetailView extends Div {
         postDialog.open(schema, strucPath);
     }
 
-    public void configureGrid(StrucSchema getSchema) {
+    private void deleteData(DataSchema dataSchema) {
+        mdActionListener.deleteData(dataSchema);
+    }
+
+    public void configureGrid(StrucSchema getSchema, boolean showDelete) {
+        if (showDelete) {
+            grid.addComponentColumn(dataSchema -> {
+                final var button = new Button(new Icon(VaadinIcon.TRASH));
+                button.addClickListener(event -> deleteData(dataSchema));
+                return button;
+            });
+        }
+
+        //Add all columns
         getSchema.getProperties().keySet().forEach(property ->
                 grid.addColumn(
                         dataSchema -> dataSchema.getValue().getProperties().get(property) != null
-                                ? dataSchema.getValue().getProperties().get(property).getValue().getValue() : "-"
+                                ? dataSchema.getValue().getProperties().get(property).getValue().getPlainValue() : "-"
                 ).setHeader(property).setAutoWidth(true)
         );
+
 
         //grid.setItems();
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -92,9 +102,9 @@ public class MasterDetailView extends Div {
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
             if (event.getValue() != null) {
-                fillDetailLayout(event.getValue());
+                detailLayout.fillDetailLayout(event.getValue());
             } else {
-                clearDetailLayout();
+                detailLayout.clearDetailLayout();
             }
         });
     }
@@ -107,69 +117,13 @@ public class MasterDetailView extends Div {
         }
     }
 
-    private void createEditorLayout(SplitLayout splitLayout, StrucSchema getSchema) {
-        Div editorLayoutDiv = new Div();
-        editorLayoutDiv.setClassName("editor-layout");
 
-        Div editorDiv = new Div();
-        editorDiv.setClassName("editor");
-        editorLayoutDiv.add(editorDiv);
-
-        FormLayout formLayout = new FormLayout();
-
-        getSchema.getProperties().keySet().forEach(key ->
-                formLayout.add(createEditorComponent(getSchema.getProperties().get(key).getType(), key))
-        );
-
-        editorDiv.add(formLayout);
-
-        splitLayout.addToSecondary(editorLayoutDiv);
-    }
-
-    private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
-        AbstractField editorComponent = switch (type) {
-            case NUMBER -> new NumberField(title);
-            case BOOLEAN -> new Checkbox(title);
-            case STRING -> new TextField(title);
-            case OBJECT -> new TextField(title); //TODO change, wenns n object is sindse ja ineinander verschachtelt
-            default -> new TextField(title);
-        };
-
-        editorComponent.setReadOnly(true);
-
-        detailLayoutComponents.put(title, editorComponent);
-
-        return editorComponent;
-    }
-
-    private void createGridLayout(SplitLayout splitLayout) {
+    private Div createGridLayout() {
         Div wrapper = new Div();
         wrapper.setClassName("grid-wrapper");
-        splitLayout.addToPrimary(wrapper);
         wrapper.add(grid);
+        return wrapper;
     }
 
-    private void fillDetailLayout(DataSchema dataSchema) {
-        dataSchema.getValue().getProperties().keySet().forEach(key -> {
-            if (detailLayoutComponents.get(key) != null) {
-                switch (dataSchema.getValue().getProperties().get(key).getValue().getPropertyTypeEnum()) {
-                    case NUMBER ->
-                            detailLayoutComponents.get(key).setValue(Double.parseDouble(dataSchema.getValue().getProperties().get(key).getValue().getValue()));
-                    case BOOLEAN ->
-                            detailLayoutComponents.get(key).setValue(Boolean.parseBoolean(dataSchema.getValue().getProperties().get(key).getValue().getValue()));
-                    case STRING ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().getValue());
-                    case OBJECT ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().toString());
-                    default ->
-                            detailLayoutComponents.get(key).setValue(dataSchema.getValue().getProperties().get(key).getValue().toString());
-                }
-            }
-        });
-    }
-
-    private void clearDetailLayout() {
-        detailLayoutComponents.values().forEach(HasValue::clear);
-    }
 
 }

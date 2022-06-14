@@ -15,20 +15,43 @@ import java.util.Map;
 @Slf4j
 public class PathService {
 
-    public static List<StrucPath> getPrimaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, String tagName) {
-        List<StrucPath> primaryPaths = new ArrayList<>();
+    public static List<String> getPrimaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
+        List<String> primaryPaths = new ArrayList<>();
 
         pathsForTag.forEach((key, value) -> {
             //wenn kein {} drinne kanns n primary path sein
             if (!key.contains("{") && value.containsKey(HttpMethod.GET)) {
                 if (value.get(HttpMethod.GET).getExternalResponseBodySchemaName() != null) {
-                    primaryPaths.add(value.get(HttpMethod.GET));
-                    log.info("Detected primary path: " + value.get(HttpMethod.GET).getPath() + " for tag: " + tagName);
+                    primaryPaths.add(value.get(HttpMethod.GET).getPath());
+                    log.info("Detected primary path: " + value.get(HttpMethod.GET).getPath());
                 }
             }
         });
         //Master Detail View (BSP Artifacts)
         return primaryPaths;
+    }
+
+    public static Map<String, String> getSecondaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> primaryPaths) {
+        //primary: /artifact/ -> secondary: /artifact/{id}/
+
+        //secondaryPath -> primaryPath
+        Map<String,String> secondaryPaths = new HashMap<>();
+
+        primaryPaths.forEach(primaryPath -> {
+            String secondaryRegex = primaryPath;
+            if (!primaryPath.endsWith("/")) {
+                secondaryRegex += "/";
+            }
+            secondaryRegex += "{";
+            String finalSecondaryRegex = secondaryRegex;
+            pathsForTag.keySet().forEach(path -> {
+                if (path.startsWith(finalSecondaryRegex) && path.split("}").length == 1
+                        && (path.endsWith("}") || path.endsWith("}/"))) {
+                    secondaryPaths.put(primaryPath, path);
+                }
+            });
+        });
+        return secondaryPaths;
     }
 
     public static StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation) {

@@ -1,4 +1,4 @@
-package com.example.application.ui.conponents;
+package com.example.application.ui.components;
 
 import com.example.application.data.dataModel.DataSchema;
 import com.example.application.data.dataModel.DataValue;
@@ -6,7 +6,6 @@ import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import com.vaadin.flow.component.AbstractField;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;

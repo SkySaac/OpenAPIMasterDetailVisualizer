@@ -29,9 +29,17 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
 
     public Component getView() {
         if (strucViewGroup.isPaged())
-            view = new MasterDetailView(this, true, strucViewGroup.getBehindPagedGetSchema(), strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST), strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT)); //übergeben: pfade
+            view = new MasterDetailView(this, true,
+                    strucViewGroup.getBehindPagedGetSchema(),
+                    strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST),
+                    strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
+                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
         else
-            view = new MasterDetailView(this, false, strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET), strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST), strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT)); //übergeben: pfade
+            view = new MasterDetailView(this, false,
+                    strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET),
+                    strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST),
+                    strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
+                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
 
         view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
         return view;
@@ -40,9 +48,8 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
 
     @Override
     public void postAction(Map<String, String> queryParameters, DataSchema properties) {
-        //TODO convert from DataSchema to json thing with jackson
-        if(strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)){
-            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST),properties);
+        if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)) {
+            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST), properties);
         }
     }
 
@@ -53,7 +60,21 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
     }
 
     @Override
-    public void deleteData() {
-        //TODO
+    public void deleteData(DataSchema dataSchema) {
+        if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)) {
+            //TODO
+            //Pfad raussuchen
+            String path = strucViewGroup.getStrucPathMap().get(HttpMethod.DELETE).getPath();
+            //enthaltener parameter (in pfad) raussuchen
+            String firstParam = path.split("\\{")[1].split("}")[0];
+            //gucken ob param in dataSchema enthalten ist
+            if (dataSchema.getValue().getProperties().containsKey(firstParam)) { //TODO nested danach suchen
+                //löschanfrage senden
+                clientDataService.deleteData(strucViewGroup.getStrucPathMap().get(HttpMethod.DELETE), firstParam,
+                        dataSchema.getValue().getProperties().get(firstParam).getValue().getPlainValue());
+            }
+
+
+        }
     }
 }

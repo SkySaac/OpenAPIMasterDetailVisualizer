@@ -19,7 +19,4 @@ public class StrucSchema {
     @Setter
     private boolean isFreeSchema = false;
 
-    public void addProperty(String key,StrucProperty property){
-        properties.put(key,property);
-    }
 }

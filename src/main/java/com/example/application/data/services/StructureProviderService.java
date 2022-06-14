@@ -1,13 +1,14 @@
 package com.example.application.data.services;
 
-import com.example.application.data.structureModel.*;
-import com.example.application.rest.client.ClientDataService;
+import com.example.application.data.structureModel.StrucOpenApi;
+import com.example.application.data.structureModel.StrucPath;
+import com.example.application.data.structureModel.StrucSchema;
+import com.example.application.data.structureModel.StrucViewGroup;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import io.swagger.v3.parser.OpenAPIV3Parser;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -51,10 +52,14 @@ public class StructureProviderService {
             log.debug("A total of {} schemas have been found for the tag {}", pathsForTag.size(), tag);
 
             //Find primarypaths for this viewgroup
-            List<StrucPath> primaryPaths = PathService.getPrimaryViewPaths(pathsForTag, tag);
-            log.debug("Primary Paths for tag " + tag + " is: " + primaryPaths);
+            List<String> primaryPaths = PathService.getPrimaryViewPaths(pathsForTag);
+            log.debug("Primary Paths for tag " + tag + " are: " + primaryPaths);
 
-            StrucViewGroup strucViewGroup = new StrucViewGroup(tag, primaryPaths, strucViewGroupSchemaMap, pathsForTag);
+            //Find secondaryPaths
+            Map<String, String> secondaryPaths = PathService.getSecondaryViewPaths(pathsForTag, primaryPaths);
+            log.debug("Secondary Paths for tag " + tag + " are: " + secondaryPaths);
+
+            StrucViewGroup strucViewGroup = new StrucViewGroup(tag, primaryPaths, secondaryPaths, strucViewGroupSchemaMap, pathsForTag);
 
             strucViewGroupList.add(strucViewGroup);
         });
@@ -95,22 +100,26 @@ public class StructureProviderService {
 
     private Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
-        pathsForTag.forEach((key, value) -> value.forEach((key1, value1) -> {
+        pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema
-            if (value1.getExternalRequestBodySchemaName() != null) {
-                strucViewGroupSchemaMap.put(value1.getExternalRequestBodySchemaName(), strucSchemaMap.get(value1.getExternalRequestBodySchemaName()));
+            if (pathValue.getExternalRequestBodySchemaName() != null) {
+                strucViewGroupSchemaMap.put(pathValue.getExternalRequestBodySchemaName(), strucSchemaMap.get(pathValue.getExternalRequestBodySchemaName()));
             }
             //Check Response Body Schema
-            if (value1.getExternalResponseBodySchemaName() != null) {
-                strucViewGroupSchemaMap.put(value1.getExternalResponseBodySchemaName(), strucSchemaMap.get(value1.getExternalResponseBodySchemaName()));
+            if (pathValue.getExternalResponseBodySchemaName() != null) {
+                strucViewGroupSchemaMap.put(pathValue.getExternalResponseBodySchemaName(), strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()));
                 //If Response is a PagedObject -> Add whats behind the paged Object //TODO replace with add all nested objects
-                if (SchemaService.isPagedSchema(strucSchemaMap.get(value1.getExternalResponseBodySchemaName()))) {
-                    String pagedSchemaName = SchemaService.getPagedSchemaName(strucSchemaMap.get(value1.getExternalResponseBodySchemaName()));
+                if (SchemaService.isPagedSchema(strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()))) {
+                    String pagedSchemaName = SchemaService.getPagedSchemaName(strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()));
                     strucViewGroupSchemaMap.put(pagedSchemaName, strucSchemaMap.get(pagedSchemaName));
                 }
+
             }
 
+            //TODO collect get refs from pathValue.getExternalResponseBodySchemaName()
+            //TODO add those refs
             //TODO check internal (nested) Schemas
+            //SchemaService.getNestedSchemaNames();
 
         }));
         return strucViewGroupSchemaMap;

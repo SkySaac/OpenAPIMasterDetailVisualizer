@@ -5,12 +5,8 @@ import com.example.application.data.structureModel.StrucProperty;
 import com.example.application.data.structureModel.StrucSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class SchemaService {
@@ -37,36 +33,60 @@ public class SchemaService {
         StrucSchema strucSchema = new StrucSchema();
         strucSchema.setName(name);
         Map<String, Schema> schemaProperties = schema.getProperties();
-        if (schemaProperties != null) {
-            for (Map.Entry<String, Schema> schemaProperty : schemaProperties.entrySet()) {
-                StrucProperty strucProperty;
-                if (schemaProperty.getValue().getType() != null)
-                    //Property is no reference -> must be another type
-                    if (Objects.equals(schemaProperty.getValue().getType(), "object")) {
-                        strucProperty = new StrucProperty(PropertyTypeEnum.OBJECT);
-                        strucProperty.setSchema(mapSchemaToStrucSchema(schemaProperty.getKey(), schemaProperty.getValue()));
+        if (schemaProperties == null) return strucSchema;
+        for (Map.Entry<String, Schema> schemaProperty : schemaProperties.entrySet()) {
+            StrucProperty strucProperty;
+            if (schemaProperty.getValue().getType() != null)
+                //Property is not a reference -> must be another type
+                if (Objects.equals(schemaProperty.getValue().getType(), "object")) {
+                    strucProperty = new StrucProperty(PropertyTypeEnum.OBJECT);
+                    strucProperty.setSchema(mapSchemaToStrucSchema(schemaProperty.getKey(), schemaProperty.getValue()));
 
-                    } else if (Objects.equals(schemaProperty.getValue().getType(), "array")) {
-                        strucProperty = new StrucProperty(PropertyTypeEnum.ARRAY);
-                        if (schemaProperty.getValue().getItems().get$ref() != null) { //is Reference inside array
-                            strucProperty.setRef(stripSchemaRefPath(schemaProperty.getValue().getItems().get$ref()));
-                        } else { //is Schema inside array //TODO erst checked ob nicht StrucProperty sein muss (wenn zb direkt String)
-                            strucProperty.setSchema(mapSchemaToStrucSchema(schemaProperty.getKey(), schemaProperty.getValue().getItems()));
-                        }
+                } else if (Objects.equals(schemaProperty.getValue().getType(), "array")) {
+                    strucProperty = new StrucProperty(PropertyTypeEnum.ARRAY);
+                    if (schemaProperty.getValue().getItems().get$ref() != null) { //is Reference inside array
+                        strucProperty.setRef(stripSchemaRefPath(schemaProperty.getValue().getItems().get$ref()));
+                    } else if (schemaProperty.getValue().getItems().getOneOf() != null //is OneOf multiple items
+                            && !schemaProperty.getValue().getItems().getOneOf().isEmpty()) {
+                        List<StrucProperty> strucProperties = new ArrayList<>();
+                        List<Schema> oneOfSchemas = schemaProperty.getValue().getItems().getOneOf();
+//                        oneOfSchemas.forEach(oneOfSchema -> {
+//                            StrucSchema oneOfStrucSchema = mapSchemaToStrucSchema("oneOf", oneOfSchema);
+//                            StrucProperty strucProperty1 = new StrucProperty()
+//                            strucProperties.add()
+//                        });
+                        strucProperty.setArrayElements(strucProperties);
 
-                    } else {
-                        //Die Property ist irgendeine art von normalem typ
-                        strucProperty = new StrucProperty(PropertyTypeEnum.fromString(schemaProperty.getValue().getType()));
+                    } else { //is Schema inside array //TODO erst checked ob nicht StrucProperty sein muss (wenn zb direkt String)
+                        StrucProperty arrayElement = new StrucProperty(PropertyTypeEnum.fromString(schemaProperty.getValue().getItems().getType()));
+                        arrayElement.setSchema(mapSchemaToStrucSchema(schemaProperty.getKey(), schemaProperty.getValue().getItems()));
+                        strucProperty.setArrayElements(List.of(arrayElement));
                     }
-                else {
-                    //Property is a reference
-                    //TODO Die Property ist wohl eine referenz auf ein anderes Schema $ref, muss hier noch gebaut werden
 
-                    strucProperty = new StrucProperty(PropertyTypeEnum.SCHEMA);
+                } else {
+                    //Die Property ist irgendeine art von normalem typ
+                    strucProperty = new StrucProperty(PropertyTypeEnum.fromString(schemaProperty.getValue().getType()));
                 }
-                strucSchema.getProperties().put(schemaProperty.getKey(), strucProperty);
+            else {
+                //Property is a reference
+                strucProperty = new StrucProperty(PropertyTypeEnum.SCHEMA);
+                //TODO Check if Property is a schema and not something else
+                if (schemaProperty.getValue().get$ref() != null) {
+                    String[] ref = schemaProperty.getValue().get$ref().split("/");
+                    strucProperty.setRef(ref[ref.length - 1]);
+                } else {
+                    //TODO can be mutiple OneOfs
+                    //check OneOf
+                    if (schemaProperty.getValue().getOneOf() != null) {
+                        List<Schema> schema1 = schemaProperty.getValue().getOneOf();
+                        String[] ref = schema1.get(0).get$ref().split("/");
+                        strucProperty.setRef(ref[ref.length - 1]);
+                    }
+                }
             }
+            strucSchema.getProperties().put(schemaProperty.getKey(), strucProperty);
         }
+
         return strucSchema;
     }
 
@@ -91,7 +111,7 @@ public class SchemaService {
             else if (schema.getProperties() != null) {
                 Map<String, Schema> properties = schema.getProperties();
                 properties.forEach((key, value) -> getNestedSchemaNames(schemas, value));
-            } else if (schema.getType().equals( "array")) {
+            } else if (schema.getType().equals("array")) {
                 //TODO for all items
             }
         }

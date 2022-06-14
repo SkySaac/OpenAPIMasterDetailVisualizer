@@ -57,6 +57,13 @@ public class ClientDataService {
         //TODO what if 400
     }
 
+    public void deleteData(StrucPath strucPath, String parameterName, String parameterValue) {
+
+        String finalPath = strucPath.getPath().replace("{parameterName}",parameterValue);
+
+        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath, null);
+    }
+
     public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema) {
 
         DataSchema dataSchema = null;
@@ -84,12 +91,11 @@ public class ClientDataService {
         //TODO make dynamic, get nested objects
         ObjectNode node = objectMapper.createObjectNode();
         dataSchema.getValue().getProperties().entrySet().forEach(entrySet -> {
-            switch (entrySet.getValue().getValue().getPropertyTypeEnum()){
-                case NUMBER -> node.put(entrySet.getKey(),Double.valueOf(entrySet.getValue().getValue().getValue()));
-                case BOOLEAN -> node.put(entrySet.getKey(),Boolean.valueOf(entrySet.getValue().getValue().getValue()));
-                default -> node.put(entrySet.getKey(),entrySet.getValue().getValue().getValue());
+            switch (entrySet.getValue().getValue().getPropertyTypeEnum()) {
+                case NUMBER -> node.put(entrySet.getKey(), Double.valueOf(entrySet.getValue().getValue().getPlainValue()));
+                case BOOLEAN -> node.put(entrySet.getKey(), Boolean.valueOf(entrySet.getValue().getValue().getPlainValue()));
+                default -> node.put(entrySet.getKey(), entrySet.getValue().getValue().getPlainValue());
             }
-
         });
         return node;
     }

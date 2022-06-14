@@ -11,7 +11,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class StrucViewGroup {
     private String tagName;
-    private List<StrucPath> primaryPaths;
+    private List<String> primaryPaths;
+    private Map<String, String> secondaryPaths;
     private Map<String, StrucSchema> strucSchemaMap;
     private Map<String, Map<HttpMethod, StrucPath>> strucPathMap;
 

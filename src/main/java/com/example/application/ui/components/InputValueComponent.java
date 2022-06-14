@@ -1,4 +1,4 @@
-package com.example.application.ui.conponents;
+package com.example.application.ui.components;
 
 import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.vaadin.flow.component.AbstractField;
