@@ -90,11 +90,11 @@ public class ClientDataService {
     private ObjectNode convertToJson(DataSchema dataSchema) {
         //TODO make dynamic, get nested objects
         ObjectNode node = objectMapper.createObjectNode();
-        dataSchema.getValue().getProperties().entrySet().forEach(entrySet -> {
-            switch (entrySet.getValue().getValue().getPropertyTypeEnum()) {
-                case NUMBER -> node.put(entrySet.getKey(), Double.valueOf(entrySet.getValue().getValue().getPlainValue()));
-                case BOOLEAN -> node.put(entrySet.getKey(), Boolean.valueOf(entrySet.getValue().getValue().getPlainValue()));
-                default -> node.put(entrySet.getKey(), entrySet.getValue().getValue().getPlainValue());
+        dataSchema.getValue().getProperties().forEach((key, value) -> {
+            switch (value.getValue().getPropertyTypeEnum()) {
+                case NUMBER -> node.put(key, Double.valueOf(value.getValue().getPlainValue()));
+                case BOOLEAN -> node.put(key, Boolean.valueOf(value.getValue().getPlainValue()));
+                default -> node.put(key, value.getValue().getPlainValue());
             }
         });
         return node;
@@ -109,27 +109,16 @@ public class ClientDataService {
                 ObjectNode objectNode = (ObjectNode) node;
                 objectNode.fieldNames().forEachRemaining(fieldName -> dataSchemas.put(fieldName, convertToDataSchema(fieldName, objectNode.get(fieldName))));
                 dataValue = new DataValue(dataSchemas, PropertyTypeEnum.OBJECT);
-                break;
             }
             case ARRAY -> {
                 List<DataSchema> dataSchemas = new ArrayList<>();
                 ArrayNode arrayNode = (ArrayNode) node;
                 arrayNode.forEach(elementNode -> dataSchemas.add(convertToDataSchema("-", elementNode)));
                 dataValue = new DataValue(dataSchemas, PropertyTypeEnum.ARRAY);
-                break;
             }
-            case BOOLEAN -> {
-                dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
-                break;
-            }
-            case NUMBER -> {
-                dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
-                break;
-            }
-            default -> {
-                dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
-                break;
-            }
+            case BOOLEAN -> dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
+            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
+            default -> dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
         }
         return new DataSchema(name, dataValue);
     }

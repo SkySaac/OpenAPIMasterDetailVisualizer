@@ -29,8 +29,6 @@ public class MasterDetailView extends Div {
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
 
-    private PostDialog postDialog;
-
     public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, StrucSchema postSchema, StrucSchema putSchema, boolean hasDelete) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
@@ -69,8 +67,8 @@ public class MasterDetailView extends Div {
         add(div);
     }
 
-    public void openDialog(StrucSchema schema, StrucPath strucPath) {
-        postDialog = new PostDialog(mdActionListener);
+    public void openPostDialog(StrucSchema schema, StrucPath strucPath) {
+        PostDialog postDialog = new PostDialog(mdActionListener);
         postDialog.open(schema, strucPath);
     }
 
@@ -88,7 +86,7 @@ public class MasterDetailView extends Div {
         }
 
         //Add all columns
-        getSchema.getProperties().keySet().forEach(property ->
+        getSchema.getStrucValue().getProperties().keySet().forEach(property ->
                 grid.addColumn(
                         dataSchema -> dataSchema.getValue().getProperties().get(property) != null
                                 ? dataSchema.getValue().getProperties().get(property).getValue().getPlainValue() : "-"

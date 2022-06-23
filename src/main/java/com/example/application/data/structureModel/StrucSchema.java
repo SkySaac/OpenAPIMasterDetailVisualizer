@@ -9,14 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Getter
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class StrucSchema {
-    @Setter
     private String name;
-    private Map<String, StrucProperty> properties = new HashMap<>();
-
-    @Setter
+    private StrucValue strucValue;
     private boolean isFreeSchema = false;
 
 }

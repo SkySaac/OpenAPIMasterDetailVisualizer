@@ -56,7 +56,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
 
     @Override
     public void openPostDialog() {
-        view.openDialog(strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST), strucViewGroup.getStrucPathMap().get(HttpMethod.POST));
+        view.openPostDialog(strucViewGroup.getStrucSchemaMap().get(HttpMethod.POST), strucViewGroup.getStrucPathMap().get(HttpMethod.POST));
     }
 
     @Override

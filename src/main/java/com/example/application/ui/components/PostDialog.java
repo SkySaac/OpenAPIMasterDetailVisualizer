@@ -27,7 +27,7 @@ public class PostDialog extends Dialog {
 
     private final PostActionListener actionListener;
 
-    private List<InputValueComponent> inputFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
     private Map<String, AbstractField> querryFieldComponents = new HashMap<>();
 
     public PostDialog(PostActionListener actionListener) {
@@ -70,8 +70,8 @@ public class PostDialog extends Dialog {
 
     private void createFields(StrucSchema schema) {
         VerticalLayout verticalLayout = new VerticalLayout();
-        schema.getProperties().keySet().forEach(key -> {
-                    AbstractField abstractField = createEditorComponent(schema.getProperties().get(key).getType(), key);
+        schema.getStrucValue().getProperties().keySet().forEach(key -> {
+                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), key);
                     verticalLayout.add(abstractField);
                 }
         );
@@ -79,24 +79,14 @@ public class PostDialog extends Dialog {
     }
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
-        AbstractField inputComponent;
-        switch (type) {
-            case NUMBER:
-                inputComponent = new NumberField(title);
-                break;
-            case BOOLEAN:
-                inputComponent = new Checkbox(title);
-                break;
-            case STRING:
-                inputComponent = new TextField(title);
-                break;
-            case OBJECT: //TODO change, wenns n object is sindse ja ineinander verschachtelt
-                inputComponent = new TextField(title);
-                break;
-            default:
-                inputComponent = new TextField(title);
-                break;
-        }
+        AbstractField inputComponent = switch (type) {
+            case NUMBER -> new NumberField(title);
+            case BOOLEAN -> new Checkbox(title);
+            case STRING -> new TextField(title);
+            case OBJECT -> //TODO change, wenns n object is sindse ja ineinander verschachtelt
+                    new TextField(title);
+            default -> new TextField(title);
+        };
 
         inputFieldComponents.add(new InputValueComponent(title,inputComponent,type));
 
