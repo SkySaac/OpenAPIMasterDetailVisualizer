@@ -21,7 +21,7 @@ public class PathService {
         pathsForTag.forEach((key, value) -> {
             //wenn kein {} drinne kanns n primary path sein
             if (!key.contains("{") && value.containsKey(HttpMethod.GET)) {
-                if (value.get(HttpMethod.GET).getExternalResponseBodySchemaName() != null) {
+                if (value.get(HttpMethod.GET).getExternalResponseBodySchemaName() != null) { //TODO non external response schema
                     primaryPaths.add(value.get(HttpMethod.GET).getPath());
                     log.info("Detected primary path: " + value.get(HttpMethod.GET).getPath());
                 }
@@ -66,7 +66,6 @@ public class PathService {
                     String externalSchemaPath = operation.getRequestBody().getContent().get("application/json").getSchema().get$ref(); //TODO was wenn kein href & für andere arten von content
                     if (externalSchemaPath != null) {
                         strucPath.setExternalRequestBodySchemaName(SchemaService.stripSchemaRefPath(externalSchemaPath));
-                        strucPath.setExternalRequestSchema(true);
                     } else {
                         StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
@@ -104,7 +103,6 @@ public class PathService {
             if (operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref() != null) {
                 String externalSchemaPath = operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref();
                 strucPath.setExternalResponseBodySchemaName(SchemaService.stripSchemaRefPath(externalSchemaPath));
-                strucPath.setExternalResponseSchema(true);
             } else {
                 StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
                 strucPath.setResponseStrucSchema(strucSchema);

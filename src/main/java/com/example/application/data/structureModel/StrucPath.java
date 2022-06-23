@@ -11,12 +11,18 @@ public class StrucPath {
     private String path;
     private HttpMethod httpMethod;
     private String externalResponseBodySchemaName; // im String steht der Name des Schemas
-    private boolean isExternalResponseSchema;
     private StrucSchema responseStrucSchema;
     private String externalRequestBodySchemaName; // im String steht der Name des Schemas
-    private boolean isExternalRequestSchema;
     private StrucSchema requestStrucSchema;
     //TODO: query params
     //TODO: path params
     //TODO: sonstiges
+
+    public boolean isExternalResponseSchema() {
+        return externalResponseBodySchemaName != null;
+    }
+
+    public boolean isExternalRequestSchema() {
+        return externalRequestBodySchemaName != null;
+    }
 }

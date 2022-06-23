@@ -3,6 +3,7 @@ package com.example.application.ui.presenter;
 import com.example.application.data.services.StrucViewGroupConverterService;
 import com.example.application.data.services.StructureProviderService;
 import com.example.application.data.structureModel.StrucOpenApi;
+import com.example.application.data.structureModel.StrucViewGroupLV;
 import com.example.application.data.structureModel.StrucViewGroupMDV;
 import com.example.application.rest.client.ClientDataService;
 import com.example.application.ui.accesspoint.AccessPoint;
@@ -16,7 +17,8 @@ import java.util.Map;
 @Controller
 @Slf4j
 public class TagPresenter {
-    private final Map<String, MasterDetailPresenter> presenters;
+    private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>();
+    private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
     private final StructureProviderService structureProviderService;
     private final StrucViewGroupConverterService strucViewGroupConverterService;
@@ -27,12 +29,11 @@ public class TagPresenter {
         this.clientDataService = clientDataService;
         this.structureProviderService = structureProviderService;
         this.strucViewGroupConverterService = strucViewGroupConverterService;
-        presenters = new HashMap<>();
     }
 
     private void clearOldPresenters() {
-        presenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
-        presenters.clear();
+        masterDetailPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
+        masterDetailPresenters.clear();
     }
 
     public void registerPresenters(StrucOpenApi strucOpenApi) {
@@ -41,10 +42,11 @@ public class TagPresenter {
         strucOpenApi.getStrucViewGroups().forEach(strucViewGroup -> {
             if (strucViewGroupConverterService.isMDVStructure(strucViewGroup)) {
                 StrucViewGroupMDV strucViewGroupMDV = strucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
-                registerMasterDetailPresenter(strucViewGroup.getTagName(), strucViewGroupMDV);
+                registerMasterDetailPresenter(strucViewGroupMDV);
             } else {
                 //TODO non Master Detail View
-                log.info("Registering List Presenter for the {} view", strucViewGroup.getTagName());
+                StrucViewGroupLV strucViewGroupLV = strucViewGroupConverterService.createStrucViewGroupLV(strucViewGroup);
+                registerListPresenter(strucViewGroupLV);
                 //Multiple primary view object -> List View
                 //StrucViewGroupLV strucViewGroupLV = createStrucViewGroupLV(strucViewGroup);
                 //registerListViewPresenter(strucViewGroup.getTagName(), strucViewGroupLV);
@@ -63,16 +65,35 @@ public class TagPresenter {
 
     }
 
-    private void registerMasterDetailPresenter(String name, StrucViewGroupMDV strucViewGroupMDV) {
+    private void registerMasterDetailPresenter(StrucViewGroupMDV strucViewGroupMDV) {
         //TODO check if presenter name already exists
-        log.info("Registering Master-Detail Presenter for the {} view", name);
+        log.info("Registering Master-Detail Presenter for the {} view", strucViewGroupMDV.getTagName());
+
         MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(clientDataService, strucViewGroupMDV);
-        presenters.put(name, masterDetailPresenter);
-        AccessPoint.getMainLayout().addNavigationTarget(name);
+
+        masterDetailPresenters.put(strucViewGroupMDV.getTagName(), masterDetailPresenter);
+
+        AccessPoint.getMainLayout().addNavigationTarget(strucViewGroupMDV.getTagName(),true);
     }
 
-    public MasterDetailPresenter getPresenter(String name) {
+    private void registerListPresenter(StrucViewGroupLV strucViewGroupLV) {
+        //TODO check if presenter name already exists
+        log.info("Registering List Presenter for the {} view", strucViewGroupLV.getTagName());
+
+        ListPresenter listPresenter = new ListPresenter(clientDataService,strucViewGroupLV);
+
+        listPresenters.put(strucViewGroupLV.getTagName(), listPresenter);
+
+        AccessPoint.getMainLayout().addNavigationTarget(strucViewGroupLV.getTagName(),false);
+    }
+
+    public MasterDetailPresenter getMasterDetailPresenter(String name) {
         //TODO catch not existing presenter
-        return presenters.get(name);
+        return masterDetailPresenters.get(name);
+    }
+
+    public ListPresenter getListPresenter(String name) {
+        //TODO catch not existing presenter
+        return listPresenters.get(name);
     }
 }

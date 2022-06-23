@@ -1,9 +1,7 @@
 package com.example.application.data.services;
 
-import com.example.application.data.structureModel.StrucPath;
-import com.example.application.data.structureModel.StrucSchema;
-import com.example.application.data.structureModel.StrucViewGroup;
-import com.example.application.data.structureModel.StrucViewGroupMDV;
+import com.example.application.data.structureModel.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +9,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class StrucViewGroupConverterService {
+
+    public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup){
+        log.info("List primary paths for {}: ",strucViewGroup.getTagName(),strucViewGroup.getPrimaryPaths());
+        //TODO
+        return new StrucViewGroupLV(strucViewGroup.getTagName(),strucViewGroup.getPrimaryPaths(),strucViewGroup.getSecondaryPaths(),strucViewGroup.getStrucSchemaMap(),strucViewGroup.getStrucPathMap());
+    }
 
     public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
         if (!isMDVStructure(strucViewGroup)) return null;
@@ -19,8 +24,6 @@ public class StrucViewGroupConverterService {
         Map<HttpMethod, StrucSchema> strucSchemaMap = new HashMap<>();
 
         //There should only be one primary path
-        strucViewGroup.getStrucPathMap().get(strucViewGroup.getPrimaryPaths().get(0)).get(HttpMethod.GET).getExternalResponseBodySchemaName();
-
         StrucPath primaryGetPath = strucViewGroup.getStrucPathMap().get(strucViewGroup.getPrimaryPaths().get(0)).get(HttpMethod.GET);
 
         String secondaryPath = strucViewGroup.getSecondaryPaths().get(primaryGetPath.getPath());

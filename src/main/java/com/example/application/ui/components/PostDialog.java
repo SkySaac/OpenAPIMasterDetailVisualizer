@@ -22,7 +22,7 @@ import java.util.Map;
 public class PostDialog extends Dialog {
 
     public interface PostActionListener {
-        void postAction(Map<String, String> queryParameters, DataSchema properties);
+        void postAction(String path, Map<String, String> queryParameters, DataSchema properties);
     }
 
     private final PostActionListener actionListener;
@@ -34,12 +34,12 @@ public class PostDialog extends Dialog {
         this.actionListener = actionListener;
     }
 
-    public void open(StrucSchema schema, StrucPath strucPath) {
+    public void open(StrucSchema schema, StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
         createFields(schema);
         createQuerryParamFields(strucPath);
 
         Button postButton = new Button("Post");
-        postButton.addClickListener(e -> this.postAction());
+        postButton.addClickListener(e -> this.postAction(strucPath.getPath()));
 
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
@@ -51,7 +51,7 @@ public class PostDialog extends Dialog {
         this.open();
     }
 
-    private void postAction() {
+    private void postAction(String path) {
         //TODO collect query params
 
         Map<String, DataSchema> dataInputMap = new HashMap<>();
@@ -65,7 +65,7 @@ public class PostDialog extends Dialog {
         DataSchema dataSchema = new DataSchema("post", dataValue);
 
         //TODO check if valid
-        actionListener.postAction(null, dataSchema);
+        actionListener.postAction(path,null, dataSchema);
     }
 
     private void createFields(StrucSchema schema) {

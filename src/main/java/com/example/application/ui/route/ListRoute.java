@@ -6,17 +6,16 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.*;
 
-
-@PageTitle("MasterDetail")
-@Route(value="masterDetail/:tag", layout = MainLayout.class)
+@PageTitle("List")
+@Route(value="list/:tag", layout = MainLayout.class)
 @PreserveOnRefresh
-public class MasterDetailRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
+public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
 
     private final TagPresenter presenter;
 
     private Component activeView;
 
-    public MasterDetailRoute(TagPresenter presenter) {
+    public ListRoute(TagPresenter presenter) {
         this.presenter = presenter;
         setSizeFull();
     }
@@ -26,9 +25,9 @@ public class MasterDetailRoute extends Div implements BeforeEnterObserver,Before
         String tag = beforeEnterEvent.getRouteParameters().get("tag").get().replace("%20"," "); //replace spaces
         System.out.println("Route tag:"+ tag);
 
-        activeView = presenter.getMasterDetailPresenter(tag).getView();
+        activeView = presenter.getListPresenter(tag).getView();
         add(activeView);
-        //TODO choose correct presenter to get View from -> if not exists show 404
+        //TODO choose correct presenter to get View from
     }
 
     @Override
@@ -36,5 +35,4 @@ public class MasterDetailRoute extends Div implements BeforeEnterObserver,Before
         remove(activeView);
         activeView = null; //TODO immer neu erstellen oder nur einmal und dann abspeichern und abrufen über ne Map ?
     }
-
 }

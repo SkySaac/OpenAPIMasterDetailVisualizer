@@ -24,8 +24,6 @@ public class MasterDetailView extends Div {
     }
 
     private final MDActionListener mdActionListener;
-
-
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
 

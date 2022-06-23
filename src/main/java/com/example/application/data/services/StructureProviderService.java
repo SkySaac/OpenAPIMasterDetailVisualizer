@@ -98,11 +98,18 @@ public class StructureProviderService {
         return tags;
     }
 
+    /**
+     * This function creates a map of all Schemas that are being used in the
+     * @param strucSchemaMap
+     * @param pathsForTag
+     * @return
+     */
     private Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema
             if (pathValue.getExternalRequestBodySchemaName() != null) {
+
                 strucViewGroupSchemaMap.put(pathValue.getExternalRequestBodySchemaName(), strucSchemaMap.get(pathValue.getExternalRequestBodySchemaName()));
             }
             //Check Response Body Schema

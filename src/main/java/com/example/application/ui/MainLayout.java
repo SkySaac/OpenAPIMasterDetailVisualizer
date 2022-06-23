@@ -3,6 +3,7 @@ package com.example.application.ui;
 
 import com.example.application.ui.accesspoint.AccessPoint;
 import com.example.application.ui.route.AboutRoute;
+import com.example.application.ui.route.ListRoute;
 import com.example.application.ui.route.MasterDetailRoute;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -85,9 +86,13 @@ public class MainLayout extends AppLayout {
         }
     } //TODO remove Nav target
 
-    public void addNavigationTarget(String tagName){
-        log.info("Adding a MasterDetailView with the name: "+tagName); //TODO add replacement of " " ? maybe %20 directly ?
-        MenuItemInfo menuItemInfo = new MenuItemInfo(tagName, "la la-columns", MasterDetailRoute.class);
+    public void addNavigationTarget(String tagName, boolean isMDV){
+        log.info("Adding a View with the name: "+tagName); //TODO add replacement of " " ? maybe %20 directly ?
+        MenuItemInfo menuItemInfo;
+        if(isMDV)
+            menuItemInfo = new MenuItemInfo(tagName, "la la-columns", MasterDetailRoute.class);
+        else
+            menuItemInfo = new MenuItemInfo(tagName, "la la-columns", ListRoute.class);
         nav.add(menuItemInfo);
         addedNavTargets.put(tagName,menuItemInfo);
     }
@@ -149,7 +154,7 @@ public class MainLayout extends AppLayout {
     @Override
     protected void afterNavigation() {
         super.afterNavigation();
-        viewTitle.setText(getCurrentPageTitle());
+        viewTitle.setText(getCurrentPageTitle()); //TODO change title on nav
     }
 
     private String getCurrentPageTitle() {
