@@ -44,7 +44,7 @@ public class StructureProviderService {
             log.info("Now looking for tag: " + tag);
 
             //sucht alle paths die zu diesem tag gehören und wandelt sie in StrucPath Objekte um
-            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = PathService.getPathsForTag(tag, openAPI.getPaths());
+            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = PathService.getPathsForTag(tag, openAPI.getPaths(),strucSchemaMap);
             log.info("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
 
             //alle components die zu path gehören aus strucSchemaMap holen und in strucViewGroup eintragen
@@ -108,16 +108,16 @@ public class StructureProviderService {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema
-            if (pathValue.getExternalRequestBodySchemaName() != null) {
+            if (pathValue.getRequestStrucSchema() != null) {
 
-                strucViewGroupSchemaMap.put(pathValue.getExternalRequestBodySchemaName(), strucSchemaMap.get(pathValue.getExternalRequestBodySchemaName()));
+                strucViewGroupSchemaMap.put(pathValue.getRequestStrucSchema().getName(), pathValue.getRequestStrucSchema());
             }
             //Check Response Body Schema
-            if (pathValue.getExternalResponseBodySchemaName() != null) {
-                strucViewGroupSchemaMap.put(pathValue.getExternalResponseBodySchemaName(), strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()));
+            if (pathValue.getResponseStrucSchema() != null) {
+                strucViewGroupSchemaMap.put(pathValue.getResponseStrucSchema().getName(), pathValue.getResponseStrucSchema());
                 //If Response is a PagedObject -> Add whats behind the paged Object //TODO replace with add all nested objects
-                if (SchemaService.isPagedSchema(strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()))) {
-                    String pagedSchemaName = SchemaService.getPagedSchemaName(strucSchemaMap.get(pathValue.getExternalResponseBodySchemaName()));
+                if (SchemaService.isPagedSchema(pathValue.getResponseStrucSchema())) {
+                    String pagedSchemaName = SchemaService.getPagedSchemaName(pathValue.getResponseStrucSchema());
                     strucViewGroupSchemaMap.put(pagedSchemaName, strucSchemaMap.get(pagedSchemaName));
                 }
 

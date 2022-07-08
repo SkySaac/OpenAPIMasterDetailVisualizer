@@ -12,10 +12,10 @@ import java.util.Map;
 @Slf4j
 public class StrucViewGroupConverterService {
 
-    public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup){
-        log.info("List primary paths for {}: ",strucViewGroup.getTagName(),strucViewGroup.getPrimaryPaths());
+    public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup) {
+        log.info("List primary paths for {}: {}", strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths());
         //TODO
-        return new StrucViewGroupLV(strucViewGroup.getTagName(),strucViewGroup.getPrimaryPaths(),strucViewGroup.getSecondaryPaths(),strucViewGroup.getStrucSchemaMap(),strucViewGroup.getStrucPathMap());
+        return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths(), strucViewGroup.getSecondaryPaths(), strucViewGroup.getStrucSchemaMap(), strucViewGroup.getStrucPathMap());
     }
 
     public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
@@ -30,37 +30,28 @@ public class StrucViewGroupConverterService {
 
         //Add the paged Schema (if it exists)
         StrucSchema pagedStrucSchema = null;
-        if (SchemaService.isPagedSchema(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())))
-            pagedStrucSchema = strucViewGroup.getStrucSchemaMap().get(SchemaService.getPagedSchemaName(strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName())));
-
-        //TODO resolve nested schemas
+        if (SchemaService.isPagedSchema(primaryGetPath.getResponseStrucSchema()))
+            pagedStrucSchema = strucViewGroup.getStrucSchemaMap().get(SchemaService.getPagedSchemaName(primaryGetPath.getResponseStrucSchema()));
 
         //GET (needs to exist)
-        strucPathMap.put(HttpMethod.GET, primaryGetPath); //TODO PAGED Schema
-        if (primaryGetPath.isExternalResponseSchema()) //Ist Ref
-            strucSchemaMap.put(HttpMethod.GET, strucViewGroup.getStrucSchemaMap().get(primaryGetPath.getExternalResponseBodySchemaName()));
-        else //Ist direkt definiertes Schema
-            strucSchemaMap.put(HttpMethod.GET, primaryGetPath.getResponseStrucSchema());
+        strucPathMap.put(HttpMethod.GET, primaryGetPath);
+        strucSchemaMap.put(HttpMethod.GET, primaryGetPath.getResponseStrucSchema());
 
         //POST (only looks as input, not response)
         if (strucViewGroup.getStrucPathMap().get(primaryGetPath.getPath()).containsKey(HttpMethod.POST)) { //If a POST exists for this path based on the Rest vorgaben
             StrucPath postPath = strucViewGroup.getStrucPathMap().get(primaryGetPath.getPath()).get(HttpMethod.POST);
+
             strucPathMap.put(HttpMethod.POST, postPath);
-            if (postPath.isExternalRequestSchema()) //Ist Ref
-                strucSchemaMap.put(HttpMethod.POST, strucViewGroup.getStrucSchemaMap().get(postPath.getExternalRequestBodySchemaName()));
-            else //Ist direkt definiertes Schema
-                strucSchemaMap.put(HttpMethod.POST, postPath.getRequestStrucSchema());
+            strucSchemaMap.put(HttpMethod.POST, postPath.getRequestStrucSchema());
         }
 
         //PUT (only looks as input, not response) IS FOR SECONDARYPATH
         if (strucViewGroup.getStrucPathMap().get(secondaryPath) != null &&
                 strucViewGroup.getStrucPathMap().get(secondaryPath).containsKey(HttpMethod.PUT)) { //If a Put exists for this path based on the Rest vorgaben
             StrucPath putPath = strucViewGroup.getStrucPathMap().get(secondaryPath).get(HttpMethod.PUT);
+
             strucPathMap.put(HttpMethod.PUT, putPath);
-            if (putPath.isExternalRequestSchema()) //Is Reference
-                strucSchemaMap.put(HttpMethod.PUT, strucViewGroup.getStrucSchemaMap().get(putPath.getExternalRequestBodySchemaName()));
-            else //Is directly defined schema
-                strucSchemaMap.put(HttpMethod.PUT, putPath.getRequestStrucSchema());
+            strucSchemaMap.put(HttpMethod.PUT, putPath.getRequestStrucSchema());
         }
 
         //DELETE (only looks as input, not response) IS FOR SECONDARYPATH
@@ -70,8 +61,7 @@ public class StrucViewGroupConverterService {
             strucPathMap.put(HttpMethod.DELETE, deletePath);
         }
 
-        StrucViewGroupMDV strucViewGroupMDV = new StrucViewGroupMDV(strucViewGroup.getTagName(), pagedStrucSchema, strucPathMap, strucSchemaMap);
-        return strucViewGroupMDV;
+        return new StrucViewGroupMDV(strucViewGroup.getTagName(), pagedStrucSchema, strucPathMap, strucSchemaMap);
     }
 
     public boolean isMDVStructure(StrucViewGroup strucViewGroup) {

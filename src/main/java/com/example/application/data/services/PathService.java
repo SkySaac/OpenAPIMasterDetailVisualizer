@@ -21,7 +21,7 @@ public class PathService {
         pathsForTag.forEach((key, value) -> {
             //wenn kein {} drinne kanns n primary path sein
             if (!key.contains("{") && value.containsKey(HttpMethod.GET)) {
-                if (value.get(HttpMethod.GET).getExternalResponseBodySchemaName() != null) { //TODO non external response schema
+                if (value.get(HttpMethod.GET).getResponseStrucSchema() != null) { //TODO geht null überhaupt ?
                     primaryPaths.add(value.get(HttpMethod.GET).getPath());
                     log.info("Detected primary path: " + value.get(HttpMethod.GET).getPath());
                 }
@@ -54,7 +54,7 @@ public class PathService {
         return secondaryPaths;
     }
 
-    public static StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation) {
+    public static StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation, Map<String, StrucSchema> strucSchemaMap) {
         StrucPath strucPath = new StrucPath();
         strucPath.setPath(path);
         strucPath.setHttpMethod(httpMethod);
@@ -65,7 +65,8 @@ public class PathService {
                     //TODO application/octet-stream (data PUT)
                     String externalSchemaPath = operation.getRequestBody().getContent().get("application/json").getSchema().get$ref(); //TODO was wenn kein href & für andere arten von content
                     if (externalSchemaPath != null) {
-                        strucPath.setExternalRequestBodySchemaName(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                        StrucSchema strucSchema = strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                        strucPath.setRequestStrucSchema(strucSchema);
                     } else {
                         StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
@@ -80,9 +81,9 @@ public class PathService {
         if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
             if (operation.getResponses().containsKey("200") && operation.getResponses().get("200").getContent() != null) {
                 if (operation.getResponses().get("200").getContent().containsKey("*/*"))
-                    setResponseSchema(strucPath, operation, "200", "*/*");
+                    setResponseSchema(strucPath, operation, "200", "*/*",strucSchemaMap);
                 else if (operation.getResponses().get("200").getContent().containsKey("application/json"))
-                    setResponseSchema(strucPath, operation, "200", "application/json");
+                    setResponseSchema(strucPath, operation, "200", "application/json",strucSchemaMap);
             }
         } else {
             log.info("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
@@ -98,11 +99,11 @@ public class PathService {
      * @param returnCode the http returnCode to be searched
      * @param returnType the returnType to be searched
      */
-    public static void setResponseSchema(StrucPath strucPath, Operation operation, String returnCode, String returnType) {
+    public static void setResponseSchema(StrucPath strucPath, Operation operation, String returnCode, String returnType, Map<String, StrucSchema> strucSchemaMap) {
         if (operation.getResponses().get(returnCode).getContent().containsKey(returnType)) {
             if (operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref() != null) {
                 String externalSchemaPath = operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref();
-                strucPath.setExternalResponseBodySchemaName(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                strucPath.setResponseStrucSchema(strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath)));
             } else {
                 StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
                 strucPath.setResponseStrucSchema(strucSchema);
@@ -110,7 +111,7 @@ public class PathService {
         }
     }
 
-    public static Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths) {
+    public static Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths,Map<String, StrucSchema> strucSchemaMap) {
         Map<String, Map<HttpMethod, StrucPath>> pathOperationMap = new HashMap<>(); //Path -> List
         paths.keySet().forEach(key -> { //TODO all paths without recognised tags into one sonstiges tag
             Map<HttpMethod, StrucPath> methodOperationMap = new HashMap<>();
@@ -118,25 +119,25 @@ public class PathService {
                     && paths.get(key).getGet().getTags() != null
                     && paths.get(key).getGet().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.GET,
-                        operationToStrucPath(key, HttpMethod.GET, paths.get(key).getGet()));
+                        operationToStrucPath(key, HttpMethod.GET, paths.get(key).getGet(),strucSchemaMap));
             }
             if (paths.get(key).getPost() != null
                     && paths.get(key).getPost().getTags() != null
                     && paths.get(key).getPost().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.POST,
-                        operationToStrucPath(key, HttpMethod.POST, paths.get(key).getPost()));
+                        operationToStrucPath(key, HttpMethod.POST, paths.get(key).getPost(),strucSchemaMap));
             }
             if (paths.get(key).getPut() != null
                     && paths.get(key).getPut().getTags() != null
                     && paths.get(key).getPut().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.PUT,
-                        operationToStrucPath(key, HttpMethod.PUT, paths.get(key).getPut()));
+                        operationToStrucPath(key, HttpMethod.PUT, paths.get(key).getPut(),strucSchemaMap));
             }
             if (paths.get(key).getDelete() != null
                     && paths.get(key).getDelete().getTags() != null
                     && paths.get(key).getDelete().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.DELETE,
-                        operationToStrucPath(key, HttpMethod.DELETE, paths.get(key).getDelete()));
+                        operationToStrucPath(key, HttpMethod.DELETE, paths.get(key).getDelete(),strucSchemaMap));
             }
             if (methodOperationMap.size() > 0)
                 pathOperationMap.put(key, methodOperationMap);

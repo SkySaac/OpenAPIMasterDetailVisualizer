@@ -22,7 +22,7 @@ public class DetailLayout extends Div implements DetailSwitchListener {
         //this.setClassName("editor");
         //editorLayoutDiv.add(editorDiv);
         //TODO if is object
-        basicDetailComponent = new ObjectComponent(schema.getName(), schema, this);
+        basicDetailComponent = new ObjectComponent(schema!=null?schema.getName():"Object7", schema, this);
         currentDetailComponent = basicDetailComponent;
 
         add(createPath());

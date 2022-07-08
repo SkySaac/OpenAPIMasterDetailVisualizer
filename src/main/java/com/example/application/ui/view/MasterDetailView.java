@@ -12,9 +12,11 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+@Slf4j
 public class MasterDetailView extends Div {
 
     public interface MDActionListener extends PostDialog.PostActionListener {
@@ -37,6 +39,9 @@ public class MasterDetailView extends Div {
         addPageButtons(isPaged, postSchema);
 
         splitLayout.addToPrimary(createGridLayout());
+
+        if(getSchema==null)
+            log.warn("schema in null");
 
         detailLayout = new DetailLayout(getSchema);
         splitLayout.addToSecondary(detailLayout);

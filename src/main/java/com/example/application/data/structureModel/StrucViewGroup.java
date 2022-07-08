@@ -13,7 +13,6 @@ public class StrucViewGroup {
     private String tagName;
     private List<String> primaryPaths;
     private Map<String, String> secondaryPaths;
-    private Map<String, StrucSchema> strucSchemaMap;
+    private Map<String, StrucSchema> strucSchemaMap; //TODO remove ?
     private Map<String, Map<HttpMethod, StrucPath>> strucPathMap;
-
 }
