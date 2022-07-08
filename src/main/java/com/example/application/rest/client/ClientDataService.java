@@ -5,6 +5,7 @@ import com.example.application.data.dataModel.DataValue;
 import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
+import com.example.application.ui.controller.NotificationController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,13 +25,15 @@ import java.util.Map;
 @Service
 @Slf4j
 public class ClientDataService {
+    private final ClientRequestService clientRequestService;
+    private final NotificationController notificationController;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Setter
     private String serverUrl = "";
-    private final ClientRequestService clientRequestService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ClientDataService(ClientRequestService clientRequestService) {
+    public ClientDataService(ClientRequestService clientRequestService, NotificationController notificationController) {
         this.clientRequestService = clientRequestService;
+        this.notificationController = notificationController;
     }
 
     private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path, String body) {
@@ -54,19 +57,24 @@ public class ClientDataService {
         ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), body);
         log.info(response.getStatusCode().toString());
 
-        //TODO what if 400
+        notificationController.postNotification("POST successful", false);
     }
 
     public void deleteData(StrucPath strucPath, String parameterName, String parameterValue) {
 
-        String finalPath = strucPath.getPath().replace("{parameterName}",parameterValue);
+        String finalPath = strucPath.getPath().replace("{parameterName}", parameterValue);
 
         ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath, null);
+
+        notificationController.postNotification("DELETE successful", false);
+
     }
 
     public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema) {
 
         DataSchema dataSchema = null;
+
+        boolean isError = false;
 
         //TODO http bzw https -> url aus openapi doc ändern
         ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), null);
@@ -82,6 +90,12 @@ public class ClientDataService {
             }
         } catch (JsonProcessingException je) {
             //TODO: error fetching data for this
+            notificationController.postNotification("Malformed body", true);
+            isError = true;
+        }
+
+        if (!isError) {
+            notificationController.postNotification("GET successful", false);
         }
 
         return dataSchema;

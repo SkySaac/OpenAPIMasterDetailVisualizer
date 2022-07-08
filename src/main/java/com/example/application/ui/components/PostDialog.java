@@ -9,6 +9,7 @@ import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
@@ -28,15 +29,17 @@ public class PostDialog extends Dialog {
     private final PostActionListener actionListener;
 
     private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
-    private Map<String, AbstractField> querryFieldComponents = new HashMap<>();
+    private List<InputValueComponent> querryFieldComponents = new ArrayList<>();
 
     public PostDialog(PostActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
     public void open(StrucSchema schema, StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
-        createFields(schema);
-        createQuerryParamFields(strucPath);
+        if (!strucPath.getQueryParams().isEmpty())
+            createQueryParamFields(strucPath);
+        if(schema!=null)
+            createFields(schema);
 
         Button postButton = new Button("Post");
         postButton.addClickListener(e -> this.postAction(strucPath.getPath()));
@@ -51,34 +54,50 @@ public class PostDialog extends Dialog {
         this.open();
     }
 
+    private Map<String,String> collectQueryParams(){
+        Map<String,String> params = new HashMap<>();
+        querryFieldComponents.forEach(component -> {
+            if(!component.getComponent().isEmpty()){
+                params.put(component.getTitle(),component.getComponent().getValue().toString()); //TODO toString correct ?
+            }
+        });
+        return params;
+    }
+
     private void postAction(String path) {
+        Map<String,String> queryParams = collectQueryParams();
         //TODO collect query params
 
         Map<String, DataSchema> dataInputMap = new HashMap<>();
         inputFieldComponents.forEach(inputValueComponent -> {
-            DataValue inputFieldValue = new DataValue(inputValueComponent.getComponent().getValue().toString(),inputValueComponent.getPropertyTypeEnum());
-            DataSchema inputFieldSchema = new DataSchema(inputValueComponent.getTitle(),inputFieldValue);
-            dataInputMap.put(inputValueComponent.getTitle(),inputFieldSchema);
+            DataValue inputFieldValue = new DataValue(inputValueComponent.getComponent().getValue().toString(), inputValueComponent.getPropertyTypeEnum());
+            DataSchema inputFieldSchema = new DataSchema(inputValueComponent.getTitle(), inputFieldValue);
+            dataInputMap.put(inputValueComponent.getTitle(), inputFieldSchema);
 
         });
-        DataValue dataValue = new DataValue(dataInputMap,PropertyTypeEnum.OBJECT);
+        DataValue dataValue = new DataValue(dataInputMap, PropertyTypeEnum.OBJECT);
         DataSchema dataSchema = new DataSchema("post", dataValue);
 
         //TODO check if valid
-        actionListener.postAction(path,null, dataSchema);
+        actionListener.postAction(path, queryParams, dataSchema);
     }
 
     private void createFields(StrucSchema schema) {
         VerticalLayout verticalLayout = new VerticalLayout();
+        VerticalLayout verticalLayoutContent = new VerticalLayout();
+
         schema.getStrucValue().getProperties().keySet().forEach(key -> {
-                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), key);
-                    verticalLayout.add(abstractField);
+            AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), key,true);
+            verticalLayoutContent.add(abstractField);
                 }
         );
+
+        verticalLayout.add(new Label("Body"));
+        verticalLayout.add(verticalLayoutContent);
         add(verticalLayout);
     }
 
-    private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
+    private AbstractField createEditorComponent(PropertyTypeEnum type, String title, boolean input) {
         AbstractField inputComponent = switch (type) {
             case NUMBER -> new NumberField(title);
             case BOOLEAN -> new Checkbox(title);
@@ -88,13 +107,28 @@ public class PostDialog extends Dialog {
             default -> new TextField(title);
         };
 
-        inputFieldComponents.add(new InputValueComponent(title,inputComponent,type));
+        if(input) //TODO maybe add it later and not in this function
+            inputFieldComponents.add(new InputValueComponent(title, inputComponent, type));
+        else
+            querryFieldComponents.add( new InputValueComponent(title, inputComponent, type));
 
         return inputComponent;
     }
 
-    private void createQuerryParamFields(StrucPath strucPath) {
+    private void createQueryParamFields(StrucPath strucPath) {
         //TODO
+        VerticalLayout verticalLayout = new VerticalLayout();
+        VerticalLayout verticalLayoutContent = new VerticalLayout();
+
+        strucPath.getQueryParams().forEach(queryParam -> { //TODO check if required
+            AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getName(),false);
+            verticalLayoutContent.add(abstractField);
+                }
+        );
+
+        verticalLayout.add(new Label("Query Parameters"));
+        verticalLayout.add(verticalLayoutContent);
+        add(verticalLayout);
     }
 
 

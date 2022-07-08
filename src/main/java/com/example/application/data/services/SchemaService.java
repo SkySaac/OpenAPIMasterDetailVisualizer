@@ -162,6 +162,7 @@ public class SchemaService {
         return schemaRef.substring(schemaRef.lastIndexOf('/') + 1);
     }
 
+    @Deprecated
     public static Set<String> getNestedSchemaNames(Set<String> schemas, Schema schema) {
         if (schema != null) {
             if (schema.get$ref() != null)

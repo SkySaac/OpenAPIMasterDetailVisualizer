@@ -3,6 +3,8 @@ package com.example.application.ui.view;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import com.example.application.ui.components.PostDialog;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -52,14 +54,9 @@ public class ListView extends Div {
             v.forEach((httpMethod, strucPath) -> {
 
                 switch (httpMethod) {
-                    case POST -> {
-                        HorizontalLayout horizontalLayout = new HorizontalLayout();
-                        horizontalLayout.add(path);
-                        horizontalLayout.add(new Label(httpMethod.toString())); //TODO was wenn externalSchema
-                        horizontalLayout.addClickListener(event -> actionListener.openPostDialog(path));
-                        verticalLayout.add(horizontalLayout);
+                    case POST ->
+                        verticalLayout.add(createPostListComponent("POST: " + path, path));
 
-                    }
                     default -> {
                         HorizontalLayout horizontalLayout = new HorizontalLayout();
                         horizontalLayout.add(path);
@@ -72,6 +69,13 @@ public class ListView extends Div {
             });
         });
         return verticalLayout;
+    }
+
+    private Component createPostListComponent(String text, String path) {
+        Button componentClicker = new Button(text);
+        //TODO was wenn externalSchema
+        componentClicker.addClickListener(event -> actionListener.openPostDialog(path));
+        return componentClicker;
     }
 
     public void setData() {

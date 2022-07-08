@@ -1,5 +1,6 @@
 package com.example.application.data.services;
 
+import com.example.application.data.structureModel.PropertyTypeEnum;
 import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import io.swagger.v3.oas.models.Operation;
@@ -59,6 +60,15 @@ public class PathService {
         strucPath.setPath(path);
         strucPath.setHttpMethod(httpMethod);
         log.info("Converting Operation to Path for Path {} and HttpMethod {}", path, httpMethod.toString());
+
+        //Querry params
+        if(operation.getParameters()!=null && !operation.getParameters().isEmpty()){
+            operation.getParameters().forEach( parameter -> {
+                strucPath.getQueryParams().add(new StrucPath.StruckQueryParameter(parameter.getName(),
+                        PropertyTypeEnum.fromString(parameter.getSchema().getType()),parameter.getRequired()));
+            });
+        }
+
         if (HttpMethod.POST.equals(httpMethod) || HttpMethod.PUT.equals(httpMethod)) { //TODO was in get oder delete ?, was tun wenn kein ref schema
             if (operation.getRequestBody() != null) { //example: /api/apps/{id}/actions and HttpMethod PUT-
                 if (operation.getRequestBody().getContent().containsKey("application/json") && operation.getRequestBody().getContent().get("application/json").getSchema() != null) { //Has actual Schema (Example /artifacts/id/data)
