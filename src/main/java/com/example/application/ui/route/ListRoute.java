@@ -5,10 +5,12 @@ import com.example.application.ui.presenter.TagPresenter;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.*;
+import lombok.extern.slf4j.Slf4j;
 
 @PageTitle("List")
 @Route(value="list/:tag", layout = MainLayout.class)
 @PreserveOnRefresh
+@Slf4j
 public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
 
     private final TagPresenter presenter;
@@ -32,7 +34,10 @@ public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObs
 
     @Override
     public void beforeLeave(BeforeLeaveEvent beforeLeaveEvent){
-        remove(activeView);
+        if(activeView==null)
+            log.warn("activeView is null when it should be removed");
+        else
+            remove(activeView);
         activeView = null; //TODO immer neu erstellen oder nur einmal und dann abspeichern und abrufen über ne Map ?
     }
 }

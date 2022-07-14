@@ -18,6 +18,8 @@ public class DetailLayout extends Div implements DetailSwitchListener {
 
         //Div editorLayoutDiv = new Div();
         this.setClassName("editor-layout"); //TODO css
+        this.getStyle().set("padding-left","10px");
+        this.getStyle().set("padding-right","10px");
 
         //this.setClassName("editor");
         //editorLayoutDiv.add(editorDiv);

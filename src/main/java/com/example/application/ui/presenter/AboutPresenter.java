@@ -24,6 +24,8 @@ public class AboutPresenter implements AboutView.ActionListener {
 
     private final List<String> serverList = new ArrayList<>();
 
+    private String currentServerURL = "/";
+
 
     public AboutPresenter(ClientDataService clientDataService, TagPresenter tagPresenter) {
         this.clientDataService = clientDataService;
@@ -31,8 +33,7 @@ public class AboutPresenter implements AboutView.ActionListener {
     }
 
     public AboutView getView() {
-        view = new AboutView(this, StructureProviderService.PARSE_OBJECT);
-        view.setServers(serverList);
+        view = new AboutView(this, StructureProviderService.PARSE_OBJECT,currentServerURL,serverList);
         return view;
     }
 
@@ -45,8 +46,10 @@ public class AboutPresenter implements AboutView.ActionListener {
     }
 
     @Override
-    public void serverSelected(String server) {
-        clientDataService.setServerUrl(server);
+    public void serverSelected(String selectedServerURL) {
+        clientDataService.setServerUrl(selectedServerURL);
+        currentServerURL = selectedServerURL;
+        log.info("New Server selected: {}",selectedServerURL);
     }
 
     @Override

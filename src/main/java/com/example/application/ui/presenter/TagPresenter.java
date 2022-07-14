@@ -32,6 +32,8 @@ public class TagPresenter {
     }
 
     private void clearOldPresenters() {
+        listPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
+        listPresenters.clear();
         masterDetailPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
         masterDetailPresenters.clear();
     }

@@ -23,7 +23,7 @@ public class AboutView extends VerticalLayout {
 
 
 
-    public AboutView(ActionListener actionListener, String defaultSource) {
+    public AboutView(ActionListener actionListener, String defaultSource, String selectedServerURL, List<String> serverURLs) {
         setSpacing(false);
 
         Image img = new Image("images/empty-plant.png", "placeholder plant");
@@ -47,6 +47,8 @@ public class AboutView extends VerticalLayout {
         serverAddButton.addClickListener(e-> {
             actionListener.addServerToSelection(serverInput.getValue());
         });
+        serverListBox.setItems(serverURLs);
+        serverListBox.setValue(selectedServerURL);
         serverListBox.addValueChangeListener(e-> {
             if(e.getValue()!=null)
                 actionListener.serverSelected(e.getValue());
