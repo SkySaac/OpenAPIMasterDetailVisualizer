@@ -22,11 +22,12 @@ public class ArrayComponent extends DetailComponent {
     private final List<StrucSchema> arrayElements;
     private final DetailSwitchListener detailSwitchListener;
 
-    public ArrayComponent(String label, List<StrucSchema> arrayElements, DetailSwitchListener detailSwitchListener) {
+    public ArrayComponent(String title, List<StrucSchema> arrayElements, DetailSwitchListener detailSwitchListener) {
+        super(title);
         this.arrayElements = arrayElements;
         this.detailSwitchListener = detailSwitchListener;
 
-        Label titleLabel = new Label(label);
+        Label titleLabel = new Label(title);
 
         verticalLayout = new VerticalLayout();
 

@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -14,12 +17,22 @@ public class StrucViewGroupConverterService {
 
     public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup) {
         log.info("List primary paths for {}: {}", strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths());
-        //TODO
-        return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths(), strucViewGroup.getSecondaryPaths(), strucViewGroup.getStrucSchemaMap(), strucViewGroup.getStrucPathMap());
+
+        //creates internal MDVs
+        Map<String,StrucViewGroupMDV> internalMDVStrucViewGroups = new HashMap<>();
+        strucViewGroup.getPrimaryPaths().forEach(primaryPath -> {
+            StrucViewGroup strucViewGroupInternalMD = new StrucViewGroup(strucViewGroup.getTagName(),List.of(primaryPath)
+            , strucViewGroup.getSecondaryPaths().entrySet().stream().filter( entry -> entry.getValue().equals(primaryPath)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()))
+                    , strucViewGroup.getStrucSchemaMap()
+                    ,strucViewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(primaryPath)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue())));
+            internalMDVStrucViewGroups.put(primaryPath,createStrucViewGroupMDV(strucViewGroupInternalMD));
+        });
+
+        return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths(), strucViewGroup.getSecondaryPaths(), strucViewGroup.getStrucSchemaMap(), strucViewGroup.getStrucPathMap(), internalMDVStrucViewGroups);
     }
 
     public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
-        if (!isMDVStructure(strucViewGroup)) return null;
+        if (!isMDVStructure(strucViewGroup)) return null; //TODO glaube kann raus, würde sonst lsitview dinger
         Map<HttpMethod, StrucPath> strucPathMap = new HashMap<>();
         Map<HttpMethod, StrucSchema> strucSchemaMap = new HashMap<>();
 

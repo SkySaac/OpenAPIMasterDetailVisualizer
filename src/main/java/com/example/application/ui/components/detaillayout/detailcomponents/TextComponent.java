@@ -8,11 +8,13 @@ public class TextComponent extends DetailComponent {
     private final TextField textField;
 
     public TextComponent(String label) {
+        super(label);
         textField = new TextField(label);
         textField.setReadOnly(true);
         add(textField);
     }
     public TextComponent() {
+        super("TODO");
         textField = new TextField();
         textField.setReadOnly(true);
         add(textField);

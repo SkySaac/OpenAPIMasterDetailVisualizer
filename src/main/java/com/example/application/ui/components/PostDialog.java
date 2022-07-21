@@ -30,7 +30,6 @@ public class PostDialog extends Dialog {
 
     private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
     private List<InputValueComponent> querryFieldComponents = new ArrayList<>();
-
     public PostDialog(PostActionListener actionListener) {
         this.actionListener = actionListener;
     }
@@ -66,7 +65,6 @@ public class PostDialog extends Dialog {
 
     private void postAction(String path) {
         Map<String,String> queryParams = collectQueryParams();
-        //TODO collect query params
 
         Map<String, DataSchema> dataInputMap = new HashMap<>();
         inputFieldComponents.forEach(inputValueComponent -> {

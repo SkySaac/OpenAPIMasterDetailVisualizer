@@ -39,7 +39,7 @@ public class SchemaService {
                 if (schema.getProperties() != null) {
                     Map<String, Schema> properties = schema.getProperties();
                     if (properties == null) {
-                        log.info("debug me");
+                        log.info("debug me"); //TODO
                     }
                     properties.forEach((propertyName, property) ->
                             strucValue.getProperties().put(propertyName, mapSchemaToStrucSchema(propertyName, property))

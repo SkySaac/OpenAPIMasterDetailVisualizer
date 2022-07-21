@@ -6,13 +6,15 @@ import com.vaadin.flow.component.textfield.NumberField;
 public class NumberComponent extends DetailComponent {
     private final NumberField numberField;
 
-    public NumberComponent(String label) {
-        numberField = new NumberField(label);
+    public NumberComponent(String title) {
+        super(title);
+        numberField = new NumberField(title);
         numberField.setReadOnly(true);
         add(numberField);
     }
 
     public NumberComponent(){
+        super("TODO");
         numberField = new NumberField();
         numberField.setReadOnly(true);
         add(numberField);

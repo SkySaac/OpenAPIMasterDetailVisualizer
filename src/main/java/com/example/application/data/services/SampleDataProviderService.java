@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Deprecated
 public class SampleDataProviderService {
     private DataSchema dataobjectsArtficatView;
     private DataSchema dataobjectsCatalogsView;

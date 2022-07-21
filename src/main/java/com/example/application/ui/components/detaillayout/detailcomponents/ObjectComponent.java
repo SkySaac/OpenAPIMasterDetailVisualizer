@@ -28,6 +28,7 @@ public class ObjectComponent extends DetailComponent {
     private final FormLayout formLayout;
 
     public ObjectComponent(String objectTitle, StrucSchema schema, DetailSwitchListener detailSwitchListener) {
+        super(objectTitle);
         this.objectTitle = objectTitle;
         this.detailSwitchListener = detailSwitchListener;
         this.additionalSchema = schema.getStrucValue().getAdditionalPropertySchema();

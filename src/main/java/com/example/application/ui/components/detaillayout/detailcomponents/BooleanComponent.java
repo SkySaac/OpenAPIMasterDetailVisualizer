@@ -7,11 +7,15 @@ public class BooleanComponent extends DetailComponent {
 
     private final Checkbox checkbox;
 
-    public BooleanComponent(String label) {
-        checkbox = new Checkbox(label);
+    public BooleanComponent(String title) {
+        super(title);
+        checkbox = new Checkbox(title);
         checkbox.setReadOnly(true);
         add(checkbox);
-    }public BooleanComponent() {
+    }
+
+    public BooleanComponent() {
+        super("TODO");
         checkbox = new Checkbox();
         checkbox.setReadOnly(true);
         add(checkbox);

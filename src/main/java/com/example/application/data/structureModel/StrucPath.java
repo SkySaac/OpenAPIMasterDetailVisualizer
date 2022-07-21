@@ -16,15 +16,17 @@ public class StrucPath {
     private HttpMethod httpMethod;
     private StrucSchema responseStrucSchema;
     private StrucSchema requestStrucSchema;
-    private List<StruckQueryParameter> queryParams = new ArrayList<>();
+    private List<StrucParameter> queryParams = new ArrayList<>();
+    private List<StrucParameter> pathParams = new ArrayList<>();
     //TODO: path params
     //TODO: sonstiges
 
     @Getter
     @AllArgsConstructor
-    public static class StruckQueryParameter {
+    public static class StrucParameter {
         private String name;
         private PropertyTypeEnum type;
         private boolean required;
     }
+
 }

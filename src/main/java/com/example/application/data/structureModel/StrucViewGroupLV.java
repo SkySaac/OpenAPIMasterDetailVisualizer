@@ -11,8 +11,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class StrucViewGroupLV {
     private String tagName;
-    private List<String> primaryPaths; //TODO benötigt ?
-    private Map<String, String> secondaryPaths; //TODO benötigt ?
-    private Map<String, StrucSchema> strucSchemaMap;
-    private Map<String, Map<HttpMethod, StrucPath>> strucPathMap;
+    private List<String> notMatchedPrimaryPaths; //TODO benötigt ? -> Ja
+    private Map<String, String> secondaryPaths; //TODO benötigt ? -> Nein
+    private Map<String, StrucSchema> notMatchedStrucSchemaMap;
+    private Map<String, Map<HttpMethod, StrucPath>> notMatchedStrucPathMap;
+
+    private Map<String,StrucViewGroupMDV> strucViewGroupMDVS; //TODO path -> SVGMDV
 }

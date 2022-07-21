@@ -31,11 +31,20 @@ public class TagPresenter {
         this.strucViewGroupConverterService = strucViewGroupConverterService;
     }
 
+    public List<String> getServers() {
+        return strucOpenApi.getServers();
+    }
+
     private void clearOldPresenters() {
         listPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
         listPresenters.clear();
         masterDetailPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
         masterDetailPresenters.clear();
+    }
+
+    public void prepareStructure(String source) {
+        StrucOpenApi strucOpenApi = structureProviderService.generateApiStructure(source);
+        registerPresenters(strucOpenApi);
     }
 
     public void registerPresenters(StrucOpenApi strucOpenApi) {
@@ -57,16 +66,6 @@ public class TagPresenter {
         this.strucOpenApi = strucOpenApi;
     }
 
-    public List<String> getServers() {
-        return strucOpenApi.getServers();
-    }
-
-    public void prepareStructure(String source) {
-        StrucOpenApi strucOpenApi = structureProviderService.generateApiStructure(source);
-        registerPresenters(strucOpenApi);
-
-    }
-
     private void registerMasterDetailPresenter(StrucViewGroupMDV strucViewGroupMDV) {
         //TODO check if presenter name already exists
         log.info("Registering Master-Detail Presenter for the {} view", strucViewGroupMDV.getTagName());
@@ -81,6 +80,8 @@ public class TagPresenter {
     private void registerListPresenter(StrucViewGroupLV strucViewGroupLV) {
         //TODO check if presenter name already exists
         log.info("Registering List Presenter for the {} view", strucViewGroupLV.getTagName());
+
+        //TODO feed presenter the internal MDVs
 
         ListPresenter listPresenter = new ListPresenter(clientDataService,strucViewGroupLV);
 

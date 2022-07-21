@@ -60,11 +60,17 @@ public class ClientDataService {
         notificationController.postNotification("POST successful", false);
     }
 
-    public void deleteData(StrucPath strucPath, String parameterName, String parameterValue) {
+    public void deleteData(StrucPath strucPath, Map<String,String> pathVariables) {
+        final String[] finalPath = {strucPath.getPath()};
+        pathVariables.forEach((k,v) -> {
+            if(strucPath.getPath().contains("{"+k+"}")) {
+                finalPath[0] = finalPath[0].replace("{" + k + "}", v);
+            }
+        });
 
-        String finalPath = strucPath.getPath().replace("{parameterName}", parameterValue);
+        log.info("Sending DELETE request to: {}",serverUrl+finalPath[0]);
 
-        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath, null);
+        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath[0], null);
 
         notificationController.postNotification("DELETE successful", false);
 
@@ -83,7 +89,7 @@ public class ClientDataService {
             dataSchema = convertToDataSchema("-", node);
             //TODO
             if (pageSchema == null) {
-                //Data is not paged -> just json or array or string
+                //Data is not paged
             } else { //TODO ABSTRAHIEREN
                 String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
                 dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);

@@ -36,7 +36,7 @@ public class PathService {
         //primary: /artifact/ -> secondary: /artifact/{id}/
 
         //secondaryPath -> primaryPath
-        Map<String,String> secondaryPaths = new HashMap<>();
+        Map<String, String> secondaryPaths = new HashMap<>();
 
         primaryPaths.forEach(primaryPath -> {
             String secondaryRegex = primaryPath;
@@ -46,7 +46,7 @@ public class PathService {
             secondaryRegex += "{";
             String finalSecondaryRegex = secondaryRegex;
             pathsForTag.keySet().forEach(path -> {
-                if (path.startsWith(finalSecondaryRegex) && path.split("}").length == 1
+                if (path.startsWith(finalSecondaryRegex) && (path.split("}").length == 1 || path.split("}/").length == 1)
                         && (path.endsWith("}") || path.endsWith("}/"))) {
                     secondaryPaths.put(primaryPath, path);
                 }
@@ -55,17 +55,31 @@ public class PathService {
         return secondaryPaths;
     }
 
+    private static String stripPath(String path) {
+        //TODO strip path-> / in front ok in the back not
+        if (!path.startsWith("/"))
+            path = '/' + path;
+
+        if (path.endsWith("/"))
+            path = path.substring(0, path.length() - 2);
+        return path;
+    }
+
     public static StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation, Map<String, StrucSchema> strucSchemaMap) {
         StrucPath strucPath = new StrucPath();
         strucPath.setPath(path);
         strucPath.setHttpMethod(httpMethod);
         log.info("Converting Operation to Path for Path {} and HttpMethod {}", path, httpMethod.toString());
 
-        //Querry params
-        if(operation.getParameters()!=null && !operation.getParameters().isEmpty()){
-            operation.getParameters().forEach( parameter -> {
-                strucPath.getQueryParams().add(new StrucPath.StruckQueryParameter(parameter.getName(),
-                        PropertyTypeEnum.fromString(parameter.getSchema().getType()),parameter.getRequired()));
+        //Query & Path params
+        if (operation.getParameters() != null && !operation.getParameters().isEmpty()) {
+            operation.getParameters().forEach(parameter -> {
+                if (parameter.getIn().equals("query"))
+                    strucPath.getQueryParams().add(new StrucPath.StrucParameter(parameter.getName(),
+                            PropertyTypeEnum.fromString(parameter.getSchema().getType()), parameter.getRequired()));
+                else if(parameter.getIn().equals("path"))
+                    strucPath.getPathParams().add(new StrucPath.StrucParameter(parameter.getName(),
+                            PropertyTypeEnum.fromString(parameter.getSchema().getType()), parameter.getRequired()));
             });
         }
 
@@ -88,12 +102,17 @@ public class PathService {
                 }
             }
         }
-        if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
+        else if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
             if (operation.getResponses().containsKey("200") && operation.getResponses().get("200").getContent() != null) {
                 if (operation.getResponses().get("200").getContent().containsKey("*/*"))
-                    setResponseSchema(strucPath, operation, "200", "*/*",strucSchemaMap);
+                    setResponseSchema(strucPath, operation, "200", "*/*", strucSchemaMap);
                 else if (operation.getResponses().get("200").getContent().containsKey("application/json"))
-                    setResponseSchema(strucPath, operation, "200", "application/json",strucSchemaMap);
+                    setResponseSchema(strucPath, operation, "200", "application/json", strucSchemaMap);
+                else if (operation.getResponses().get("200").getContent().containsKey("application/ld+json"))
+                    setResponseSchema(strucPath, operation, "200", "application/ld+json", strucSchemaMap);
+                else if (operation.getResponses().get("200").getContent().containsKey("application/hal+json"))
+                    setResponseSchema(strucPath, operation, "200", "application/hal+json", strucSchemaMap);
+
             }
         } else {
             log.info("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
@@ -121,36 +140,36 @@ public class PathService {
         }
     }
 
-    public static Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths,Map<String, StrucSchema> strucSchemaMap) {
+    public static Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths, Map<String, StrucSchema> strucSchemaMap) {
         Map<String, Map<HttpMethod, StrucPath>> pathOperationMap = new HashMap<>(); //Path -> List
-        paths.keySet().forEach(key -> { //TODO all paths without recognised tags into one sonstiges tag
+        paths.keySet().forEach(path -> { //TODO all paths without recognised tags into one sonstiges tag
             Map<HttpMethod, StrucPath> methodOperationMap = new HashMap<>();
-            if (paths.get(key).getGet() != null
-                    && paths.get(key).getGet().getTags() != null
-                    && paths.get(key).getGet().getTags().contains(tagName)) {
+            if (paths.get(path).getGet() != null
+                    && paths.get(path).getGet().getTags() != null
+                    && paths.get(path).getGet().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.GET,
-                        operationToStrucPath(key, HttpMethod.GET, paths.get(key).getGet(),strucSchemaMap));
+                        operationToStrucPath(path, HttpMethod.GET, paths.get(path).getGet(), strucSchemaMap));
             }
-            if (paths.get(key).getPost() != null
-                    && paths.get(key).getPost().getTags() != null
-                    && paths.get(key).getPost().getTags().contains(tagName)) {
+            if (paths.get(path).getPost() != null
+                    && paths.get(path).getPost().getTags() != null
+                    && paths.get(path).getPost().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.POST,
-                        operationToStrucPath(key, HttpMethod.POST, paths.get(key).getPost(),strucSchemaMap));
+                        operationToStrucPath(path, HttpMethod.POST, paths.get(path).getPost(), strucSchemaMap));
             }
-            if (paths.get(key).getPut() != null
-                    && paths.get(key).getPut().getTags() != null
-                    && paths.get(key).getPut().getTags().contains(tagName)) {
+            if (paths.get(path).getPut() != null
+                    && paths.get(path).getPut().getTags() != null
+                    && paths.get(path).getPut().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.PUT,
-                        operationToStrucPath(key, HttpMethod.PUT, paths.get(key).getPut(),strucSchemaMap));
+                        operationToStrucPath(path, HttpMethod.PUT, paths.get(path).getPut(), strucSchemaMap));
             }
-            if (paths.get(key).getDelete() != null
-                    && paths.get(key).getDelete().getTags() != null
-                    && paths.get(key).getDelete().getTags().contains(tagName)) {
+            if (paths.get(path).getDelete() != null
+                    && paths.get(path).getDelete().getTags() != null
+                    && paths.get(path).getDelete().getTags().contains(tagName)) {
                 methodOperationMap.put(HttpMethod.DELETE,
-                        operationToStrucPath(key, HttpMethod.DELETE, paths.get(key).getDelete(),strucSchemaMap));
+                        operationToStrucPath(path, HttpMethod.DELETE, paths.get(path).getDelete(), strucSchemaMap));
             }
             if (methodOperationMap.size() > 0)
-                pathOperationMap.put(key, methodOperationMap);
+                pathOperationMap.put(path, methodOperationMap);
         });
         return pathOperationMap;
     }
