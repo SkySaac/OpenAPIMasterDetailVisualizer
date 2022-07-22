@@ -34,11 +34,13 @@ public class PathComponent extends HorizontalLayout{
         startListenerDiv.addClickListener(e-> this.switchView(basePathComponent));
         add(startListenerDiv);
         add(currentPathLayout);
+
+        //TODO style these Divs
     }
 
     public void createPathElement(String schemaName, DetailComponent detailComponent) {
-        Label startLabel = new Label(schemaName);
-        Div listenerDiv = new Div(startLabel);
+        Label label = new Label("/ "+schemaName);
+        Div listenerDiv = new Div(label);
         listenerDiv.addClickListener(e-> this.switchView(detailComponent));
 
         pathElementOrderList.add(listenerDiv);

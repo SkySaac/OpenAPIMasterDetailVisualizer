@@ -55,12 +55,8 @@ public class TagPresenter {
                 StrucViewGroupMDV strucViewGroupMDV = strucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(strucViewGroupMDV);
             } else {
-                //TODO non Master Detail View
                 StrucViewGroupLV strucViewGroupLV = strucViewGroupConverterService.createStrucViewGroupLV(strucViewGroup);
                 registerListPresenter(strucViewGroupLV);
-                //Multiple primary view object -> List View
-                //StrucViewGroupLV strucViewGroupLV = createStrucViewGroupLV(strucViewGroup);
-                //registerListViewPresenter(strucViewGroup.getTagName(), strucViewGroupLV);
             }
         });
         this.strucOpenApi = strucOpenApi;

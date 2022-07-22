@@ -64,6 +64,7 @@ public class ObjectComponent extends DetailComponent {
             };
 
             detailLayoutComponents.put(title, detailComponent);
+
             return detailComponent;
 
         }

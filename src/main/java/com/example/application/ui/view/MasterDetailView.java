@@ -25,6 +25,7 @@ public class MasterDetailView extends Div {
 
         void openDeleteDialog();
 
+        void refreshData();
     }
 
     private final MDActionListener mdActionListener;
@@ -38,7 +39,7 @@ public class MasterDetailView extends Div {
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        addPageButtons(isPaged, hasPost);
+        addTopButtons(isPaged, hasPost);
 
         splitLayout.addToPrimary(createGridLayout());
 
@@ -53,8 +54,7 @@ public class MasterDetailView extends Div {
         // Configure Grid
         configureGrid(getSchema, hasDelete);
     }
-
-    public void addPageButtons(boolean isPaged, boolean hasPost) {
+    public void addTopButtons(boolean isPaged, boolean hasPost) {
         Div div = new Div();
 
         if (isPaged) {
@@ -62,6 +62,10 @@ public class MasterDetailView extends Div {
             Button forwards = new Button(VaadinIcon.ARROW_RIGHT.create());
             div.add(backwards, forwards);
         }
+
+        Button refreshButton = new Button(VaadinIcon.REFRESH.create());
+        refreshButton.addClickListener(e -> mdActionListener.refreshData());
+        div.add(refreshButton);
 
         if (hasPost) {
             Button postButton = new Button("Create");

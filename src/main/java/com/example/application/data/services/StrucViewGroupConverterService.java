@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,19 +15,22 @@ import java.util.stream.Collectors;
 public class StrucViewGroupConverterService {
 
     public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup) {
-        log.info("List primary paths for {}: {}", strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths());
+        log.debug("List LV primary paths for {}: {}", strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths());
 
         //creates internal MDVs
-        Map<String,StrucViewGroupMDV> internalMDVStrucViewGroups = new HashMap<>();
+        Map<String, StrucViewGroupMDV> internalMDVStrucViewGroups = new HashMap<>();
         strucViewGroup.getPrimaryPaths().forEach(primaryPath -> {
-            StrucViewGroup strucViewGroupInternalMD = new StrucViewGroup(strucViewGroup.getTagName(),List.of(primaryPath)
-            , strucViewGroup.getSecondaryPaths().entrySet().stream().filter( entry -> entry.getValue().equals(primaryPath)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()))
+            StrucViewGroup strucViewGroupInternalMD = new StrucViewGroup(strucViewGroup.getTagName(), List.of(primaryPath)
+                    , strucViewGroup.getSecondaryPaths().entrySet().stream().filter(e -> e.getKey().equals(primaryPath)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
                     , strucViewGroup.getStrucSchemaMap()
-                    ,strucViewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(primaryPath)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue())));
-            internalMDVStrucViewGroups.put(primaryPath,createStrucViewGroupMDV(strucViewGroupInternalMD));
+                    , strucViewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(primaryPath)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+            internalMDVStrucViewGroups.put(primaryPath, createStrucViewGroupMDV(strucViewGroupInternalMD));
         });
 
-        return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths(), strucViewGroup.getSecondaryPaths(), strucViewGroup.getStrucSchemaMap(), strucViewGroup.getStrucPathMap(), internalMDVStrucViewGroups);
+        return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getStrucSchemaMap(), //TODO remove secondary paths
+                strucViewGroup.getStrucPathMap().entrySet().stream().filter(entry -> !strucViewGroup.getSecondaryPaths().values().contains(entry.getKey()))
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue())),
+                internalMDVStrucViewGroups);
     }
 
     public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {

@@ -11,6 +11,7 @@ public class BooleanComponent extends DetailComponent {
         super(title);
         checkbox = new Checkbox(title);
         checkbox.setReadOnly(true);
+        checkbox.setSizeFull();
         add(checkbox);
     }
 

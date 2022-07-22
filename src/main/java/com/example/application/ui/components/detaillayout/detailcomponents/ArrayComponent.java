@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class ArrayComponent extends DetailComponent {
 
-    private final VerticalLayout verticalLayout;
+    private final VerticalLayout verticalLayout = new VerticalLayout();
     private final List<StrucSchema> arrayElements;
     private final DetailSwitchListener detailSwitchListener;
 
@@ -28,17 +28,15 @@ public class ArrayComponent extends DetailComponent {
         this.detailSwitchListener = detailSwitchListener;
 
         Label titleLabel = new Label(title);
-
-        verticalLayout = new VerticalLayout();
-
         add(titleLabel);
+
         add(verticalLayout);
     }
 
     @Override
     public void fillDetailLayout(DataValue dataValue) {
         dataValue.getDataSchemas().forEach(dataSchemaElement -> {
-            Component component = createDetailComponent(dataSchemaElement.getName(), dataSchemaElement);
+            Component component = createDetailComponent(this.getComponentTitle(), dataSchemaElement);
             verticalLayout.add(component);
         });
     }
@@ -94,6 +92,7 @@ public class ArrayComponent extends DetailComponent {
                 default -> new TextComponent();
             };
             detailComponent.fillDetailLayout(dataSchema.getValue());
+            detailComponent.setSizeFull();
             return detailComponent;
         }
     }

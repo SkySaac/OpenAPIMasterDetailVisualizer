@@ -66,6 +66,7 @@ public class DetailLayout extends Div implements DetailSwitchListener, PathCompo
     public void switchToArray(DetailComponent source, String title, DetailComponent target) {
         log.info("(Array) Switched from {} to {} : {}", source, title, target);
         switchView(target);
+        pathComponent.createPathElement(target.getComponentTitle(),target);
     }
 
     @Override

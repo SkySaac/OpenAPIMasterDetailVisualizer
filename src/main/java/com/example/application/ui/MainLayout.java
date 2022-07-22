@@ -68,7 +68,7 @@ public class MainLayout extends AppLayout {
     private H1 viewTitle;
     private Nav nav;
 
-    private Map<String,MenuItemInfo> addedNavTargets = new HashMap<>();
+    private final Map<String,MenuItemInfo> addedNavTargets = new HashMap<>();
 
 
     public MainLayout() {

@@ -11,8 +11,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class StrucViewGroupLV {
     private String tagName;
-    private List<String> notMatchedPrimaryPaths; //TODO benötigt ? -> Ja
-    private Map<String, String> secondaryPaths; //TODO benötigt ? -> Nein
     private Map<String, StrucSchema> notMatchedStrucSchemaMap;
     private Map<String, Map<HttpMethod, StrucPath>> notMatchedStrucPathMap;
 

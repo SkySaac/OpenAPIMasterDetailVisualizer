@@ -11,8 +11,11 @@ public class TextComponent extends DetailComponent {
         super(label);
         textField = new TextField(label);
         textField.setReadOnly(true);
+        textField.setSizeFull();
+
         add(textField);
     }
+
     public TextComponent() {
         super("TODO");
         textField = new TextField();
@@ -22,6 +25,8 @@ public class TextComponent extends DetailComponent {
 
     @Override
     public void fillDetailLayout(DataValue dataValue) {
+        //if(URLValidator.isValid(dataValue.getPlainValue()))
+        //TODO if is application link (starting with server url and going to a path that we know -> has GET) or else just normal url
         textField.setValue(String.valueOf(dataValue.getPlainValue()));
     }
 

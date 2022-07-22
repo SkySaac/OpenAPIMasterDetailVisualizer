@@ -32,27 +32,16 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
                     strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.POST),
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
                     strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
-            view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
-        }
-        else {
+        } else {
             view = new MasterDetailView(this, false,
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET),
                     strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.POST),
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
                     strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
-            view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
         }
+        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
         return view;
     }
-
-
-    @Override
-    public void postAction(String path, Map<String, String> queryParameters, DataSchema properties) {
-        if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)) {
-            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST), properties);
-        }
-    }
-
 
     @Override
     public void openPostDialog() {
@@ -65,6 +54,19 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
     }
 
     @Override
+    public void refreshData() {
+        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
+    }
+
+    @Override
+    public void postAction(String path, Map<String, String> queryParameters, DataSchema properties) {
+        if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)) {
+            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST), properties);
+        }
+        refreshData();
+    }
+
+    @Override
     public void deleteAction(String path, Map<String, String> pathVariables) {
         if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)) {
             //TODO QUERRY
@@ -74,5 +76,6 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
             //löschanfrage senden
             clientDataService.deleteData(strucViewGroup.getStrucPathMap().get(HttpMethod.DELETE), pathVariables);
         }
+        refreshData();
     }
 }

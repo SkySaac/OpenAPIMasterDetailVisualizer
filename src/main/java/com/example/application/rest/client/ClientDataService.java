@@ -86,7 +86,7 @@ public class ClientDataService {
         ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), null);
         try {
             JsonNode node = objectMapper.readTree(response.getBody());
-            dataSchema = convertToDataSchema("-", node);
+            dataSchema = convertToDataSchema("root", node);
             //TODO
             if (pageSchema == null) {
                 //Data is not paged
