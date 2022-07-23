@@ -7,6 +7,8 @@ import com.example.application.ui.view.MasterDetailView;
 import com.vaadin.flow.component.Component;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.Map;
 
@@ -14,6 +16,8 @@ import java.util.Map;
 public class MasterDetailPresenter implements MasterDetailView.MDActionListener {
 
     private final ClientDataService clientDataService;
+
+    private MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     private MasterDetailView view;
     public StrucViewGroupMDV strucViewGroup;
 
@@ -31,15 +35,18 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
                     strucViewGroup.getBehindPagedGetSchema(),
                     strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.POST),
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
-                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
+                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE),
+                    !strucViewGroup.getStrucPathMap().get(HttpMethod.GET).getQueryParams().isEmpty()); //übergeben: pfade
         } else {
             view = new MasterDetailView(this, false,
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET),
                     strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.POST),
                     strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
-                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)); //übergeben: pfade
+                    strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE),
+                    !strucViewGroup.getStrucPathMap().get(HttpMethod.GET).getQueryParams().isEmpty()); //übergeben: pfade
         }
-        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
+        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET),
+                strucViewGroup.getBehindPagedGetSchema(), queryParams));
         return view;
     }
 
@@ -54,28 +61,39 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
     }
 
     @Override
-    public void refreshData() {
-        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET), strucViewGroup.getBehindPagedGetSchema()));
+    public void openQueryDialog() {
+        view.openQueryParamDialog(strucViewGroup.getStrucPathMap().get(HttpMethod.GET));
     }
 
     @Override
-    public void postAction(String path, Map<String, String> queryParameters, DataSchema properties) {
+    public void refreshData() {
+        view.setData(clientDataService.getData(strucViewGroup.getStrucPathMap().get(HttpMethod.GET),
+                strucViewGroup.getBehindPagedGetSchema(), queryParams));
+    }
+
+    @Override
+    public void postAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties) {
         if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.POST)) {
-            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST), properties);
+            clientDataService.postData(strucViewGroup.getStrucPathMap().get(HttpMethod.POST), properties, queryParameters);
         }
         refreshData();
     }
 
     @Override
-    public void deleteAction(String path, Map<String, String> pathVariables) {
+    public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String, String> queryParameters) {
         if (strucViewGroup.getStrucPathMap().containsKey(HttpMethod.DELETE)) {
-            //TODO QUERRY
             //enthaltener parameter (in pfad) raussuchen
             String firstParam = path.split("\\{")[1].split("}")[0];
             //gucken ob param in dataSchema enthalten ist
             //löschanfrage senden
-            clientDataService.deleteData(strucViewGroup.getStrucPathMap().get(HttpMethod.DELETE), pathVariables);
+            clientDataService.deleteData(strucViewGroup.getStrucPathMap().get(HttpMethod.DELETE), pathVariables, queryParameters);
         }
+        refreshData();
+    }
+
+    @Override
+    public void setQueryParams(MultiValueMap<String, String> queryParams) {
+        this.queryParams = queryParams;
         refreshData();
     }
 }

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,10 +37,12 @@ public class ClientDataService {
         this.notificationController = notificationController;
     }
 
-    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path, String body) {
+    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path,
+                                               MultiValueMap<String, String> queryParams, String body) {
         final var requestWrapper = new ClientRequestWrapper(httpMethod, url);
 
         requestWrapper.requestBuilder()
+                .queryParams(queryParams)
                 .path(path);
 
         if (body != null) {
@@ -52,38 +55,38 @@ public class ClientDataService {
         return response;
     }
 
-    public void postData(StrucPath strucPath, DataSchema bodyData) {
+    public void postData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams) {
         String body = convertToJson(bodyData).toString();
-        ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), body);
+        ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), queryParams, body);
         log.info(response.getStatusCode().toString());
 
         notificationController.postNotification("POST successful", false);
     }
 
-    public void deleteData(StrucPath strucPath, Map<String,String> pathVariables) {
+    public void deleteData(StrucPath strucPath, Map<String, String> pathVariables, MultiValueMap<String,String> queryParams) {
         final String[] finalPath = {strucPath.getPath()};
-        pathVariables.forEach((k,v) -> {
-            if(strucPath.getPath().contains("{"+k+"}")) {
+        pathVariables.forEach((k, v) -> {
+            if (strucPath.getPath().contains("{" + k + "}")) {
                 finalPath[0] = finalPath[0].replace("{" + k + "}", v);
             }
         });
 
-        log.info("Sending DELETE request to: {}",serverUrl+finalPath[0]);
+        log.info("Sending DELETE request to: {}", serverUrl + finalPath[0]);
 
-        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath[0], null);
+        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath[0], queryParams,null);
 
         notificationController.postNotification("DELETE successful", false);
 
     }
 
-    public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema) {
+    public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema, MultiValueMap<String,String> queryParameters) {
 
         DataSchema dataSchema = null;
 
         boolean isError = false;
 
         //TODO http bzw https -> url aus openapi doc ändern
-        ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), null);
+        ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(),queryParameters, null);
         try {
             JsonNode node = objectMapper.readTree(response.getBody());
             dataSchema = convertToDataSchema("root", node);

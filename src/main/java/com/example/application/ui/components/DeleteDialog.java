@@ -11,6 +11,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +22,7 @@ import java.util.Map;
 public class DeleteDialog extends Dialog {
 
     public interface DeleteActionListener {
-        void deleteAction(String path, Map<String,String> pathVariables);
+        void deleteAction(String path, Map<String,String> pathVariables, MultiValueMap<String,String> queryParameters);
     }
 
     private final DeleteActionListener actionListener;
@@ -37,14 +39,15 @@ public class DeleteDialog extends Dialog {
             createQueryParamFields(strucPath);
         createPathParamFields(strucPath);
 
+
+        Button closePostViewButton = new Button("Close");
+        closePostViewButton.addClickListener(e -> this.close());
+
         Button deleteButton = new Button("Delete");
         deleteButton.addClickListener(e -> {
             if(areRequiredFieldsFilled())
                 deleteAction(strucPath.getPath());
         });
-
-        Button closePostViewButton = new Button("Close");
-        closePostViewButton.addClickListener(e -> this.close());
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(deleteButton, closePostViewButton);
@@ -53,11 +56,11 @@ public class DeleteDialog extends Dialog {
         this.open();
     }
 
-    private Map<String,String> collectQueryParams(){
-        Map<String,String> params = new HashMap<>();
+    private MultiValueMap<String,String> collectQueryParams(){
+        MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         queryFieldComponents.forEach(component -> {
             if(!component.getComponent().isEmpty()){
-                params.put(component.getTitle(),component.getComponent().getValue().toString()); //TODO toString correct ?
+                params.add(component.getTitle(),component.getComponent().getValue().toString()); //TODO toString correct ?
             }
         });
         return params;
@@ -79,11 +82,11 @@ public class DeleteDialog extends Dialog {
 
     private void deleteAction(String path) {
         //TODO use em later
-        Map<String,String> queryParams = collectQueryParams();
+        MultiValueMap<String,String> queryParams = collectQueryParams();
 
         Map<String,String> pathParams = collectPathParams();
 
-        actionListener.deleteAction(path,pathParams);
+        actionListener.deleteAction(path,pathParams,queryParams);
     }
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title, boolean isPath) {

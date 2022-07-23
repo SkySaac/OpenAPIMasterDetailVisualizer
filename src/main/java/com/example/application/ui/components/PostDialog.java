@@ -14,6 +14,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +25,7 @@ import java.util.Map;
 public class PostDialog extends Dialog {
 
     public interface PostActionListener {
-        void postAction(String path, Map<String, String> queryParameters, DataSchema properties);
+        void postAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties);
     }
 
     private final PostActionListener actionListener;
@@ -40,11 +42,11 @@ public class PostDialog extends Dialog {
         if(schema!=null)
             createFields(schema);
 
-        Button postButton = new Button("Post");
-        postButton.addClickListener(e -> this.postAction(strucPath.getPath()));
-
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
+
+        Button postButton = new Button("Post");
+        postButton.addClickListener(e -> this.postAction(strucPath.getPath()));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(postButton, closePostViewButton);
@@ -53,18 +55,19 @@ public class PostDialog extends Dialog {
         this.open();
     }
 
-    private Map<String,String> collectQueryParams(){
-        Map<String,String> params = new HashMap<>();
+    private MultiValueMap<String,String> collectQueryParams(){
+        MultiValueMap<String,String> params = new LinkedMultiValueMap<>() {
+        };
         querryFieldComponents.forEach(component -> {
             if(!component.getComponent().isEmpty()){
-                params.put(component.getTitle(),component.getComponent().getValue().toString()); //TODO toString correct ?
+                params.add(component.getTitle(),component.getComponent().getValue().toString()); //TODO toString correct ?
             }
         });
         return params;
     }
 
     private void postAction(String path) {
-        Map<String,String> queryParams = collectQueryParams();
+        MultiValueMap<String,String> queryParams = collectQueryParams();
 
         Map<String, DataSchema> dataInputMap = new HashMap<>();
         inputFieldComponents.forEach(inputValueComponent -> {

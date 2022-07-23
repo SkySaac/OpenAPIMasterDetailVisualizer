@@ -9,6 +9,7 @@ import com.example.application.ui.view.ListView;
 import com.vaadin.flow.component.Component;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.MultiValueMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,16 +65,16 @@ public class ListPresenter implements ListView.LActionListener{
     }
 
     @Override
-    public void postAction(String path, Map<String, String> queryParameters, DataSchema properties) {
+    public void postAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties) { //TODO use queryparams
         if (strucViewGroup.getNotMatchedStrucPathMap().containsKey(HttpMethod.POST)) {
-            clientDataService.postData(strucViewGroup.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST), properties);
+            clientDataService.postData(strucViewGroup.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST), properties,queryParameters);
         }
     }
 
     @Override
-    public void deleteAction(String path, Map<String, String> pathVariables) {
+    public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String,String> queryParameters) {
         if (strucViewGroup.getNotMatchedStrucPathMap().containsKey(HttpMethod.DELETE)) {
-            clientDataService.deleteData(strucViewGroup.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE), pathVariables);
+            clientDataService.deleteData(strucViewGroup.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE), pathVariables,queryParameters);
         }
     }
 }
