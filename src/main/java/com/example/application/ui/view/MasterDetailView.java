@@ -5,6 +5,7 @@ import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
 import com.example.application.ui.components.DeleteDialog;
 import com.example.application.ui.components.PostDialog;
+import com.example.application.ui.components.PutDialog;
 import com.example.application.ui.components.QueryParamDialog;
 import com.example.application.ui.components.detaillayout.DetailLayout;
 import com.vaadin.flow.component.button.Button;
@@ -22,35 +23,40 @@ import java.util.List;
 @Slf4j
 public class MasterDetailView extends Div {
 
-    public interface MDActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener, QueryParamDialog.QueryActionListener {
+    public interface MDActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener,
+            QueryParamDialog.QueryActionListener, PutDialog.PutActionListener {
         void openPostDialog();
 
         void openDeleteDialog();
+
         void openQueryDialog();
 
         void refreshData();
+
     }
 
     private final MDActionListener mdActionListener;
+    private final DetailLayout.NavigationListener navigationListener;
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
 
-    public MasterDetailView(MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, boolean hasPost,
+    public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, boolean hasPost,
                             StrucSchema putSchema, boolean hasDelete, boolean hasQueryParams) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
+        this.navigationListener = navigationListener;
         addClassNames("master-detail-view");
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        addTopButtons(isPaged, hasPost,hasQueryParams);
+        addTopButtons(isPaged, hasPost, hasQueryParams);
 
         splitLayout.addToPrimary(createGridLayout());
 
         if (getSchema == null)
             log.warn("schema in null");
 
-        detailLayout = new DetailLayout(getSchema);
+        detailLayout = new DetailLayout(navigationListener, getSchema);
         splitLayout.addToSecondary(detailLayout);
 
         add(splitLayout);
@@ -89,9 +95,16 @@ public class MasterDetailView extends Div {
         add(menuBar);
     }
 
-    public void openPostDialog(StrucSchema schema, StrucPath strucPath) {
+    public void openPostDialog(StrucPath strucPath) {
         PostDialog postDialog = new PostDialog(mdActionListener);
-        postDialog.open(schema, strucPath);
+        postDialog.open(strucPath);
+    }
+
+    //TODO PUT Dialog
+
+    public void openPutDialog(StrucPath strucPath) {
+        PutDialog putDialog = new PutDialog(mdActionListener);
+        putDialog.open(strucPath);
     }
 
     public void openDeleteDialog(StrucPath strucPath) {
@@ -99,7 +112,7 @@ public class MasterDetailView extends Div {
         deleteDialog.open(strucPath);
     }
 
-    public void openQueryParamDialog(StrucPath strucPath){
+    public void openQueryParamDialog(StrucPath strucPath) {
         QueryParamDialog queryParamDialog = new QueryParamDialog(mdActionListener);
         queryParamDialog.open(strucPath);
     }
@@ -151,6 +164,7 @@ public class MasterDetailView extends Div {
     private Div createGridLayout() {
         Div wrapper = new Div();
         wrapper.setClassName("grid-wrapper");
+        grid.setSizeFull();
         wrapper.add(grid);
         return wrapper;
     }

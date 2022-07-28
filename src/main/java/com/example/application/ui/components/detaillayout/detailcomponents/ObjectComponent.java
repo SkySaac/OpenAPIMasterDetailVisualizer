@@ -31,6 +31,8 @@ public class ObjectComponent extends DetailComponent {
         super(objectTitle);
         this.objectTitle = objectTitle;
         this.detailSwitchListener = detailSwitchListener;
+        if(schema==null)
+            System.out.println("hi");
         this.additionalSchema = schema.getStrucValue().getAdditionalPropertySchema();
 
         formLayout = new FormLayout();
@@ -58,9 +60,10 @@ public class ObjectComponent extends DetailComponent {
             return arrayButton;
         } else {
             DetailComponent detailComponent = switch (strucSchema.getStrucValue().getType()) {
-                case NUMBER -> new NumberComponent(title);
+                case INTEGER -> new NumberComponent(title);
+                case DOUBLE -> new DoubleComponent(title);
                 case BOOLEAN -> new BooleanComponent(title);
-                default -> new TextComponent(title);
+                default -> new TextComponent(detailSwitchListener,title);
             };
 
             detailLayoutComponents.put(title, detailComponent);
@@ -114,9 +117,10 @@ public class ObjectComponent extends DetailComponent {
             return arrayComponent;
         } else {
             DetailComponent detailComponent = switch (strucSchema.getStrucValue().getType()) {
-                case NUMBER -> new NumberComponent(title);
+                case INTEGER -> new NumberComponent(title);
+                case DOUBLE -> new DoubleComponent(title);
                 case BOOLEAN -> new BooleanComponent(title);
-                default -> new TextComponent(title);
+                default -> new TextComponent(detailSwitchListener,title);
             };
 
             detailLayoutComponents.put(title, detailComponent);

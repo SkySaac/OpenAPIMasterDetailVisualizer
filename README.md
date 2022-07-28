@@ -60,3 +60,14 @@ Once the Docker image is correctly built, you can test it locally using
 ```
 docker run -p 8080:8080 mybachelor:latest
 ```
+
+todo:
+
+fix not showing tags on the left at first start
+nvaigation not working
+put not working
+.../{id} has no view yet
+.../{id}/... without GET has no view
+listview internal mdvs need paths -> for good routing
+rebuild -> path of every view -> comes from the primaryGetView not the tag (for the masterDetailViews)
+funktioniert mainlayout zeil 41 wenn nav dings mehrere / drinne hat ?

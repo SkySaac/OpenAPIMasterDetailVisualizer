@@ -9,6 +9,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import org.springframework.util.LinkedMultiValueMap;
@@ -25,7 +26,7 @@ public class QueryParamDialog extends Dialog {
 
     private final QueryActionListener actionListener;
 
-    private List<InputValueComponent> querryFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> querryFieldComponents = new ArrayList<>();
 
     public QueryParamDialog(QueryActionListener actionListener) {
         this.actionListener = actionListener;
@@ -68,7 +69,8 @@ public class QueryParamDialog extends Dialog {
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title) {
         AbstractField inputComponent = switch (type) {
-            case NUMBER -> new NumberField(title);
+            case INTEGER -> new IntegerField(title);
+            case DOUBLE -> new NumberField(title);
             case BOOLEAN -> new Checkbox(title);
             case STRING -> new TextField(title);
             case OBJECT -> //TODO change, wenns n object is sindse ja ineinander verschachtelt

@@ -9,6 +9,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,7 +29,7 @@ public class DeleteDialog extends Dialog {
     private final DeleteActionListener actionListener;
 
     private final List<InputValueComponent> pathFieldComponents = new ArrayList<>();
-    private List<InputValueComponent> queryFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
 
     public DeleteDialog(DeleteActionListener actionListener) {
         this.actionListener = actionListener;
@@ -67,7 +68,7 @@ public class DeleteDialog extends Dialog {
     }
 
     private boolean areRequiredFieldsFilled(){
-        return pathFieldComponents.stream().allMatch(component -> !component.getComponent().isEmpty());
+        return pathFieldComponents.stream().noneMatch(component -> component.getComponent().isEmpty());
     }
 
     private Map<String,String> collectPathParams(){
@@ -91,7 +92,8 @@ public class DeleteDialog extends Dialog {
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title, boolean isPath) {
         AbstractField inputComponent = switch (type) {
-            case NUMBER -> new NumberField(title);
+            case INTEGER -> new IntegerField(title);
+            case DOUBLE -> new NumberField(title);
             case BOOLEAN -> new Checkbox(title);
             case STRING -> new TextField(title);
             case OBJECT -> //TODO change, wenns n object is sindse ja ineinander verschachtelt

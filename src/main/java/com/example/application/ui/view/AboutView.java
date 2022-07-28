@@ -14,13 +14,14 @@ public class AboutView extends VerticalLayout {
 
     public interface ActionListener {
         void openApiAction(String source);
+
         void serverSelected(String server);
+
         void addServerToSelection(String server);
     }
 
 
     private final Select<String> serverListBox = new Select<>();
-
 
 
     public AboutView(ActionListener actionListener, String defaultSource, String selectedServerURL, List<String> serverURLs) {
@@ -44,13 +45,11 @@ public class AboutView extends VerticalLayout {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField serverInput = new TextField();
         Button serverAddButton = new Button("Add Server");
-        serverAddButton.addClickListener(e-> {
-            actionListener.addServerToSelection(serverInput.getValue());
-        });
+        serverAddButton.addClickListener(e -> actionListener.addServerToSelection(serverInput.getValue()));
         serverListBox.setItems(serverURLs);
         serverListBox.setValue(selectedServerURL);
-        serverListBox.addValueChangeListener(e-> {
-            if(e.getValue()!=null)
+        serverListBox.addValueChangeListener(e -> {
+            if (e.getValue() != null)
                 actionListener.serverSelected(e.getValue());
         });
         horizontalLayout.add(serverInput, serverAddButton);
@@ -66,8 +65,12 @@ public class AboutView extends VerticalLayout {
 
     public void setServers(List<String> servers) {
         serverListBox.setItems(servers);
-        if(servers.size()>0)
+        if (servers.size() > 0)
             serverListBox.setValue(servers.get(0));
+    }
+
+    public void setSelectedServer(String server) {
+        serverListBox.setValue(server);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.example.application.ui.accesspoint;
+package com.example.application.ui.other;
 
 import com.example.application.ui.MainLayout;
 import lombok.Getter;

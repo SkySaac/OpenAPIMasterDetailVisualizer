@@ -86,10 +86,11 @@ public class ArrayComponent extends DetailComponent {
             return arrayButton;
         } else {
             DetailComponent detailComponent = switch (dataSchema.getValue().getPropertyTypeEnum()) {
-                case NUMBER -> new NumberComponent();
+                case INTEGER -> new NumberComponent();
+                case DOUBLE -> new DoubleComponent();
                 case BOOLEAN -> new BooleanComponent();
-                case STRING -> new TextComponent();
-                default -> new TextComponent();
+                case STRING -> new TextComponent(detailSwitchListener);
+                default -> new TextComponent(detailSwitchListener);
             };
             detailComponent.fillDetailLayout(dataSchema.getValue());
             detailComponent.setSizeFull();

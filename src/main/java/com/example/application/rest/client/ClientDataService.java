@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -30,6 +31,7 @@ public class ClientDataService {
     private final NotificationController notificationController;
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Setter
+    @Getter
     private String serverUrl = "";
 
     public ClientDataService(ClientRequestService clientRequestService, NotificationController notificationController) {
@@ -37,12 +39,13 @@ public class ClientDataService {
         this.notificationController = notificationController;
     }
 
-    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path,
+    private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path, Map<String, String> pathParams,
                                                MultiValueMap<String, String> queryParams, String body) {
         final var requestWrapper = new ClientRequestWrapper(httpMethod, url);
 
         requestWrapper.requestBuilder()
                 .queryParams(queryParams)
+                .pathParams(pathParams)
                 .path(path);
 
         if (body != null) {
@@ -57,36 +60,30 @@ public class ClientDataService {
 
     public void postData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams) {
         String body = convertToJson(bodyData).toString();
-        ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), queryParams, body);
+        ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), new HashMap<>(), queryParams, body);
         log.info(response.getStatusCode().toString());
 
         notificationController.postNotification("POST successful", false);
     }
 
-    public void deleteData(StrucPath strucPath, Map<String, String> pathVariables, MultiValueMap<String,String> queryParams) {
-        final String[] finalPath = {strucPath.getPath()};
-        pathVariables.forEach((k, v) -> {
-            if (strucPath.getPath().contains("{" + k + "}")) {
-                finalPath[0] = finalPath[0].replace("{" + k + "}", v);
-            }
-        });
+    public void deleteData(StrucPath strucPath, Map<String, String> pathVariables, MultiValueMap<String, String> queryParams) {
+        //TODO instead of strucpath get path directly as string
+        log.info("Sending DELETE request to: {}", serverUrl + strucPath.getPath());
 
-        log.info("Sending DELETE request to: {}", serverUrl + finalPath[0]);
-
-        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl, finalPath[0], queryParams,null);
+        ResponseEntity<String> response = sendRequest(HttpMethod.DELETE, serverUrl,strucPath.getPath(),pathVariables, queryParams, null);
 
         notificationController.postNotification("DELETE successful", false);
 
     }
 
-    public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema, MultiValueMap<String,String> queryParameters) {
+    public DataSchema getData(StrucPath strucPath, StrucSchema pageSchema, Map<String, String> pathParams, MultiValueMap<String, String> queryParameters) {
 
         DataSchema dataSchema = null;
 
         boolean isError = false;
 
         //TODO http bzw https -> url aus openapi doc ändern
-        ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(),queryParameters, null);
+        ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), pathParams, queryParameters, null);
         try {
             JsonNode node = objectMapper.readTree(response.getBody());
             dataSchema = convertToDataSchema("root", node);
@@ -115,7 +112,8 @@ public class ClientDataService {
         ObjectNode node = objectMapper.createObjectNode();
         dataSchema.getValue().getProperties().forEach((key, value) -> {
             switch (value.getValue().getPropertyTypeEnum()) {
-                case NUMBER -> node.put(key, Double.valueOf(value.getValue().getPlainValue()));
+                case INTEGER -> node.put(key, Integer.valueOf(value.getValue().getPlainValue()));
+                case DOUBLE -> node.put(key, Double.valueOf(value.getValue().getPlainValue()));
                 case BOOLEAN -> node.put(key, Boolean.valueOf(value.getValue().getPlainValue()));
                 default -> node.put(key, value.getValue().getPlainValue());
             }
@@ -140,7 +138,7 @@ public class ClientDataService {
                 dataValue = new DataValue(dataSchemas, PropertyTypeEnum.ARRAY);
             }
             case BOOLEAN -> dataValue = new DataValue(String.valueOf(node.asBoolean()), PropertyTypeEnum.BOOLEAN);
-            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.NUMBER);
+            case NUMBER -> dataValue = new DataValue(String.valueOf(node.asDouble()), PropertyTypeEnum.DOUBLE);
             default -> dataValue = new DataValue(node.asText(), PropertyTypeEnum.STRING);
         }
         return new DataSchema(name, dataValue);

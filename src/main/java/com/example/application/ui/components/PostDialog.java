@@ -12,6 +12,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import org.springframework.util.LinkedMultiValueMap;
@@ -30,17 +31,17 @@ public class PostDialog extends Dialog {
 
     private final PostActionListener actionListener;
 
-    private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
-    private List<InputValueComponent> querryFieldComponents = new ArrayList<>();
+    protected final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> querryFieldComponents = new ArrayList<>();
     public PostDialog(PostActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
-    public void open(StrucSchema schema, StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
+    public void open(StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
-        if(schema!=null)
-            createFields(schema);
+        if(strucPath.getRequestStrucSchema()!=null)
+            createFields(strucPath.getRequestStrucSchema());
 
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
@@ -100,7 +101,8 @@ public class PostDialog extends Dialog {
 
     private AbstractField createEditorComponent(PropertyTypeEnum type, String title, boolean input) {
         AbstractField inputComponent = switch (type) {
-            case NUMBER -> new NumberField(title);
+            case INTEGER -> new IntegerField(title);
+            case DOUBLE -> new NumberField(title);
             case BOOLEAN -> new Checkbox(title);
             case STRING -> new TextField(title);
             case OBJECT -> //TODO change, wenns n object is sindse ja ineinander verschachtelt

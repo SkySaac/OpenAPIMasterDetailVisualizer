@@ -9,7 +9,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClientRequestWrapper {
 
@@ -24,7 +26,16 @@ public class ClientRequestWrapper {
     }
 
     public RequestEntity<?> getRequestEntity() {
-        uriBuilder.path(requestBuilder.path);
+        final String[] finalPath = {requestBuilder.path};
+
+        //replace all path params
+        requestBuilder.pathParams.forEach((k, v) -> {
+            if (requestBuilder.path.contains("{" + k + "}")) {
+                finalPath[0] = finalPath[0].replace("{" + k + "}", v);
+            }
+        });
+
+        uriBuilder.path(finalPath[0]);
         requestBuilder.queryParams.forEach(uriBuilder::queryParam);
 
         final var builder = RequestEntity.method(httpMethod, uriBuilder.build().toUri());
@@ -48,6 +59,7 @@ public class ClientRequestWrapper {
         RequestBuilder queryParam(String name, String value);
 
         RequestBuilder queryParams(MultiValueMap<String, String> params);
+        RequestBuilder pathParams(Map<String, String> params);
 
         RequestBuilder header(String name, String value);
 
@@ -64,6 +76,7 @@ public class ClientRequestWrapper {
         private String body;
         private String path;
         private final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+        private final Map<String, String> pathParams = new HashMap<>();
         private final HttpHeaders headers = new HttpHeaders();
 
         @Override
@@ -92,6 +105,12 @@ public class ClientRequestWrapper {
         @Override
         public RequestBuilder queryParams(MultiValueMap<String, String> params) {
             queryParams.putAll(params);
+            return this;
+        }
+
+        @Override
+        public RequestBuilder pathParams(Map<String, String> params) {
+            pathParams.putAll(params);
             return this;
         }
 

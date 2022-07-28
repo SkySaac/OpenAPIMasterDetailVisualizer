@@ -13,8 +13,8 @@ import java.util.Map;
 @Service
 @Deprecated
 public class SampleDataProviderService {
-    private DataSchema dataobjectsArtficatView;
-    private DataSchema dataobjectsCatalogsView;
+    private final DataSchema dataobjectsArtficatView;
+    private final DataSchema dataobjectsCatalogsView;
 
     public SampleDataProviderService() {
 
@@ -24,9 +24,9 @@ public class SampleDataProviderService {
         schemas1.put("remoteId",new DataSchema("remoteId", new DataValue("genesis", PropertyTypeEnum.STRING)));
         schemas1.put("title",new DataSchema("title", new DataValue("Example Title", PropertyTypeEnum.STRING)));
         schemas1.put("description",new DataSchema("description", new DataValue("Example Description", PropertyTypeEnum.STRING)));
-        schemas1.put("numAccessed",new DataSchema("numAccessed", new DataValue("5", PropertyTypeEnum.NUMBER)));
-        schemas1.put("byteSize",new DataSchema("byteSize", new DataValue("23456789", PropertyTypeEnum.NUMBER)));
-        schemas1.put("checkSum",new DataSchema("checkSum", new DataValue("0", PropertyTypeEnum.NUMBER)));
+        schemas1.put("numAccessed",new DataSchema("numAccessed", new DataValue("5", PropertyTypeEnum.INTEGER)));
+        schemas1.put("byteSize",new DataSchema("byteSize", new DataValue("23456789", PropertyTypeEnum.INTEGER)));
+        schemas1.put("checkSum",new DataSchema("checkSum", new DataValue("0", PropertyTypeEnum.INTEGER)));
         schemas1.put("_links",new DataSchema("_links", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
         schemas1.put("additional",new DataSchema("additional", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
 
@@ -40,9 +40,9 @@ public class SampleDataProviderService {
         schemas2.put("remoteId",new DataSchema("remoteId", new DataValue("genesis", PropertyTypeEnum.STRING)));
         schemas2.put("title",new DataSchema("title", new DataValue("Example Title 2", PropertyTypeEnum.STRING)));
         schemas2.put("description",new DataSchema("description", new DataValue("Example Description 2", PropertyTypeEnum.STRING)));
-        schemas2.put("numAccessed",new DataSchema("numAccessed", new DataValue("56", PropertyTypeEnum.NUMBER)));
-        schemas2.put("byteSize",new DataSchema("byteSize", new DataValue("3", PropertyTypeEnum.NUMBER)));
-        schemas2.put("checkSum",new DataSchema("checkSum", new DataValue("6", PropertyTypeEnum.NUMBER)));
+        schemas2.put("numAccessed",new DataSchema("numAccessed", new DataValue("56", PropertyTypeEnum.INTEGER)));
+        schemas2.put("byteSize",new DataSchema("byteSize", new DataValue("3", PropertyTypeEnum.INTEGER)));
+        schemas2.put("checkSum",new DataSchema("checkSum", new DataValue("6", PropertyTypeEnum.INTEGER)));
         schemas2.put("_links",new DataSchema("_links", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
         schemas2.put("additional",new DataSchema("additional", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
 
@@ -56,9 +56,9 @@ public class SampleDataProviderService {
         schemas3.put("remoteId",new DataSchema("remoteId", new DataValue("genesis", PropertyTypeEnum.STRING)));
         schemas3.put("title",new DataSchema("title", new DataValue("Example Title 3", PropertyTypeEnum.STRING)));
         schemas3.put("description",new DataSchema("description", new DataValue("Example Description 3", PropertyTypeEnum.STRING)));
-        schemas3.put("numAccessed",new DataSchema("numAccessed", new DataValue("56", PropertyTypeEnum.NUMBER)));
-        schemas3.put("byteSize",new DataSchema("byteSize", new DataValue("3675", PropertyTypeEnum.NUMBER)));
-        schemas3.put("checkSum",new DataSchema("checkSum", new DataValue("4567", PropertyTypeEnum.NUMBER)));
+        schemas3.put("numAccessed",new DataSchema("numAccessed", new DataValue("56", PropertyTypeEnum.INTEGER)));
+        schemas3.put("byteSize",new DataSchema("byteSize", new DataValue("3675", PropertyTypeEnum.INTEGER)));
+        schemas3.put("checkSum",new DataSchema("checkSum", new DataValue("4567", PropertyTypeEnum.INTEGER)));
         schemas3.put("_links",new DataSchema("_links", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
         schemas3.put("additional",new DataSchema("additional", new DataValue(new ArrayList<>(), PropertyTypeEnum.OBJECT)));
 

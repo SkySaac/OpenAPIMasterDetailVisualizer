@@ -12,6 +12,7 @@ import io.swagger.v3.parser.OpenAPIV3Parser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,8 +45,8 @@ public class StructureProviderService {
             log.info("Now looking for tag: " + tag);
 
             //sucht alle paths die zu diesem tag gehören und wandelt sie in StrucPath Objekte um
-            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = PathService.getPathsForTag(tag, openAPI.getPaths(),strucSchemaMap);
-            log.info("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
+            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = PathService.getPathsForTag(tag, openAPI.getPaths(), strucSchemaMap);
+            log.debug("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
 
             //alle components die zu path gehören aus strucSchemaMap holen und in strucViewGroup eintragen
             Map<String, StrucSchema> strucViewGroupSchemaMap = createStrucViewGroupSchemaMap(strucSchemaMap, pathsForTag);
@@ -55,11 +56,19 @@ public class StructureProviderService {
             List<String> primaryPaths = PathService.getPrimaryViewPaths(pathsForTag);
             log.debug("Primary Paths for tag " + tag + " are: " + primaryPaths);
 
+
+            //TODO rethink how secondary and primaryPath get saved -> maybe List of primary+secondary List
             //Find secondaryPaths
             Map<String, String> secondaryPaths = PathService.getSecondaryViewPaths(pathsForTag, primaryPaths);
             log.debug("Secondary Paths for tag " + tag + " are: " + secondaryPaths);
 
-            StrucViewGroup strucViewGroup = new StrucViewGroup(tag, primaryPaths, secondaryPaths, strucViewGroupSchemaMap, pathsForTag);
+            //TODO collect internal primary paths like /api/artifacts/{id}/representations -> make another list like primary paths
+            //TODO internal primary path need to have following pattern: primarypath/{...}/...
+            MultiValueMap<String, String> internalPrimaryPaths = PathService.getInternalPrimaryViewPaths(pathsForTag,primaryPaths);
+            log.debug("Internal Primary Paths for tag " + tag + " are: " + internalPrimaryPaths);
+
+            //TODO put internal primaryPath into StrucViewGroup, Put internal primaryPath into MDVStrucViewGroup
+            StrucViewGroup strucViewGroup = new StrucViewGroup(tag, primaryPaths, secondaryPaths, internalPrimaryPaths,strucViewGroupSchemaMap, pathsForTag);
 
             strucViewGroupList.add(strucViewGroup);
         });
@@ -98,12 +107,6 @@ public class StructureProviderService {
         return tags;
     }
 
-    /**
-     * This function creates a map of all Schemas that are being used in the
-     * @param strucSchemaMap
-     * @param pathsForTag
-     * @return
-     */
     private Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {

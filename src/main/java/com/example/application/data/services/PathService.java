@@ -7,6 +7,8 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +26,7 @@ public class PathService {
             if (!key.contains("{") && value.containsKey(HttpMethod.GET)) {
                 if (value.get(HttpMethod.GET).getResponseStrucSchema() != null) { //TODO geht null überhaupt ?
                     primaryPaths.add(value.get(HttpMethod.GET).getPath());
-                    log.info("Detected primary path: " + value.get(HttpMethod.GET).getPath());
+                    log.debug("Detected primary path: " + value.get(HttpMethod.GET).getPath());
                 }
             }
         });
@@ -35,7 +37,7 @@ public class PathService {
     public static Map<String, String> getSecondaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> primaryPaths) {
         //primary: /artifact/ -> secondary: /artifact/{id}/
 
-        //secondaryPath -> primaryPath
+        //secondaryPath -> primaryPath //TODO mach regex daraus
         Map<String, String> secondaryPaths = new HashMap<>();
 
         primaryPaths.forEach(primaryPath -> {
@@ -49,10 +51,25 @@ public class PathService {
                 if (path.startsWith(finalSecondaryRegex) && (path.split("}").length == 1 || path.split("}/").length == 1)
                         && (path.endsWith("}") || path.endsWith("}/"))) {
                     secondaryPaths.put(primaryPath, path);
+                    log.debug("Secondary Path found {} for Primary Path {}",path,primaryPath);
                 }
             });
         });
         return secondaryPaths;
+    }
+
+    public static MultiValueMap<String, String> getInternalPrimaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> primaryPaths) {
+        MultiValueMap<String, String> internalPrimary = new LinkedMultiValueMap<>();
+
+        primaryPaths.forEach(primaryPath -> { //TODO annahme: primaryPath/{...id...}/... ohne noch ein{} am ende
+            pathsForTag.keySet().forEach(path -> {
+                if(path.matches(primaryPath+"/\\{(\\w)+\\}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
+                    internalPrimary.add(primaryPath, path);
+                    log.info("Internal PrimaryPath found {} for Primary Path {}",path,primaryPath);
+                }
+            });
+        });
+        return internalPrimary;
     }
 
     private static String stripPath(String path) {
@@ -69,7 +86,7 @@ public class PathService {
         StrucPath strucPath = new StrucPath();
         strucPath.setPath(path);
         strucPath.setHttpMethod(httpMethod);
-        log.info("Converting Operation to Path for Path {} and HttpMethod {}", path, httpMethod.toString());
+        log.debug("Converting Operation to Path for Path {} and HttpMethod {}", path, httpMethod.toString());
 
         //Query & Path params
         if (operation.getParameters() != null && !operation.getParameters().isEmpty()) {
@@ -115,7 +132,7 @@ public class PathService {
 
             }
         } else {
-            log.info("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
+            log.debug("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
         }
         return strucPath;
     }

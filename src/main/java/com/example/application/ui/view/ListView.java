@@ -1,9 +1,9 @@
 package com.example.application.ui.view;
 
 import com.example.application.data.structureModel.StrucPath;
-import com.example.application.data.structureModel.StrucSchema;
 import com.example.application.ui.components.DeleteDialog;
 import com.example.application.ui.components.PostDialog;
+import com.example.application.ui.components.PutDialog;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -14,17 +14,18 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import org.springframework.http.HttpMethod;
 
-import java.util.List;
 import java.util.Map;
 
 public class ListView extends Div {
 
-    public interface LActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener {
+    public interface LActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener, PutDialog.PutActionListener {
         void openPostDialog(String path);
 
         void openDeleteDialog(String path);
 
         void openInternalMDV(String path);
+
+        void openPutDialog(String path);
     }
 
     private final LActionListener actionListener;
@@ -42,7 +43,7 @@ public class ListView extends Div {
         add(listDrawer);
     }
 
-    private Button createNavigateButton(){
+    private Button createNavigateButton() {
         Button navigateBackButton = new Button(new Icon(VaadinIcon.BACKWARDS));
         navigateBackButton.addClickListener(e -> this.closeMDVView());
         return navigateBackButton;
@@ -59,28 +60,26 @@ public class ListView extends Div {
     private VerticalLayout createListContent(Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         VerticalLayout verticalLayout = new VerticalLayout();
 
-        strucPathMap.forEach((path, v) -> {
+        strucPathMap.forEach((path, v) -> v.forEach((httpMethod, strucPath) -> {
+            switch (httpMethod) {
+                case POST -> verticalLayout.add(createPostListComponent("POST: " + path, path));
+                case DELETE -> verticalLayout.add(createDeleteComponent("DELETE: " + path, path));
+                case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path));
+                case PUT -> verticalLayout.add(createPostListComponent("PUT: " + path, path));
+                default -> {
+                    HorizontalLayout horizontalLayout = new HorizontalLayout();
+                    horizontalLayout.add(path);
+                    horizontalLayout.add(new Label(httpMethod.toString()));
+                    verticalLayout.add(horizontalLayout);
 
-            v.forEach((httpMethod, strucPath) -> {
-                switch (httpMethod) {
-                    case POST -> verticalLayout.add(createPostListComponent("POST: " + path, path));
-                    case DELETE -> verticalLayout.add(createDeleteComponent("DELETE: " + path, path));
-                    case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path));
-                    default -> {
-                        HorizontalLayout horizontalLayout = new HorizontalLayout();
-                        horizontalLayout.add(path);
-                        horizontalLayout.add(new Label(httpMethod.toString()));
-                        verticalLayout.add(horizontalLayout);
-
-                    }
                 }
+            }
 
-            });
-        });
+        }));
         return verticalLayout;
     }
 
-    public void openMDVView(Component masterDetailView){
+    public void openMDVView(Component masterDetailView) {
         this.remove(listDrawer); //TODO instead make totally view in presenter
         this.currentMasterDetailView = masterDetailView;
         this.currentNavigateButton = createNavigateButton();
@@ -88,7 +87,7 @@ public class ListView extends Div {
         this.add(masterDetailView);
     }
 
-    public void closeMDVView(){
+    public void closeMDVView() {
         this.remove(currentMasterDetailView);
         this.remove(currentNavigateButton);
         this.add(listDrawer);
@@ -108,6 +107,13 @@ public class ListView extends Div {
         return componentClicker;
     }
 
+    private Component createPutListComponent(String text, String path) {
+        Button componentClicker = new Button(text);
+        //TODO was wenn externalSchema
+        componentClicker.addClickListener(event -> actionListener.openPutDialog(path));
+        return componentClicker;
+    }
+
     private Component createDeleteComponent(String text, String path) {
         Button componentClicker = new Button(text);
         //TODO was wenn externalSchema
@@ -115,9 +121,14 @@ public class ListView extends Div {
         return componentClicker;
     }
 
-    public void openPostDialog(StrucSchema schema, StrucPath strucPath) {
+    public void openPostDialog(StrucPath strucPath) {
         PostDialog postDialog = new PostDialog(actionListener);
-        postDialog.open(schema, strucPath);
+        postDialog.open(strucPath);
+    }
+
+    public void openPutDialog(StrucPath strucPath) {
+        PutDialog putDialog = new PutDialog(actionListener);
+        putDialog.open(strucPath);
     }
 
     public void openDeleteDialog(StrucPath strucPath) {

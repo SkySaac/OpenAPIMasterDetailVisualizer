@@ -1,7 +1,7 @@
 package com.example.application.ui;
 
 
-import com.example.application.ui.accesspoint.AccessPoint;
+import com.example.application.ui.other.AccessPoint;
 import com.example.application.ui.route.AboutRoute;
 import com.example.application.ui.route.ListRoute;
 import com.example.application.ui.route.MasterDetailRoute;
@@ -12,6 +12,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import java.util.Map;
  * The main view is a top-level placeholder for other views.
  */
 @Slf4j
+@PreserveOnRefresh
 public class MainLayout extends AppLayout {
 
     public static class MenuItemInfo extends ListItem {
@@ -32,11 +34,11 @@ public class MainLayout extends AppLayout {
         /**
          * A simple navigation item component, based on ListItem element.
          */
-        public MenuItemInfo(String menuTitle, String iconClass, Class<? extends Component> view) {
+        public MenuItemInfo(String menuTitle, String navRoute, String iconClass, Class<? extends Component> view) {
             this.view = view;
             RouterLink link = new RouterLink();
             link.addClassNames("menu-item-link");
-            link.setRoute(view, new RouteParameters("tag", menuTitle));
+            link.setRoute(view, new RouteParameters("tag", navRoute));
 
             Span text = new Span(menuTitle);
             text.addClassNames("menu-item-text");
@@ -50,7 +52,7 @@ public class MainLayout extends AppLayout {
         }
         /**
          * Simple wrapper to create icons using LineAwesome iconset. See
-         * https://icons8.com/line-awesome
+         * <a href="https://icons8.com/line-awesome">...</a>
          */
         @NpmPackage(value = "line-awesome", version = "1.3.0")
         public static class LineAwesomeIcon extends Span {
@@ -86,13 +88,17 @@ public class MainLayout extends AppLayout {
         }
     } //TODO remove Nav target
 
-    public void addNavigationTarget(String tagName, boolean isMDV){
-        log.info("Adding a View with the name: "+tagName); //TODO add replacement of " " ? maybe %20 directly ?
+    public void addNavigationTarget(String tagName, boolean isMDV, String navRoute){
+
+        if (navRoute.startsWith("/"))
+            navRoute = navRoute.substring(1);
+
+        log.info("Adding a View with the name: {} and route: {}",tagName,navRoute); //TODO add replacement of " " ? maybe %20 directly ?
         MenuItemInfo menuItemInfo;
         if(isMDV)
-            menuItemInfo = new MenuItemInfo(tagName, "la la-columns", MasterDetailRoute.class);
+            menuItemInfo = new MenuItemInfo(tagName,navRoute, "la la-columns", MasterDetailRoute.class);
         else
-            menuItemInfo = new MenuItemInfo(tagName, "la la-columns", ListRoute.class);
+            menuItemInfo = new MenuItemInfo(tagName,navRoute, "la la-columns", ListRoute.class);
         nav.add(menuItemInfo);
         addedNavTargets.put(tagName,menuItemInfo);
     }
@@ -140,7 +146,7 @@ public class MainLayout extends AppLayout {
 
     private MenuItemInfo[] createBasicMenuItems() {
         return new MenuItemInfo[]{ //
-                new MenuItemInfo("About", "la la-file", AboutRoute.class)
+                new MenuItemInfo("About","about", "la la-file", AboutRoute.class)
         };
     }
 

@@ -56,6 +56,7 @@ public class AboutPresenter implements AboutView.ActionListener {
     public void addServerToSelection(String server) {
         serverList.add(server);
         view.setServers(serverList);
+        view.setSelectedServer(server);
     }
 
 

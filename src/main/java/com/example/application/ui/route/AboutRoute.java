@@ -4,6 +4,7 @@ import com.example.application.ui.MainLayout;
 import com.example.application.ui.presenter.AboutPresenter;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 
@@ -12,6 +13,7 @@ import javax.annotation.PostConstruct;
 @PageTitle("About")
 @Route(value = "about", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
+@PreserveOnRefresh
 public class AboutRoute extends Div {
     private final AboutPresenter presenter;
 

@@ -11,7 +11,7 @@ import java.util.*;
 @Slf4j
 public class SchemaService {
 
-    public static String getPagedSchemaName(StrucSchema schema) { //TODO GENERALISIEREN
+    public static String getPagedSchemaName(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
         Map<String, StrucSchema> properties = schema.getStrucValue().getProperties().get("_embedded").getStrucValue().getProperties();
         Map.Entry<String, StrucSchema> entry = properties.entrySet().iterator().next();
         if (entry.getValue().getStrucValue().getRef() == null || entry.getValue().getStrucValue().getType().equals(PropertyTypeEnum.SCHEMA)) {
@@ -21,9 +21,9 @@ public class SchemaService {
         return entry.getValue().getStrucValue().getRef();
     }
 
-    public static boolean isPagedSchema(StrucSchema schema) { //TODO GENERALISIEREN
+    public static boolean isPagedSchema(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
         if (schema == null)
-            System.out.println("hi");
+            log.debug("schema is null while trying to find out if its a paged schema or not");
         Map<String, StrucSchema> properties = schema.getStrucValue().getProperties();
         return properties != null && properties.containsKey("_embedded");
     }
@@ -78,8 +78,9 @@ public class SchemaService {
                     strucValue.getArrayElements().add(mapSchemaToStrucSchema("oneOf", schema.getItems()));
                 }
             } else {
-                //schema is string
+                //schema is string or other
                 strucValue = new StrucValue(PropertyTypeEnum.fromString(schema.getType()));
+
             }
 
         } else {
@@ -127,18 +128,18 @@ public class SchemaService {
                             schemaMap.get(properties.get(i).getValue().getStrucValue().getRef()));
             }
             //Check if the schema of the additional properties has a ref
-            if(schema.getStrucValue().getAdditionalPropertySchema()!=null){
+            if (schema.getStrucValue().getAdditionalPropertySchema() != null) {
                 //If the additional Property Schema is a ref -> replace it else
-                if(!schema.getStrucValue().getAdditionalPropertySchema().getStrucValue().getType().equals(PropertyTypeEnum.SCHEMA)){
+                if (!schema.getStrucValue().getAdditionalPropertySchema().getStrucValue().getType().equals(PropertyTypeEnum.SCHEMA)) {
                     replaceInternalRefs(schema.getStrucValue().getAdditionalPropertySchema(), schemaMap);
-                }else{
+                } else {
                     schema.getStrucValue().setAdditionalPropertySchema(
                             schemaMap.get(schema.getStrucValue().getAdditionalPropertySchema().getStrucValue().getRef()));
                 }
 
             }
         } else if (schema.getStrucValue().getType().equals(PropertyTypeEnum.ARRAY)) {
-            if(schema.getStrucValue().getRef()!=null){
+            if (schema.getStrucValue().getRef() != null) {
                 log.warn("Ref inside array, when it should be inside schema");
             }
 
@@ -162,7 +163,7 @@ public class SchemaService {
         return schemaRef.substring(schemaRef.lastIndexOf('/') + 1);
     }
 
-    @Deprecated
+    @Deprecated //TODO REMOVE
     public static Set<String> getNestedSchemaNames(Set<String> schemas, Schema schema) {
         if (schema != null) {
             if (schema.get$ref() != null)
