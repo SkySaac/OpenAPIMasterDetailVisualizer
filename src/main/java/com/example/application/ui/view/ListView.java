@@ -4,12 +4,11 @@ import com.example.application.data.structureModel.StrucPath;
 import com.example.application.ui.components.DeleteDialog;
 import com.example.application.ui.components.PostDialog;
 import com.example.application.ui.components.PutDialog;
+import com.example.application.ui.components.detaillayout.DetailLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import org.springframework.http.HttpMethod;
@@ -23,38 +22,17 @@ public class ListView extends Div {
 
         void openDeleteDialog(String path);
 
-        void openInternalMDV(String path);
-
         void openPutDialog(String path);
+
+        void navigateFromListView(String path);
     }
 
     private final LActionListener actionListener;
-    private final VerticalLayout listDrawer; //contains the list
-    private final String tagName;
-
-    private Component currentMasterDetailView = null;
-    private Component currentNavigateButton = null;
 
     public ListView(String tagName, LActionListener actionListener, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         this.actionListener = actionListener;
-        this.tagName = tagName;
 
-        listDrawer = createListDrawer(strucPathMap);
-        add(listDrawer);
-    }
-
-    private Button createNavigateButton() {
-        Button navigateBackButton = new Button(new Icon(VaadinIcon.BACKWARDS));
-        navigateBackButton.addClickListener(e -> this.closeMDVView());
-        return navigateBackButton;
-    }
-
-    private VerticalLayout createListDrawer(Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
-        VerticalLayout listDrawer = new VerticalLayout();
-
-        listDrawer.add(createListContent(strucPathMap));
-
-        return listDrawer;
+        add(createListContent(strucPathMap));
     }
 
     private VerticalLayout createListContent(Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
@@ -79,24 +57,10 @@ public class ListView extends Div {
         return verticalLayout;
     }
 
-    public void openMDVView(Component masterDetailView) {
-        this.remove(listDrawer); //TODO instead make totally view in presenter
-        this.currentMasterDetailView = masterDetailView;
-        this.currentNavigateButton = createNavigateButton();
-        this.add(currentNavigateButton);
-        this.add(masterDetailView);
-    }
-
-    public void closeMDVView() {
-        this.remove(currentMasterDetailView);
-        this.remove(currentNavigateButton);
-        this.add(listDrawer);
-    }
-
     private Component createMDVComponent(String text, String path) {
         Button componentClicker = new Button(text);
         //TODO was wenn externalSchema
-        componentClicker.addClickListener(event -> actionListener.openInternalMDV(path));
+        componentClicker.addClickListener(event -> actionListener.navigateFromListView(path));
         return componentClicker;
     }
 

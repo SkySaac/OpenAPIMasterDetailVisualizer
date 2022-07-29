@@ -6,6 +6,7 @@ import com.example.application.ui.route.AboutRoute;
 import com.example.application.ui.route.ListRoute;
 import com.example.application.ui.route.MasterDetailRoute;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -16,6 +17,7 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +27,7 @@ import java.util.Map;
  */
 @Slf4j
 @PreserveOnRefresh
+@SessionScope
 public class MainLayout extends AppLayout {
 
     public static class MenuItemInfo extends ListItem {
@@ -36,9 +39,10 @@ public class MainLayout extends AppLayout {
          */
         public MenuItemInfo(String menuTitle, String navRoute, String iconClass, Class<? extends Component> view) {
             this.view = view;
-            RouterLink link = new RouterLink();
+            Div link = new Div();
             link.addClassNames("menu-item-link");
-            link.setRoute(view, new RouteParameters("tag", navRoute));
+            //link.setRoute(view, new RouteParameters("tag", navRoute));
+            link.addClickListener(e -> UI.getCurrent().navigate(navRoute));
 
             Span text = new Span(menuTitle);
             text.addClassNames("menu-item-text");
@@ -95,10 +99,10 @@ public class MainLayout extends AppLayout {
 
         log.info("Adding a View with the name: {} and route: {}",tagName,navRoute); //TODO add replacement of " " ? maybe %20 directly ?
         MenuItemInfo menuItemInfo;
-        if(isMDV)
-            menuItemInfo = new MenuItemInfo(tagName,navRoute, "la la-columns", MasterDetailRoute.class);
+        if(isMDV) //TODO remore useless parameters (like the class thingy)
+            menuItemInfo = new MenuItemInfo(tagName,"/masterDetail/"+navRoute, "la la-columns", MasterDetailRoute.class);
         else
-            menuItemInfo = new MenuItemInfo(tagName,navRoute, "la la-columns", ListRoute.class);
+            menuItemInfo = new MenuItemInfo(tagName,"/list/"+navRoute, "la la-columns", ListRoute.class);
         nav.add(menuItemInfo);
         addedNavTargets.put(tagName,menuItemInfo);
     }

@@ -14,6 +14,7 @@ public class StrucViewGroupMDV {
     private String tagName;
     private StrucSchema behindPagedGetSchema;
     private Map<HttpMethod,StrucPath> primaryStrucPathMap;
+    private String secondaryGetPath;
     private Map<HttpMethod,StrucSchema> strucSchemaMap;
 
     private final Map<String, StrucViewGroupMDV> internalMDVs = new HashMap<>();

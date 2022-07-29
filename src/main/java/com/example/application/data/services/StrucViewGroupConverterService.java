@@ -111,7 +111,7 @@ public class StrucViewGroupConverterService {
             strucPathMap.put(HttpMethod.DELETE, deletePath);
         }
 
-        return new StrucViewGroupMDV(tagName, pagedStrucSchema, strucPathMap, strucSchemaMap);
+        return new StrucViewGroupMDV(tagName, pagedStrucSchema, strucPathMap,secondaryPath, strucSchemaMap);
     }
 
     public boolean isMDVStructure(StrucViewGroup strucViewGroup) {

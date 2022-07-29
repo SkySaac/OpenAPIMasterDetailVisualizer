@@ -17,8 +17,6 @@ public class ClientRequestService extends DefaultResponseErrorHandler {
     private final NotificationController notificationController;
     private final RestTemplate restTemplate;
 
-    private RequestEntity<?> recentRequestEntity = null;
-
     public ClientRequestService(NotificationController notificationController, RestTemplateBuilder restTemplateBuilder) {
         this.notificationController = notificationController;
         this.restTemplate = restTemplateBuilder.errorHandler(this).build();
@@ -31,7 +29,6 @@ public class ClientRequestService extends DefaultResponseErrorHandler {
 
     public ResponseEntity<String> request(ClientRequestWrapper requestWrapper) {
         final var requestEntity = requestWrapper.getRequestEntity();
-        recentRequestEntity = requestEntity;
         return restTemplate.exchange(requestEntity, String.class);
     }
 }

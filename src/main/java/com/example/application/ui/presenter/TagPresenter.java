@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +25,12 @@ import java.util.Objects;
 @Controller
 @PreserveOnRefresh
 @Slf4j
+@SessionScope
 public class TagPresenter implements DetailLayout.NavigationListener {
 
     @Getter
-    private final Map<String, String> primaryPathToTagNameMap = new HashMap<>();
-    private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>();
+    private final Map<String, String> primaryPathToTagNameMap = new HashMap<>(); //TODO remove, see the map below
+    private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>(); //TODO change to have path directly instead of tag as key
     private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
     private final StructureProviderService structureProviderService;
@@ -65,7 +67,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         strucOpenApi.getStrucViewGroups().forEach(strucViewGroup -> {
             if (strucViewGroupConverterService.isMDVStructure(strucViewGroup)) {
                 StrucViewGroupMDV strucViewGroupMDV = strucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
-                registerMasterDetailPresenter(strucViewGroupMDV);
+                registerMasterDetailPresenter(strucViewGroupMDV, true);
             } else {
                 StrucViewGroupLV strucViewGroupLV = strucViewGroupConverterService.createStrucViewGroupLV(strucViewGroup);
                 registerListPresenter(strucViewGroupLV);
@@ -74,27 +76,29 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         this.strucOpenApi = strucOpenApi;
     }
 
-    private void registerMasterDetailPresenter(StrucViewGroupMDV strucViewGroupMDV) {
+    private void registerMasterDetailPresenter(StrucViewGroupMDV strucViewGroupMDV, boolean menuNavigationable) {
         //TODO check if presenter name already exists
         log.info("Registering Master-Detail Presenter for the {} view", strucViewGroupMDV.getTagName());
-        String navigationRoute = "/masterDetail/" + strucViewGroupMDV.getTagName();
 
-        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(navigationRoute, this, clientDataService, strucViewGroupMDV);
+        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(this, clientDataService, strucViewGroupMDV);
 
         masterDetailPresenters.put(strucViewGroupMDV.getTagName(), masterDetailPresenter);
 
         primaryPathToTagNameMap.put(strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), strucViewGroupMDV.getTagName());
-
-        AccessPoint.getMainLayout().addNavigationTarget(strucViewGroupMDV.getTagName(), true
-                , strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+        if (menuNavigationable)
+            AccessPoint.getMainLayout().addNavigationTarget(strucViewGroupMDV.getTagName(), true
+                    , strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
     }
 
     private void registerListPresenter(StrucViewGroupLV strucViewGroupLV) {
         //TODO check if presenter name already exists
         log.info("Registering List Presenter for the {} view", strucViewGroupLV.getTagName());
-        String navigationRoute = "/list/" + strucViewGroupLV.getTagName(); //TODO correct refix ??
 
-        ListPresenter listPresenter = new ListPresenter(navigationRoute, clientDataService, strucViewGroupLV, this);
+        strucViewGroupLV.getStrucViewGroupMDVS().forEach(
+                (k, v) -> registerMasterDetailPresenter(v, false));
+
+
+        ListPresenter listPresenter = new ListPresenter(clientDataService, strucViewGroupLV, this);
 
         listPresenters.put(strucViewGroupLV.getTagName(), listPresenter);
 
@@ -113,59 +117,20 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     @Override
-    public void navigate(String path) { //TODO THIS STUFF CAN ALMOST COMPLETELY BE DELETED IF LISTVIEW MDV ROUTES  BECOME TRAGETABLE IN MDVROUTE TOO
+    public void navigate(String path) {
         log.info("Navigation to {}", path);
         if (path.startsWith(clientDataService.getServerUrl())) {
             //TODO kann es zu kollisionen kommen ? (glaube nich außer wenn path param = nem pfadteil ist)
 
             String pathWithoutServerURL = path.substring(clientDataService.getServerUrl().length());
 
-            List<Component> foundMDVPresenters = masterDetailPresenters.values().stream()
-                        .map(masterDetailPresenter -> masterDetailPresenter.getIfHasInternalTargetView(pathWithoutServerURL))
-                        .filter(Objects::nonNull).toList();
-
-            if(foundMDVPresenters.size()>0) {
-                //is MDV not listview
-                UI.getCurrent().navigate("/masterDetail"+pathWithoutServerURL);
-            }else{
-                //is a listview (or a 404)
-                UI.getCurrent().navigate("/list"+pathWithoutServerURL); //TODO vl siehe unten ?
-            }
+            //is MDV not listview
+            UI.getCurrent().navigate("/masterDetail" + pathWithoutServerURL);
 
         } else {
             //path not within program
             UI.getCurrent().navigate(path);
         }
-
-
-//            if (masterDetailPresenters.containsKey(pathWithoutServerURL)) { //normal mdv path
-//                masterDetailPresenters.get(pathWithoutServerURL);
-//            } else if (listPresenters.containsKey(pathWithoutServerURL)) { //Normal list path
-//                UI.getCurrent().navigate(listPresenters.get(pathWithoutServerURL).getNavigationRoute());
-//            } else {
-//                //TODO what if secondary path
-//
-//                List<NavigationTarget> foundMDVPresenters = masterDetailPresenters.values().stream()
-//                        .map(masterDetailPresenter -> masterDetailPresenter.getIfHasInternalTargetView(pathWithoutServerURL))
-//                        .filter(Objects::nonNull).toList();
-//
-//                if (foundMDVPresenters.size() > 0) {
-//                    //navigate to the first
-//                } else {
-//                    List<NavigationTarget> foundListPresenters = listPresenters.values().stream()
-//                            .map(masterDetailPresenter -> masterDetailPresenter.hasInternalTargetPath(pathWithoutServerURL))
-//                            .filter(Objects::nonNull).toList();
-//                    if (foundListPresenters.size() > 0) {
-//                        //navigate to the first
-//                    } else {
-//                        //path within program but doesnt exist
-//                        //TODO show 404 error page
-//                        UI.getCurrent().navigate("http://http.cat/404");
-//                    }
-//                }
-//            }
-
-
     }
 
     public Component getMDVInternalNavigationTargetFromPath(String path) {

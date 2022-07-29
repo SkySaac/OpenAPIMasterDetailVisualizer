@@ -22,8 +22,6 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
 
     private final ClientDataService clientDataService;
     private final DetailLayout.NavigationListener navigationListener;
-    @Getter
-    private final String navigationRoute;
 
     private MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     private Map<String, String> pathParams = new HashMap<>();
@@ -31,48 +29,18 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
     private MasterDetailView view;
     public StrucViewGroupMDV strucViewGroup;
 
-    public MasterDetailPresenter(String navigationRoute, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, StrucViewGroupMDV strucViewGroup) {
+    public MasterDetailPresenter(DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, StrucViewGroupMDV strucViewGroup) {
         this.clientDataService = clientDataService;
-        this.navigationRoute = navigationRoute;
         this.navigationListener = navigationListener;
         this.strucViewGroup = strucViewGroup;
 
         if (!strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.GET) || !strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.GET))
             log.error("Master Detail Presenter created with no Get path or schema: {}", strucViewGroup.getTagName());
 
-        //TODO create master detail presenters for internal primary views
-
-        strucViewGroup.getInternalMDVs().entrySet().forEach(entry -> { //TODO if id is needed put id in path
-            String newNavigationRoute = navigationRoute + entry.getValue().getTagName();
-            internalPresenters.put(entry.getKey(), new MasterDetailPresenter(newNavigationRoute, navigationListener, clientDataService, entry.getValue()));
+        strucViewGroup.getInternalMDVs().forEach((key, value) -> { //TODO if id is needed put id in path
+            internalPresenters.put(key, new MasterDetailPresenter(navigationListener, clientDataService, value));
         });
 
-    }
-
-    @Deprecated
-    public Component getInternalView(List<String> pathParams) { //TODO REMOVE
-        log.info("We have this path: " + pathParams.get(0) + " and have to match it to one of these: " + internalPresenters.keySet());
-
-        if (pathParams.size() == 2) {
-            //first part is id -> second part is what we match
-            List<String> selectedPath = internalPresenters.keySet().stream().filter(presenterPath ->
-                    presenterPath.split("/")[presenterPath.split("/").length - 1].equals(pathParams.get(1))).toList();
-            //should only have 1 entry now
-            if (selectedPath.size() == 1) {
-                HashMap<String, String> pathParamMap = new HashMap<>();
-                pathParamMap.put(selectedPath.get(0).split("/")[selectedPath.get(0).split("/").length - 2], pathParams.get(0));
-                internalPresenters.get(selectedPath).getView(pathParamMap);
-            } else {
-                //TODO
-            }
-        } else {
-            //is either no id in path (maybe using queryparams?) or just wrong
-            //TODO
-        }
-        //TODO -> see if last parameter matches to any internal primary view
-        //TODO (optional) -> if yes send data request to that url -> to check if it actually works
-        //TODO call getView on correct internalPrimary Presenter
-        return getView();
     }
 
     public Component getView() {
@@ -174,6 +142,21 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
                 } else {
                     pathParams.clear();
                 }
+            }
+        }
+        //checking the secondary path here
+        if(strucViewGroup.getSecondaryGetPath()!=null){
+            String[] splittedPresenterPath = strucViewGroup.getSecondaryGetPath().split("/");
+
+            boolean matching = true;
+            for (int i = 0; i < splittedPath.length - 1; i++) {
+                if (!splittedPresenterPath[i].startsWith("{") && !splittedPath[i].equals(splittedPresenterPath[i])) {
+                    matching = false;
+                    break;
+                }
+            }
+            if (matching) {
+                return getView();
             }
         }
         return null;
