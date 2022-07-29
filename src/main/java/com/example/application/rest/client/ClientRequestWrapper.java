@@ -54,6 +54,8 @@ public class ClientRequestWrapper {
 
         RequestBuilder body(String body);
 
+        RequestBuilder accept(MediaType mediaType);
+
         RequestBuilder path(String path);
 
         RequestBuilder queryParam(String name, String value);
@@ -82,6 +84,12 @@ public class ClientRequestWrapper {
         @Override
         public RequestBuilder body(String body) {
             this.body = body;
+            return this;
+        }
+
+        @Override
+        public RequestBuilder accept(MediaType mediaType) {
+            headers.getAccept().add(mediaType);
             return this;
         }
 

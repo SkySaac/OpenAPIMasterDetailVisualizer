@@ -14,8 +14,6 @@ import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.RouteParameters;
-import com.vaadin.flow.router.RouterLink;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.annotation.SessionScope;
 
@@ -54,6 +52,7 @@ public class MainLayout extends AppLayout {
         public Class<?> getView() {
             return view;
         }
+
         /**
          * Simple wrapper to create icons using LineAwesome iconset. See
          * <a href="https://icons8.com/line-awesome">...</a>
@@ -71,10 +70,12 @@ public class MainLayout extends AppLayout {
         }
 
     }
+
     private H1 viewTitle;
     private Nav nav;
 
-    private final Map<String,MenuItemInfo> addedNavTargets = new HashMap<>();
+    private final Map<String, MenuItemInfo> addedMDVNavTargets = new HashMap<>();
+    private final Map<String, MenuItemInfo> addedListNavTargets = new HashMap<>();
 
 
     public MainLayout() {
@@ -84,27 +85,36 @@ public class MainLayout extends AppLayout {
         AccessPoint.setMainLayout(this);
     }
 
-    public void removeNavigationTarget(String tagName){
-        log.info("Removing navigation target: "+ tagName);
-        if(addedNavTargets.containsKey(tagName)) {
-            nav.remove(addedNavTargets.get(tagName));
-            addedNavTargets.remove(tagName);
+    public void removeNavigationTarget(String path) {
+        log.info("Removing navigation target: " + path);
+        if (addedMDVNavTargets.containsKey(path)) {
+            nav.remove(addedMDVNavTargets.get(path));
+            addedMDVNavTargets.remove(path);
         }
-    } //TODO remove Nav target
+        else if (addedListNavTargets.containsKey(path)) {
+            nav.remove(addedListNavTargets.get(path));
+            addedListNavTargets.remove(path);
+        }
+    }
 
-    public void addNavigationTarget(String tagName, boolean isMDV, String navRoute){
+    public void addNavigationTarget(String tagName, boolean isMDV, String navRoute) {
 
         if (navRoute.startsWith("/"))
             navRoute = navRoute.substring(1);
 
-        log.info("Adding a View with the name: {} and route: {}",tagName,navRoute); //TODO add replacement of " " ? maybe %20 directly ?
+        log.info("Adding a View with the name: {} and route: {}", tagName, navRoute); //TODO add replacement of " " ? maybe %20 directly ?
         MenuItemInfo menuItemInfo;
-        if(isMDV) //TODO remore useless parameters (like the class thingy)
-            menuItemInfo = new MenuItemInfo(tagName,"/masterDetail/"+navRoute, "la la-columns", MasterDetailRoute.class);
-        else
-            menuItemInfo = new MenuItemInfo(tagName,"/list/"+navRoute, "la la-columns", ListRoute.class);
+        if (isMDV) //TODO remore useless parameters (like the class thingy)
+        {
+            menuItemInfo = new MenuItemInfo(tagName, "/masterDetail/" + navRoute, "la la-columns", MasterDetailRoute.class);
+            addedMDVNavTargets.put(navRoute,menuItemInfo);
+
+        } else {
+            menuItemInfo = new MenuItemInfo(tagName, "/list/" + navRoute, "la la-columns", ListRoute.class);
+            addedListNavTargets.put(tagName,menuItemInfo);
+
+        }
         nav.add(menuItemInfo);
-        addedNavTargets.put(tagName,menuItemInfo);
     }
 
     private Component createHeaderContent() {
@@ -150,7 +160,7 @@ public class MainLayout extends AppLayout {
 
     private MenuItemInfo[] createBasicMenuItems() {
         return new MenuItemInfo[]{ //
-                new MenuItemInfo("About","about", "la la-file", AboutRoute.class)
+                new MenuItemInfo("About", "about", "la la-file", AboutRoute.class)
         };
     }
 

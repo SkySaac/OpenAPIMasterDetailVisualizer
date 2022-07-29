@@ -31,7 +31,7 @@ public class ObjectComponent extends DetailComponent {
         super(objectTitle);
         this.objectTitle = objectTitle;
         this.detailSwitchListener = detailSwitchListener;
-        if(schema==null)
+        if (schema == null)
             System.out.println("hi");
         this.additionalSchema = schema.getStrucValue().getAdditionalPropertySchema();
 
@@ -63,7 +63,7 @@ public class ObjectComponent extends DetailComponent {
                 case INTEGER -> new NumberComponent(title);
                 case DOUBLE -> new DoubleComponent(title);
                 case BOOLEAN -> new BooleanComponent(title);
-                default -> new TextComponent(detailSwitchListener,title);
+                default -> new TextComponent(detailSwitchListener, title);
             };
 
             detailLayoutComponents.put(title, detailComponent);
@@ -74,13 +74,19 @@ public class ObjectComponent extends DetailComponent {
     }
 
     public void fillDetailLayout(DataValue dataValue) {
-        List<String> unusedProperties = new ArrayList<>(dataValue.getProperties().keySet());
-        dataValue.getProperties().keySet().forEach(key -> {
-            if (detailLayoutComponents.get(key) != null) {
-                detailLayoutComponents.get(key).fillDetailLayout(dataValue.get(key).getValue());
-                unusedProperties.remove(key);
-            }
-        });
+        List<String> unusedProperties;
+        //if (dataValue.getProperties() != null) {
+            unusedProperties = new ArrayList<>(dataValue.getProperties().keySet());
+
+            dataValue.getProperties().keySet().forEach(key -> {
+                if (detailLayoutComponents.get(key) != null) {
+                    detailLayoutComponents.get(key).fillDetailLayout(dataValue.get(key).getValue());
+                    unusedProperties.remove(key);
+                }
+            });
+        //} else {
+           // unusedProperties = new ArrayList<>();
+        //}
 
         createAdditionalPropertyComponents(dataValue, unusedProperties);
     }
@@ -120,7 +126,7 @@ public class ObjectComponent extends DetailComponent {
                 case INTEGER -> new NumberComponent(title);
                 case DOUBLE -> new DoubleComponent(title);
                 case BOOLEAN -> new BooleanComponent(title);
-                default -> new TextComponent(detailSwitchListener,title);
+                default -> new TextComponent(detailSwitchListener, title);
             };
 
             detailLayoutComponents.put(title, detailComponent);

@@ -27,9 +27,6 @@ import java.util.Objects;
 @Slf4j
 @SessionScope
 public class TagPresenter implements DetailLayout.NavigationListener {
-
-    @Getter
-    private final Map<String, String> primaryPathToTagNameMap = new HashMap<>(); //TODO remove, see the map below
     private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>(); //TODO change to have path directly instead of tag as key
     private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
@@ -82,9 +79,8 @@ public class TagPresenter implements DetailLayout.NavigationListener {
 
         MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(this, clientDataService, strucViewGroupMDV);
 
-        masterDetailPresenters.put(strucViewGroupMDV.getTagName(), masterDetailPresenter);
+        masterDetailPresenters.put(strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
 
-        primaryPathToTagNameMap.put(strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), strucViewGroupMDV.getTagName());
         if (menuNavigationable)
             AccessPoint.getMainLayout().addNavigationTarget(strucViewGroupMDV.getTagName(), true
                     , strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
@@ -106,9 +102,9 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                 , strucViewGroupLV.getTagName());
     }
 
-    public MasterDetailPresenter getMasterDetailPresenter(String name) {
+    public MasterDetailPresenter getMasterDetailPresenter(String path) {
         //TODO catch not existing presenter
-        return masterDetailPresenters.get(name);
+        return masterDetailPresenters.get(path);
     }
 
     public ListPresenter getListPresenter(String name) {
@@ -142,5 +138,9 @@ public class TagPresenter implements DetailLayout.NavigationListener {
             return foundMDVPresenters.get(0);
         }
         return null;
+    }
+
+    public boolean hasMasterDetailPresenter(String path){
+        return masterDetailPresenters.containsKey(path);
     }
 }

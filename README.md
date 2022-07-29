@@ -65,8 +65,9 @@ todo:
 
 fix not showing tags on the left at first start
 fix not showing logos on the navtargets on the left
-nvaigation not working
 put not working
 .../{id} has no view yet
 .../{id}/... without GET has no view
-listview internal mdvs need paths -> for good routing
+api/utils/enums makes error
+api/configurations/active
+api/configuration/pattern is empty -> correct ?
