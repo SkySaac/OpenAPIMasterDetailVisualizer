@@ -17,12 +17,11 @@ import org.springframework.util.MultiValueMap;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
 @Slf4j
 public class StructureProviderService {
     public static final String PARSE_OBJECT = "testOpenApi.yaml";
 
-    public StrucOpenApi generateApiStructure(String pathToOpenApiFile) {
+    public static StrucOpenApi generateApiStructure(String pathToOpenApiFile) {
         OpenAPI openAPI = new OpenAPIV3Parser().read(pathToOpenApiFile);
 
         StrucOpenApi strucOpenApi = new StrucOpenApi();
@@ -78,7 +77,7 @@ public class StructureProviderService {
         return strucOpenApi;
     }
 
-    private Set<String> collectTags(OpenAPI openAPI) {
+    private static Set<String> collectTags(OpenAPI openAPI) {
         Set<String> tags = new HashSet<>();
         if (openAPI.getTags() != null) {
             tags.addAll(openAPI.getTags().stream().map(Tag::getName).toList());
@@ -90,7 +89,7 @@ public class StructureProviderService {
         return tags;
     }
 
-    private Set<String> collectTags(PathItem pathItem) {
+    private static Set<String> collectTags(PathItem pathItem) {
         Set<String> tags = new HashSet<>();
         if (pathItem.getGet() != null && pathItem.getGet().getTags() != null)
             tags.addAll(pathItem.getGet().getTags());
@@ -107,7 +106,7 @@ public class StructureProviderService {
         return tags;
     }
 
-    private Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
+    private static Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema

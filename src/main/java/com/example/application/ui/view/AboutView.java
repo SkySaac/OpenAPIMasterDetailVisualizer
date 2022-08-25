@@ -1,5 +1,6 @@
 package com.example.application.ui.view;
 
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -31,28 +32,29 @@ public class AboutView extends VerticalLayout {
         img.setWidth("200px");
         add(img);
 
-        //TODO uploadButton
-
         TextField textField = new TextField("OpenAPI Doc");
         textField.setValue(defaultSource);
+        textField.setWidth(20, Unit.PERCENTAGE);
         add(textField);
 
         Button button = new Button("Extract OpenAPI Structure!");
         button.addClickListener(e -> actionListener.openApiAction(textField.getValue()));
         add(button);
 
-
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField serverInput = new TextField();
+        serverInput.setWidth(70, Unit.PERCENTAGE);
         Button serverAddButton = new Button("Add Server");
         serverAddButton.addClickListener(e -> actionListener.addServerToSelection(serverInput.getValue()));
         serverListBox.setItems(serverURLs);
         serverListBox.setValue(selectedServerURL);
+        serverListBox.setWidth(20, Unit.PERCENTAGE);
         serverListBox.addValueChangeListener(e -> {
             if (e.getValue() != null)
                 actionListener.serverSelected(e.getValue());
         });
         horizontalLayout.add(serverInput, serverAddButton);
+        horizontalLayout.setWidth(20, Unit.PERCENTAGE);
 
         add(serverListBox);
         add(horizontalLayout);

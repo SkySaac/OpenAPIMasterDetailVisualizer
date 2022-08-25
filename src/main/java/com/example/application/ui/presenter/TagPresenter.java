@@ -7,10 +7,14 @@ import com.example.application.data.structureModel.StrucViewGroupLV;
 import com.example.application.data.structureModel.StrucViewGroupMDV;
 import com.example.application.rest.client.ClientDataService;
 import com.example.application.ui.components.detaillayout.DetailLayout;
+import com.example.application.ui.controller.NotificationService;
 import com.example.application.ui.other.AccessPoint;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.PreserveOnRefresh;
+import com.vaadin.flow.spring.annotation.UIScope;
+import io.swagger.parser.OpenAPIParser;
+import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -25,21 +29,19 @@ import java.util.Objects;
 @Controller
 @PreserveOnRefresh
 @Slf4j
-@SessionScope
+@UIScope
 public class TagPresenter implements DetailLayout.NavigationListener {
     private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>(); //TODO change to have path directly instead of tag as key
     private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
-    private final StructureProviderService structureProviderService;
-    private final StrucViewGroupConverterService strucViewGroupConverterService;
+    private final NotificationService notificationService;
 
     @Getter
     private StrucOpenApi strucOpenApi;
 
-    public TagPresenter(ClientDataService clientDataService, StrucViewGroupConverterService strucViewGroupConverterService, StructureProviderService structureProviderService) {
+    public TagPresenter(ClientDataService clientDataService, NotificationService notificationService) {
         this.clientDataService = clientDataService;
-        this.structureProviderService = structureProviderService;
-        this.strucViewGroupConverterService = strucViewGroupConverterService;
+        this.notificationService = notificationService;
     }
 
     public List<String> getServers() {
@@ -47,14 +49,13 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     private void clearOldPresenters() {
-        listPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
+        AccessPoint.getMainLayout().removeAll();
         listPresenters.clear();
-        masterDetailPresenters.forEach((key, value) -> AccessPoint.getMainLayout().removeNavigationTarget(key));
         masterDetailPresenters.clear();
     }
 
     public void prepareStructure(String source) {
-        StrucOpenApi strucOpenApi = structureProviderService.generateApiStructure(source);
+        StrucOpenApi strucOpenApi = StructureProviderService.generateApiStructure(source);
         registerPresenters(strucOpenApi);
     }
 
@@ -62,11 +63,11 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         clearOldPresenters();
         log.info("Registering presenters...");
         strucOpenApi.getStrucViewGroups().forEach(strucViewGroup -> {
-            if (strucViewGroupConverterService.isMDVStructure(strucViewGroup)) {
-                StrucViewGroupMDV strucViewGroupMDV = strucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
+            if (StrucViewGroupConverterService.isMDVStructure(strucViewGroup)) {
+                StrucViewGroupMDV strucViewGroupMDV = StrucViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(strucViewGroupMDV, true);
             } else {
-                StrucViewGroupLV strucViewGroupLV = strucViewGroupConverterService.createStrucViewGroupLV(strucViewGroup);
+                StrucViewGroupLV strucViewGroupLV = StrucViewGroupConverterService.createStrucViewGroupLV(strucViewGroup);
                 registerListPresenter(strucViewGroupLV);
             }
         });
@@ -74,10 +75,9 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     private void registerMasterDetailPresenter(StrucViewGroupMDV strucViewGroupMDV, boolean menuNavigationable) {
-        //TODO check if presenter name already exists
         log.info("Registering Master-Detail Presenter for the {} view", strucViewGroupMDV.getTagName());
 
-        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(this, clientDataService, strucViewGroupMDV);
+        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService,this, clientDataService, strucViewGroupMDV);
 
         masterDetailPresenters.put(strucViewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
 
@@ -94,7 +94,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                 (k, v) -> registerMasterDetailPresenter(v, false));
 
 
-        ListPresenter listPresenter = new ListPresenter(clientDataService, strucViewGroupLV, this);
+        ListPresenter listPresenter = new ListPresenter(notificationService,clientDataService, strucViewGroupLV, this);
 
         listPresenters.put(strucViewGroupLV.getTagName(), listPresenter);
 
@@ -102,19 +102,21 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                 , strucViewGroupLV.getTagName());
     }
 
-    public MasterDetailPresenter getMasterDetailPresenter(String path) {
-        //TODO catch not existing presenter
-        return masterDetailPresenters.get(path);
+    public Presenter getMasterDetailPresenter(String path) {
+        if(masterDetailPresenters.containsKey(path))
+            return masterDetailPresenters.get(path);
+        else
+            return masterDetailPresenters.get(path+"/");
     }
 
-    public ListPresenter getListPresenter(String name) {
-        //TODO catch not existing presenter
+    public Presenter getListPresenter(String name) {
         return listPresenters.get(name);
     }
 
     @Override
     public void navigate(String path) {
         log.info("Navigation to {}", path);
+        log.info("CurrentServerURl: {}",clientDataService.getServerUrl());
         if (path.startsWith(clientDataService.getServerUrl())) {
             //TODO kann es zu kollisionen kommen ? (glaube nich außer wenn path param = nem pfadteil ist)
 
@@ -125,7 +127,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
 
         } else {
             //path not within program
-            UI.getCurrent().navigate(path);
+            UI.getCurrent().getPage().open(path);
         }
     }
 
@@ -141,6 +143,6 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     public boolean hasMasterDetailPresenter(String path){
-        return masterDetailPresenters.containsKey(path);
+        return masterDetailPresenters.containsKey(path) || masterDetailPresenters.containsKey(path+"/") ;
     }
 }

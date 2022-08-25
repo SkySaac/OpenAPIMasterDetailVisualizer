@@ -4,6 +4,8 @@ import com.example.application.data.structureModel.PropertyTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,8 +14,8 @@ import java.util.Map;
 public class DataValue {
     private PropertyTypeEnum propertyTypeEnum;
     private String plainValue; //If this value is a string or number
-    private List<DataSchema> dataSchemas; //If this value is an array
-    private Map<String, DataSchema> properties; //If this value is an object
+    private List<DataSchema> dataSchemas = new ArrayList<>(); //If this value is an array
+    private Map<String, DataSchema> properties = new HashMap<>(); //If this value is an object
     public DataValue(String plainValue, PropertyTypeEnum propertyTypeEnum){
         this.propertyTypeEnum = propertyTypeEnum;
         this.plainValue = plainValue;

@@ -6,6 +6,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.annotation.SessionScope;
 
@@ -14,7 +15,7 @@ import org.springframework.web.context.annotation.SessionScope;
 @Route(value = "masterDetail", layout = MainLayout.class) //TODO klein schreiben
 @PreserveOnRefresh
 @Slf4j
-@SessionScope
+@UIScope
 public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUrlParameter<String> {
 
     private final TagPresenter tagPresenter;

@@ -4,33 +4,39 @@ import com.example.application.data.dataModel.DataSchema;
 import com.example.application.data.structureModel.StrucSchema;
 import com.example.application.data.structureModel.StrucViewGroupMDV;
 import com.example.application.rest.client.ClientDataService;
+import com.example.application.ui.components.DeleteDialog;
+import com.example.application.ui.components.PostDialog;
+import com.example.application.ui.components.PutDialog;
+import com.example.application.ui.components.QueryParamDialog;
 import com.example.application.ui.components.detaillayout.DetailLayout;
+import com.example.application.ui.controller.NotificationService;
 import com.example.application.ui.view.MasterDetailView;
 import com.vaadin.flow.component.Component;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class MasterDetailPresenter implements MasterDetailView.MDActionListener {
+public class MasterDetailPresenter implements MasterDetailView.MDActionListener, QueryParamDialog.QueryActionListener,
+        PostDialog.PostActionListener, DeleteDialog.DeleteActionListener, PutDialog.PutActionListener, Presenter {
 
     private final ClientDataService clientDataService;
+    private final NotificationService notificationService;
     private final DetailLayout.NavigationListener navigationListener;
-
+    private final Map<String, MasterDetailPresenter> internalPresenters = new HashMap<>();
     private MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     private Map<String, String> pathParams = new HashMap<>();
-    private final Map<String, MasterDetailPresenter> internalPresenters = new HashMap<>();
     private MasterDetailView view;
     public StrucViewGroupMDV strucViewGroup;
 
-    public MasterDetailPresenter(DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, StrucViewGroupMDV strucViewGroup) {
+    public MasterDetailPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, StrucViewGroupMDV strucViewGroup) {
         this.clientDataService = clientDataService;
+        this.notificationService = notificationService;
         this.navigationListener = navigationListener;
         this.strucViewGroup = strucViewGroup;
 
@@ -38,7 +44,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
             log.error("Master Detail Presenter created with no Get path or schema: {}", strucViewGroup.getTagName());
 
         strucViewGroup.getInternalMDVs().forEach((key, value) -> { //TODO if id is needed put id in path
-            internalPresenters.put(key, new MasterDetailPresenter(navigationListener, clientDataService, value));
+            internalPresenters.put(key, new MasterDetailPresenter(notificationService, navigationListener, clientDataService, value));
         });
 
     }
@@ -50,7 +56,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
     public Component getView(Map<String, String> pathParams) {
         StrucSchema shownGetSchema;
 
-        if (strucViewGroup.isPaged()) {
+        if (strucViewGroup.isPaged()) { //TODO umbenennen
             shownGetSchema = strucViewGroup.getBehindPagedGetSchema(); //übergeben: pfade
         } else {
             shownGetSchema = strucViewGroup.getStrucSchemaMap().get(HttpMethod.GET);
@@ -61,65 +67,109 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
         view = new MasterDetailView(navigationListener, this, strucViewGroup.isPaged(),
                 shownGetSchema,
                 strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.POST),
-                strucViewGroup.getStrucSchemaMap().get(HttpMethod.PUT),
+                strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.PUT),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),
                 !strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET).getQueryParams().isEmpty());
-
-        view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
-                strucViewGroup.getBehindPagedGetSchema(), pathParams, queryParams));
+        try {
+            view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
+                    strucViewGroup.getBehindPagedGetSchema(), pathParams, queryParams));
+        } catch (ResourceAccessException e) {
+            log.error("Error trying to access: {}", e.getMessage());
+            e.printStackTrace();
+            notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+        }
         return view;
     }
 
+
     @Override
     public void openPostDialog() {
-        view.openPostDialog(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST));
+        PostDialog postDialog = new PostDialog(this);
+        postDialog.open(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST));
+    }
+    @Override
+    public void openPutDialog() {
+        PutDialog putDialog = new PutDialog(this);
+        putDialog.open(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.PUT));
     }
 
     @Override
     public void openDeleteDialog() {
-        view.openDeleteDialog(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.DELETE));
+        DeleteDialog deleteDialog = new DeleteDialog(this);
+        deleteDialog.open(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.DELETE));
     }
 
     @Override
     public void openQueryDialog() {
-        view.openQueryParamDialog(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET));
+        QueryParamDialog queryParamDialog = new QueryParamDialog(this);
+        queryParamDialog.open(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET));
     }
 
     @Override
     public void refreshData() {
-        view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
-                strucViewGroup.getBehindPagedGetSchema(), pathParams, queryParams));
+        try {
+            view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
+                    strucViewGroup.getBehindPagedGetSchema(), pathParams, queryParams));
+        } catch (ResourceAccessException e) {
+            log.error("Error trying to access: {}", e.getMessage());
+            e.printStackTrace();
+            notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+        }
     }
 
     @Override
-    public void postAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties) {
+    public void postAction(String path, MultiValueMap<String, String> queryParameters,Map<String,String> pathVariables, DataSchema properties) {
         if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST)) {
-            clientDataService.postData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), properties, queryParameters);
+            try {
+                clientDataService.postData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), properties, queryParameters,pathVariables);
+                refreshData();
+            } catch (ResourceAccessException e) {
+                log.error("Error trying to access: {}", e.getMessage());
+                e.printStackTrace();
+                notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+            }
         }
-        refreshData();
     }
 
     @Override
     public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String, String> queryParameters) {
         if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE)) {
-            //enthaltener parameter (in pfad) raussuchen
+            //enthaltener parameter (in pfad) raussuchen //TODO was das
             String firstParam = path.split("\\{")[1].split("}")[0];
             //gucken ob param in dataSchema enthalten ist
             //löschanfrage senden
-            clientDataService.deleteData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.DELETE), pathVariables, queryParameters);
+            try {
+                clientDataService.deleteData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.DELETE).getPath(),
+                        pathVariables, queryParameters);
+            } catch (ResourceAccessException e) {
+                log.error("Error trying to access: {}", e.getMessage());
+                e.printStackTrace();
+                notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+            }
         }
         refreshData();
+    }
+
+    @Override
+    public void putAction(String path, MultiValueMap<String, String> queryParameters,Map<String,String> pathParams, DataSchema properties) {
+        //TODO put functional
+
+        if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT)) {
+            try { //TODO
+                clientDataService.putData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.PUT), properties, queryParameters,pathParams);
+                refreshData();
+            } catch (ResourceAccessException e) {
+                log.error("Error trying to access: {}", e.getMessage());
+                e.printStackTrace();
+                notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+            }
+        }
     }
 
     @Override
     public void setQueryParams(MultiValueMap<String, String> queryParams) {
         this.queryParams = queryParams;
         refreshData();
-    }
-
-    @Override
-    public void putAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties) {
-        //TODO
     }
 
     public Component getIfHasInternalTargetView(String path) {
@@ -145,7 +195,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener 
             }
         }
         //checking the secondary path here
-        if(strucViewGroup.getSecondaryGetPath()!=null){
+        if (strucViewGroup.getSecondaryGetPath() != null) {
             String[] splittedPresenterPath = strucViewGroup.getSecondaryGetPath().split("/");
 
             boolean matching = true;

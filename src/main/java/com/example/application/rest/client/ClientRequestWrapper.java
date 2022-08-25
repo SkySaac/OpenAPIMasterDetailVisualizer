@@ -39,9 +39,12 @@ public class ClientRequestWrapper {
         requestBuilder.queryParams.forEach(uriBuilder::queryParam);
 
         final var builder = RequestEntity.method(httpMethod, uriBuilder.build().toUri());
+        requestBuilder.headers.add("accept","application/json");
+        requestBuilder.headers.add("accept","application/hal+json");
+        requestBuilder.headers.add("accept","application/ld+json");
         builder.headers(requestBuilder.headers);
         builder.contentType(MediaType.APPLICATION_JSON);
-        builder.accept(MediaType.APPLICATION_JSON);
+        //builder.accept(MediaType.APPLICATION_JSON);
 
         return builder.body(requestBuilder.body);
     }

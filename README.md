@@ -63,11 +63,32 @@ docker run -p 8080:8080 mybachelor:latest
 
 todo:
 
-fix not showing tags on the left at first start
-fix not showing logos on the navtargets on the left
-put not working
-.../{id} has no view yet
-.../{id}/... without GET has no view
-api/utils/enums makes error
-api/configurations/active
-api/configuration/pattern is empty -> correct ?
+fix not showing tags on the left at first start -> nicht wieder gesehen
+handle artifact data get
+url that points to asdgs/{id} as in space api -> needs help & fix
+css style für detailview array überschrift + pfad
+remove isFreeSchema
+post/put add direct input and add array
+
+api ids search wieso zeigt body an
+
+put not working ->  -> TESTEN
+TESTEN -> listview -> nicht anzeigen von pfaden die in anderen primaryviews drinne sind -> chekc if fixed ienmal einfach alle in listviews anzeigen alssen
+
+
+query params required -> optional
+application/octet-stream support -> button for up n download -> optional
+change to using tabs -> optional
+support allOf -> optional
+checksum sollte string sein oder long
+Problem -> Tagesschau gibt unter /api/news gibt in return object mehr parameter zurück als in apidoc defined -> geht also nicht
+Problem -> jackson doesnt know the difference between double and int
+
+
+remove @Service von services die es nicht brauchen
+FIXED I THINK.../{id}/... without GET has no view -> no mdv -> WICHTIG
+FIXED I THINK ERROR GETTING PAGE FOR SCHEMA PagedModelObject at startup -> ??
+FIXED I THINK localhost:8081 link leitet immer noch in app um und ruft nich direkt link auf -> wegen nur anderem port denk vaadin vl ?
+FIXED I THINK vaadin just having a different port still navigates you with ui.navigate to your current application instead of the external one
+api/utils/enums -> fehler, sollte objects statt arrays haben....
+nav doesnt update sometimes...

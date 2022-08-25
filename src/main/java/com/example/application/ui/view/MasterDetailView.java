@@ -1,17 +1,13 @@
 package com.example.application.ui.view;
 
 import com.example.application.data.dataModel.DataSchema;
-import com.example.application.data.structureModel.StrucPath;
 import com.example.application.data.structureModel.StrucSchema;
-import com.example.application.ui.components.DeleteDialog;
-import com.example.application.ui.components.PostDialog;
-import com.example.application.ui.components.PutDialog;
-import com.example.application.ui.components.QueryParamDialog;
 import com.example.application.ui.components.detaillayout.DetailLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -23,9 +19,10 @@ import java.util.List;
 @Slf4j
 public class MasterDetailView extends Div {
 
-    public interface MDActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener,
-            QueryParamDialog.QueryActionListener, PutDialog.PutActionListener {
+    public interface MDActionListener {
         void openPostDialog();
+
+        void openPutDialog();
 
         void openDeleteDialog();
 
@@ -36,25 +33,25 @@ public class MasterDetailView extends Div {
     }
 
     private final MDActionListener mdActionListener;
-    private final DetailLayout.NavigationListener navigationListener;
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
 
+    private final Label noDataLabel = new Label("Keine Daten erhalten");
+
     public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, boolean hasPost,
-                            StrucSchema putSchema, boolean hasDelete, boolean hasQueryParams) { //change to 2 schemas 1 create 1 get
+                            boolean hasPut, boolean hasDelete, boolean hasQueryParams) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
-        this.navigationListener = navigationListener;
         addClassNames("master-detail-view");
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        addTopButtons(isPaged, hasPost, hasQueryParams);
+        addTopButtons(hasPost, hasPut, hasQueryParams);
 
         splitLayout.addToPrimary(createGridLayout());
 
         if (getSchema == null)
-            log.warn("schema in null");
+            log.error("schema is null while creating a mdview");
 
         detailLayout = new DetailLayout(navigationListener, getSchema);
         splitLayout.addToSecondary(detailLayout);
@@ -65,16 +62,10 @@ public class MasterDetailView extends Div {
         configureGrid(getSchema, hasDelete);
     }
 
-    public void addTopButtons(boolean isPaged, boolean hasPost, boolean hasQueryParams) {
+    public void addTopButtons(boolean hasPost, boolean hasPut, boolean hasQueryParams) {
         //HorizontalLayout menubar = new HorizontalLayout();
         HorizontalLayout menuBar = new HorizontalLayout();
         menuBar.getStyle().set("padding-left", "10px");
-
-        if (isPaged) {
-            Button backwards = new Button(VaadinIcon.ARROW_LEFT.create());
-            Button forwards = new Button(VaadinIcon.ARROW_RIGHT.create());
-            menuBar.add(new Div(backwards, forwards));
-        }
 
         Button refreshButton = new Button(VaadinIcon.REFRESH.create());
         refreshButton.addClickListener(e -> mdActionListener.refreshData());
@@ -92,29 +83,13 @@ public class MasterDetailView extends Div {
             menuBar.add(postButton);
         }
 
+        if (hasPut) {
+            Button putButton = new Button(VaadinIcon.EDIT.create());
+            putButton.addClickListener(e -> mdActionListener.openPutDialog());
+            menuBar.add(putButton);
+        }
+
         add(menuBar);
-    }
-
-    public void openPostDialog(StrucPath strucPath) {
-        PostDialog postDialog = new PostDialog(mdActionListener);
-        postDialog.open(strucPath);
-    }
-
-    //TODO PUT Dialog
-
-    public void openPutDialog(StrucPath strucPath) {
-        PutDialog putDialog = new PutDialog(mdActionListener);
-        putDialog.open(strucPath);
-    }
-
-    public void openDeleteDialog(StrucPath strucPath) {
-        DeleteDialog deleteDialog = new DeleteDialog(mdActionListener);
-        deleteDialog.open(strucPath);
-    }
-
-    public void openQueryParamDialog(StrucPath strucPath) {
-        QueryParamDialog queryParamDialog = new QueryParamDialog(mdActionListener);
-        queryParamDialog.open(strucPath);
     }
 
 
@@ -130,7 +105,7 @@ public class MasterDetailView extends Div {
         //Add all columns
         getSchema.getStrucValue().getProperties().keySet().forEach(property ->
                 grid.addColumn(
-                        dataSchema -> dataSchema.getValue().getProperties().get(property) != null
+                        dataSchema -> dataSchema.getValue().getProperties().containsKey(property)
                                 ? dataSchema.getValue().getProperties().get(property).getValue().getPlainValue() : "-"
                 ).setHeader(property).setAutoWidth(true)
         );
@@ -150,14 +125,16 @@ public class MasterDetailView extends Div {
     }
 
     public void setData(DataSchema data) {
-        if (data != null) {
-            if (data.getValue().getDataSchemas() == null) {
+        if (data != null && data.getValue()!=null && (!data.getValue().getDataSchemas().isEmpty() || !data.getValue().getProperties().isEmpty())) {
+            noDataLabel.setVisible(false);
+            if (data.getValue().getDataSchemas().isEmpty() && !data.getValue().getProperties().isEmpty()) {
                 grid.setItems(List.of(data));
             } else {
                 grid.setItems(data.getValue().getDataSchemas());
             }
         } else {
             log.info("No data found");
+            noDataLabel.setVisible(true);
         }
     }
 
@@ -166,8 +143,8 @@ public class MasterDetailView extends Div {
         wrapper.setClassName("grid-wrapper");
         grid.setSizeFull();
         wrapper.add(grid);
+        wrapper.add(noDataLabel);
         return wrapper;
     }
-
 
 }

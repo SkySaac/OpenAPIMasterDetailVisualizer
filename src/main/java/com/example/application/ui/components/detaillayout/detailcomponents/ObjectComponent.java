@@ -8,12 +8,12 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 public class ObjectComponent extends DetailComponent {
 
     private final Map<String, DetailComponent> detailLayoutComponents = new HashMap<>();
@@ -74,47 +74,49 @@ public class ObjectComponent extends DetailComponent {
     }
 
     public void fillDetailLayout(DataValue dataValue) {
-        List<String> unusedProperties;
-        //if (dataValue.getProperties() != null) {
-            unusedProperties = new ArrayList<>(dataValue.getProperties().keySet());
+        Map<String,PropertyTypeEnum> unusedProperties = dataValue.getProperties().entrySet().stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), e.getValue().getValue().getPropertyTypeEnum()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                ));
 
-            dataValue.getProperties().keySet().forEach(key -> {
-                if (detailLayoutComponents.get(key) != null) {
-                    detailLayoutComponents.get(key).fillDetailLayout(dataValue.get(key).getValue());
-                    unusedProperties.remove(key);
-                }
-            });
-        //} else {
-           // unusedProperties = new ArrayList<>();
-        //}
+        dataValue.getProperties().keySet().forEach(key -> {
+            if (detailLayoutComponents.containsKey(key)) {
+                detailLayoutComponents.get(key).fillDetailLayout(dataValue.get(key).getValue());
+                unusedProperties.remove(key);
+            }
+        });
 
         createAdditionalPropertyComponents(dataValue, unusedProperties);
     }
 
-    private void createAdditionalPropertyComponents(DataValue dataValue, List<String> unusedProperties) {
+    private void createAdditionalPropertyComponents(DataValue dataValue, Map<String,PropertyTypeEnum> unusedProperties) {
         if (additionalSchema != null) {
-            //TODO check if dataValue.getProperties().get(key).getValue() has same type/properties or so as the additional one
-            //TODO if not -> remove it
-            unusedProperties.forEach(unusedProperty -> {
-                DetailComponent detailComponent = createAdditionalDetailComponent(additionalSchema, unusedProperty);
-                detailComponent.fillDetailLayout(dataValue.get(unusedProperty).getValue());
+            unusedProperties.forEach((key, value) -> {
+                if (value.equals(additionalSchema.getStrucValue().getType())) {
+                    DetailComponent detailComponent = createAdditionalDetailComponent(additionalSchema, key);
+                    detailComponent.fillDetailLayout(dataValue.get(key).getValue());
+                } else {
+                    log.info("Not usable property in return found: {}", key);
+                }
             });
         }
     }
 
-    private DetailComponent createAdditionalDetailComponent(StrucSchema strucSchema, String title) {
-        if (strucSchema.getStrucValue().getType().equals(PropertyTypeEnum.OBJECT)) {
+    private DetailComponent createAdditionalDetailComponent(StrucSchema additionalSchema, String title) {
+        if (additionalSchema.getStrucValue().getType().equals(PropertyTypeEnum.OBJECT)) {
 
-            ObjectComponent objectComponent = new ObjectComponent(title, strucSchema, detailSwitchListener);
+            ObjectComponent objectComponent = new ObjectComponent(title, additionalSchema, detailSwitchListener);
             detailLayoutComponents.put(title, objectComponent);
 
             Button objectButton = new Button(title);
             objectButton.addClickListener(e -> detailSwitchListener.switchToObject(this, title, objectComponent));
             formLayout.add(objectButton);
             return objectComponent;
-        } else if (strucSchema.getStrucValue().getType().equals(PropertyTypeEnum.ARRAY)) {
+        } else if (additionalSchema.getStrucValue().getType().equals(PropertyTypeEnum.ARRAY)) {
 
-            ArrayComponent arrayComponent = new ArrayComponent(title, strucSchema.getStrucValue().getArrayElements(), detailSwitchListener);
+            ArrayComponent arrayComponent = new ArrayComponent(title, additionalSchema.getStrucValue().getArrayElements(), detailSwitchListener);
             detailLayoutComponents.put(title, arrayComponent);
 
             Button arrayButton = new Button("List of " + title);
@@ -122,7 +124,7 @@ public class ObjectComponent extends DetailComponent {
             formLayout.add(arrayButton);
             return arrayComponent;
         } else {
-            DetailComponent detailComponent = switch (strucSchema.getStrucValue().getType()) {
+            DetailComponent detailComponent = switch (additionalSchema.getStrucValue().getType()) {
                 case INTEGER -> new NumberComponent(title);
                 case DOUBLE -> new DoubleComponent(title);
                 case BOOLEAN -> new BooleanComponent(title);

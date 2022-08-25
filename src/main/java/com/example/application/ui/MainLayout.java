@@ -2,9 +2,6 @@ package com.example.application.ui;
 
 
 import com.example.application.ui.other.AccessPoint;
-import com.example.application.ui.route.AboutRoute;
-import com.example.application.ui.route.ListRoute;
-import com.example.application.ui.route.MasterDetailRoute;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -14,43 +11,35 @@ import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
+import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.annotation.SessionScope;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The main view is a top-level placeholder for other views.
  */
 @Slf4j
 @PreserveOnRefresh
-@SessionScope
+@UIScope
 public class MainLayout extends AppLayout {
 
     public static class MenuItemInfo extends ListItem {
 
-        private final Class<? extends Component> view;
-
         /**
          * A simple navigation item component, based on ListItem element.
          */
-        public MenuItemInfo(String menuTitle, String navRoute, String iconClass, Class<? extends Component> view) {
-            this.view = view;
+        public MenuItemInfo(String menuTitle, String navRoute, String iconClass) {
             Div link = new Div();
             link.addClassNames("menu-item-link");
             //link.setRoute(view, new RouteParameters("tag", navRoute));
-            link.addClickListener(e -> UI.getCurrent().navigate(navRoute));
+            link.addClickListener(e ->
+                    UI.getCurrent().navigate(navRoute));
 
             Span text = new Span(menuTitle);
             text.addClassNames("menu-item-text");
 
             link.add(new LineAwesomeIcon(iconClass), text);
             add(link);
-        }
-
-        public Class<?> getView() {
-            return view;
         }
 
         /**
@@ -74,9 +63,6 @@ public class MainLayout extends AppLayout {
     private H1 viewTitle;
     private Nav nav;
 
-    private final Map<String, MenuItemInfo> addedMDVNavTargets = new HashMap<>();
-    private final Map<String, MenuItemInfo> addedListNavTargets = new HashMap<>();
-
 
     public MainLayout() {
         setPrimarySection(Section.DRAWER);
@@ -85,34 +71,21 @@ public class MainLayout extends AppLayout {
         AccessPoint.setMainLayout(this);
     }
 
-    public void removeNavigationTarget(String path) {
-        log.info("Removing navigation target: " + path);
-        if (addedMDVNavTargets.containsKey(path)) {
-            nav.remove(addedMDVNavTargets.get(path));
-            addedMDVNavTargets.remove(path);
-        }
-        else if (addedListNavTargets.containsKey(path)) {
-            nav.remove(addedListNavTargets.get(path));
-            addedListNavTargets.remove(path);
-        }
+    public void removeAll() {
+        nav.removeAll();
+        nav.add(createBasicMenuItems());
     }
 
     public void addNavigationTarget(String tagName, boolean isMDV, String navRoute) {
-
         if (navRoute.startsWith("/"))
             navRoute = navRoute.substring(1);
 
         log.info("Adding a View with the name: {} and route: {}", tagName, navRoute); //TODO add replacement of " " ? maybe %20 directly ?
         MenuItemInfo menuItemInfo;
-        if (isMDV) //TODO remore useless parameters (like the class thingy)
-        {
-            menuItemInfo = new MenuItemInfo(tagName, "/masterDetail/" + navRoute, "la la-columns", MasterDetailRoute.class);
-            addedMDVNavTargets.put(navRoute,menuItemInfo);
-
+        if (isMDV) {
+            menuItemInfo = new MenuItemInfo(tagName, "/masterDetail/" + navRoute, "las la-table");
         } else {
-            menuItemInfo = new MenuItemInfo(tagName, "/list/" + navRoute, "la la-columns", ListRoute.class);
-            addedListNavTargets.put(tagName,menuItemInfo);
-
+            menuItemInfo = new MenuItemInfo(tagName, "/list/" + navRoute, "las la-list");
         }
         nav.add(menuItemInfo);
     }
@@ -152,16 +125,13 @@ public class MainLayout extends AppLayout {
         list.addClassNames("navigation-list");
         nav.add(list);
 
-        for (MenuItemInfo menuItem : createBasicMenuItems()) {
-            list.add(menuItem);
-        }
+        list.add(createBasicMenuItems());
+
         return nav;
     }
 
-    private MenuItemInfo[] createBasicMenuItems() {
-        return new MenuItemInfo[]{ //
-                new MenuItemInfo("About", "about", "la la-file", AboutRoute.class)
-        };
+    private MenuItemInfo createBasicMenuItems() {
+        return new MenuItemInfo("About", "about", "la la-file");
     }
 
     private Footer createFooter() {

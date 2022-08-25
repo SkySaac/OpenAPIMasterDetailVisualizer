@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
 @Slf4j
 public class StrucViewGroupConverterService {
 
-    public StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup) {
+    public static StrucViewGroupLV createStrucViewGroupLV(StrucViewGroup strucViewGroup) {
         log.debug("List LV primary paths for {}: {}", strucViewGroup.getTagName(), strucViewGroup.getPrimaryPaths());
 
         //creates internal MDVs
@@ -30,13 +29,16 @@ public class StrucViewGroupConverterService {
         });
 
         return new StrucViewGroupLV(strucViewGroup.getTagName(), strucViewGroup.getStrucSchemaMap(), //TODO remove secondary paths
-                strucViewGroup.getStrucPathMap().entrySet().stream().filter(entry -> !strucViewGroup.getSecondaryPaths().containsValue(entry.getKey()))
+                strucViewGroup.getStrucPathMap().entrySet().stream()
+                        .filter(entry -> !strucViewGroup.getSecondaryPaths().containsValue(entry.getKey()) //TODO mal strucviewgroup angucken ob alles richtig zugeordnet ist
+                                && !strucViewGroup.getPrimaryPaths().contains(entry.getKey())
+                                && strucViewGroup.getInternalPrimaryPaths().values().stream().noneMatch(values -> values.contains(entry.getKey())))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
                 internalMDVStrucViewGroups);
     }
 
-    public StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
-        if (!isMDVStructure(strucViewGroup)) return null; //TODO glaube kann raus, würde sonst listview dinger
+    public static StrucViewGroupMDV createStrucViewGroupMDV(StrucViewGroup strucViewGroup) {
+        //if (!isMDVStructure(strucViewGroup)) return null; //TODO glaube kann raus, würde sonst listview dinger
 
         StrucViewGroupMDV primaryStrucViewGroup = createSingleStrucViewGroupMDV(strucViewGroup.getTagName(),
                 strucViewGroup.getPrimaryPaths().get(0),
@@ -56,7 +58,7 @@ public class StrucViewGroupConverterService {
         return primaryStrucViewGroup;
     }
 
-    public StrucViewGroupMDV createSingleStrucViewGroupMDV(String tagName, String primaryPath,
+    public static StrucViewGroupMDV createSingleStrucViewGroupMDV(String tagName, String primaryPath,
                                                            String secondaryPath,
                                                            Map<String, StrucSchema> groupStrucSchemaMap,
                                                            Map<String, Map<HttpMethod, StrucPath>> groupStrucPathMap) {
@@ -68,7 +70,7 @@ public class StrucViewGroupConverterService {
 
         //Add the paged Schema (if it exists)
         StrucSchema pagedStrucSchema = null;
-        if(primaryGetPath==null)
+        if (primaryGetPath == null)
             log.info("debug me");
         if (SchemaService.isPagedSchema(primaryGetPath.getResponseStrucSchema()))
             pagedStrucSchema = groupStrucSchemaMap.get(SchemaService.getPagedSchemaName(primaryGetPath.getResponseStrucSchema()));
@@ -111,14 +113,20 @@ public class StrucViewGroupConverterService {
             strucPathMap.put(HttpMethod.DELETE, deletePath);
         }
 
-        return new StrucViewGroupMDV(tagName, pagedStrucSchema, strucPathMap,secondaryPath, strucSchemaMap);
+        return new StrucViewGroupMDV(tagName, pagedStrucSchema, strucPathMap, secondaryPath, strucSchemaMap);
     }
 
-    public boolean isMDVStructure(StrucViewGroup strucViewGroup) {
-        //TODO check if primary path has GET
-        //TODO check if primary path GET has valid schema !=null
+    public static boolean isMDVStructure(StrucViewGroup strucViewGroup) {
         return strucViewGroup.getPrimaryPaths().size() == 1
                 && strucViewGroup.getStrucPathMap().keySet().stream()
-                .allMatch(path -> path.startsWith(strucViewGroup.getPrimaryPaths().get(0)));
+                .allMatch(path -> path.startsWith(strucViewGroup.getPrimaryPaths().get(0)))
+                && strucViewGroup.getStrucPathMap().get(strucViewGroup.getPrimaryPaths().get(0)).containsKey(HttpMethod.GET)
+                && strucViewGroup.getStrucPathMap().get(strucViewGroup.getPrimaryPaths().get(0)).get(HttpMethod.GET)
+                .getResponseStrucSchema() != null
+                && strucViewGroup.getStrucPathMap().keySet().stream() //All paths
+                .allMatch(path -> strucViewGroup.getPrimaryPaths().get(0).equals(path)
+                        || strucViewGroup.getSecondaryPaths().containsValue(path)
+                        || (strucViewGroup.getInternalPrimaryPaths().containsKey(strucViewGroup.getPrimaryPaths().get(0)) &&
+                        strucViewGroup.getInternalPrimaryPaths().get(strucViewGroup.getPrimaryPaths().get(0)).contains(path)));
     }
 }

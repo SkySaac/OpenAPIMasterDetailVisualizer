@@ -1,10 +1,7 @@
 package com.example.application.ui.view;
 
 import com.example.application.data.structureModel.StrucPath;
-import com.example.application.ui.components.DeleteDialog;
-import com.example.application.ui.components.PostDialog;
-import com.example.application.ui.components.PutDialog;
-import com.example.application.ui.components.detaillayout.DetailLayout;
+import com.example.application.data.structureModel.StrucViewGroupMDV;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -17,7 +14,7 @@ import java.util.Map;
 
 public class ListView extends Div {
 
-    public interface LActionListener extends PostDialog.PostActionListener, DeleteDialog.DeleteActionListener, PutDialog.PutActionListener {
+    public interface LActionListener {
         void openPostDialog(String path);
 
         void openDeleteDialog(String path);
@@ -29,21 +26,23 @@ public class ListView extends Div {
 
     private final LActionListener actionListener;
 
-    public ListView(String tagName, LActionListener actionListener, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    public ListView(String tagName, LActionListener actionListener, Map<String, StrucViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         this.actionListener = actionListener;
 
-        add(createListContent(strucPathMap));
+        add(createListContent(mdvGroups, strucPathMap));
     }
 
-    private VerticalLayout createListContent(Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    private VerticalLayout createListContent(Map<String, StrucViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         VerticalLayout verticalLayout = new VerticalLayout();
+
+        mdvGroups.forEach((path, v) -> verticalLayout.add(createMDVComponent("GET: " + path, path)));
 
         strucPathMap.forEach((path, v) -> v.forEach((httpMethod, strucPath) -> {
             switch (httpMethod) {
                 case POST -> verticalLayout.add(createPostListComponent("POST: " + path, path));
                 case DELETE -> verticalLayout.add(createDeleteComponent("DELETE: " + path, path));
-                case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path));
-                case PUT -> verticalLayout.add(createPostListComponent("PUT: " + path, path));
+                case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path)); //TODO überhaupt nötig?
+                case PUT -> verticalLayout.add(createPutListComponent("PUT: " + path, path));
                 default -> {
                     HorizontalLayout horizontalLayout = new HorizontalLayout();
                     horizontalLayout.add(path);
@@ -83,20 +82,5 @@ public class ListView extends Div {
         //TODO was wenn externalSchema
         componentClicker.addClickListener(event -> actionListener.openDeleteDialog(path));
         return componentClicker;
-    }
-
-    public void openPostDialog(StrucPath strucPath) {
-        PostDialog postDialog = new PostDialog(actionListener);
-        postDialog.open(strucPath);
-    }
-
-    public void openPutDialog(StrucPath strucPath) {
-        PutDialog putDialog = new PutDialog(actionListener);
-        putDialog.open(strucPath);
-    }
-
-    public void openDeleteDialog(StrucPath strucPath) {
-        DeleteDialog deleteDialog = new DeleteDialog(actionListener);
-        deleteDialog.open(strucPath);
     }
 }

@@ -5,6 +5,7 @@ import com.example.application.ui.presenter.TagPresenter;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.annotation.SessionScope;
 
@@ -12,7 +13,7 @@ import org.springframework.web.context.annotation.SessionScope;
 @Route(value="list/:tag", layout = MainLayout.class) //TODO rename "tag"
 @PreserveOnRefresh
 @Slf4j
-@SessionScope
+@UIScope
 public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
 
     private final TagPresenter presenter;

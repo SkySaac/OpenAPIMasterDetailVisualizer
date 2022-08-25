@@ -9,6 +9,7 @@ import com.example.application.ui.view.AboutView;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +19,13 @@ import java.util.List;
 @Slf4j
 public class AboutPresenter implements AboutView.ActionListener {
 
-    private AboutView view;
     private final ClientDataService clientDataService;
     private final TagPresenter tagPresenter;
 
     private final List<String> serverList = new ArrayList<>();
 
     private String currentServerURL = "/";
+    private final AboutView view  = new AboutView(this, StructureProviderService.PARSE_OBJECT,currentServerURL,serverList);
 
 
     public AboutPresenter(ClientDataService clientDataService, TagPresenter tagPresenter) {
@@ -33,7 +34,7 @@ public class AboutPresenter implements AboutView.ActionListener {
     }
 
     public AboutView getView() {
-        view = new AboutView(this, StructureProviderService.PARSE_OBJECT,currentServerURL,serverList);
+        view.setSelectedServer(currentServerURL);
         return view;
     }
 

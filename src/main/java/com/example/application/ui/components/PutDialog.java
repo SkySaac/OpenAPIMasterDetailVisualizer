@@ -26,20 +26,21 @@ import java.util.Map;
 public class PutDialog extends Dialog {
 
     public interface PutActionListener {
-        void putAction(String path, MultiValueMap<String, String> queryParameters, DataSchema properties);
+        void putAction(String path, MultiValueMap<String, String> queryParameters,Map<String,String> pathParams, DataSchema properties);
     }
 
     private final PutActionListener actionListener;
 
-    protected final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
-    private List<InputValueComponent> querryFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> querryFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> pathFieldComponents = new ArrayList<>();
 
     public PutDialog(PutActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
-    public void open(StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
-        if(!strucPath.getPathParams().isEmpty()) //TODO check if all required params are in it instead
+    public void open(StrucPath strucPath) {
+        if (!strucPath.getPathParams().isEmpty()) //TODO check if all required params are in it instead
             createPathParamFields(strucPath); //TODO
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
@@ -64,14 +65,24 @@ public class PutDialog extends Dialog {
         };
         querryFieldComponents.forEach(component -> {
             if (!component.getComponent().isEmpty()) {
-                params.add(component.getTitle(), component.getComponent().getValue().toString()); //TODO toString correct ?
+                params.add(component.getTitle(), component.getComponent().getValue().toString());
             }
+        });
+        return params;
+    }
+
+    private Map<String, String> collectPathParams() {
+        Map<String, String> params = new HashMap<>() {
+        };
+        pathFieldComponents.forEach(component -> {
+            params.put(component.getTitle(), component.getComponent().getValue().toString());
         });
         return params;
     }
 
     private void putAction(String path) {
         MultiValueMap<String, String> queryParams = collectQueryParams();
+        Map<String, String> pathParams = collectPathParams();
 
         Map<String, DataSchema> dataInputMap = new HashMap<>();
         inputFieldComponents.forEach(inputValueComponent -> {
@@ -84,7 +95,7 @@ public class PutDialog extends Dialog {
         DataSchema dataSchema = new DataSchema("post", dataValue);
 
         //TODO check if valid
-        actionListener.putAction(path, queryParams, dataSchema);
+        actionListener.putAction(path, queryParams,pathParams, dataSchema);
     }
 
     private void createFields(StrucSchema schema) {
@@ -92,7 +103,7 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         schema.getStrucValue().getProperties().keySet().forEach(key -> {
-                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), key, true);
+                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), key, "input");
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -102,7 +113,7 @@ public class PutDialog extends Dialog {
         add(verticalLayout);
     }
 
-    private AbstractField createEditorComponent(PropertyTypeEnum type, String title, boolean input) {
+    private AbstractField createEditorComponent(PropertyTypeEnum type, String title, String inputType) {
         AbstractField inputComponent = switch (type) {
             case INTEGER -> new IntegerField(title);
             case DOUBLE -> new NumberField(title);
@@ -113,21 +124,22 @@ public class PutDialog extends Dialog {
             default -> new TextField(title);
         };
 
-        if (input) //TODO maybe add it later and not in this function
+        if (inputType.equals("input")) //TODO maybe add it later and not in this function
             inputFieldComponents.add(new InputValueComponent(title, inputComponent, type));
-        else
+        else if (inputType.equals("query"))
             querryFieldComponents.add(new InputValueComponent(title, inputComponent, type));
+        else if (inputType.equals("path"))
+            pathFieldComponents.add(new InputValueComponent(title, inputComponent, type));
 
         return inputComponent;
     }
 
     private void createQueryParamFields(StrucPath strucPath) {
-        //TODO
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getQueryParams().forEach(queryParam -> { //TODO check if required
-                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getName(), false);
+                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getName(), "query");
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -142,7 +154,7 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getName(),true);
+                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getName(), "path");
                     verticalLayoutContent.add(abstractField);
                 }
         );

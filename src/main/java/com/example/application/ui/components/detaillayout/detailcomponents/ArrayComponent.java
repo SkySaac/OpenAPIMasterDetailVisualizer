@@ -50,6 +50,9 @@ public class ArrayComponent extends DetailComponent {
         if (strucProperties.size() > 1) {
             log.warn("ArrayComponent has multiple elements with the same name: {} ", strucProperties);
         }
+        if(strucProperties.size()==0){
+            log.error("The returned objects structure is different from the structure defined in the openapi document");
+        }
         return strucProperties.get(0);
     }
 
@@ -89,7 +92,6 @@ public class ArrayComponent extends DetailComponent {
                 case INTEGER -> new NumberComponent();
                 case DOUBLE -> new DoubleComponent();
                 case BOOLEAN -> new BooleanComponent();
-                case STRING -> new TextComponent(detailSwitchListener);
                 default -> new TextComponent(detailSwitchListener);
             };
             detailComponent.fillDetailLayout(dataSchema.getValue());
