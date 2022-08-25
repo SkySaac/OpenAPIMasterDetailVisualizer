@@ -1,13 +1,13 @@
-package com.example.application.ui.route;
+package openapivisualizer.application.ui.route;
 
-import com.example.application.ui.MainLayout;
-import com.example.application.ui.presenter.TagPresenter;
+import openapivisualizer.application.ui.MainLayout;
+import openapivisualizer.application.ui.other.AccessPoint;
+import openapivisualizer.application.ui.presenter.TagPresenter;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.context.annotation.SessionScope;
 
 @PageTitle("List")
 @Route(value="list/:tag", layout = MainLayout.class) //TODO rename "tag"
@@ -31,6 +31,8 @@ public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObs
         System.out.println("Route tag:"+ tag);
 
         activeView = presenter.getListPresenter(tag).getView();
+        AccessPoint.getMainLayout().setCurrentPageTitle(tag);
+
         add(activeView);
     }
 
