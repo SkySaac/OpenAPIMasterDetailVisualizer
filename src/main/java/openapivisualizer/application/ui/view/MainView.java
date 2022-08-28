@@ -2,16 +2,17 @@ package openapivisualizer.application.ui.view;
 
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 
 import java.util.List;
 
 
-public class MainView extends VerticalLayout {
+public class MainView extends HorizontalLayout {
 
     public interface ActionListener {
         void openApiAction(String source);
@@ -19,48 +20,79 @@ public class MainView extends VerticalLayout {
         void serverSelected(String server);
 
         void addServerToSelection(String server);
+
+        void setCredential(String username, String password);
     }
 
     private final Select<String> serverListBox = new Select<>();
 
     public MainView(ActionListener actionListener, String defaultSource, String selectedServerURL, List<String> serverURLs) {
-        setSpacing(false);
+        setSizeFull();
+        add(generationLayout(actionListener, defaultSource, selectedServerURL, serverURLs));
+        add(credentialLayout(actionListener));
 
-        Image img = new Image("images/empty-plant.png", "placeholder plant");
-        img.setWidth("200px");
-        add(img);
+    }
+
+    public VerticalLayout generationLayout(ActionListener actionListener, String defaultSource, String selectedServerURL, List<String> serverURLs) {
+        VerticalLayout generationLayout = new VerticalLayout();
+        generationLayout.setAlignItems(Alignment.CENTER);
+
+        Label title = new Label("OpenAPI Generierung");
+        title.getStyle().set("font-size","large");
+        generationLayout.add(title);
 
         TextField textField = new TextField("OpenAPI Doc");
         textField.setValue(defaultSource);
-        textField.setWidth(20, Unit.PERCENTAGE);
-        add(textField);
+        textField.setPlaceholder("Path to your openApi.yaml");
+        textField.setWidth(40, Unit.PERCENTAGE);
+        generationLayout.add(textField);
 
         Button button = new Button("Extract OpenAPI Structure!");
         button.addClickListener(e -> actionListener.openApiAction(textField.getValue()));
-        add(button);
+        generationLayout.add(button);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField serverInput = new TextField();
-        serverInput.setWidth(70, Unit.PERCENTAGE);
-        Button serverAddButton = new Button("Add Server");
+        Button serverAddButton = new Button("Hinzufügen");
         serverAddButton.addClickListener(e -> actionListener.addServerToSelection(serverInput.getValue()));
         serverListBox.setItems(serverURLs);
         serverListBox.setValue(selectedServerURL);
-        serverListBox.setWidth(20, Unit.PERCENTAGE);
+        serverListBox.setWidth(40, Unit.PERCENTAGE);
         serverListBox.addValueChangeListener(e -> {
-            if (e.getValue() != null)
+            if (e.getValue() != null) {
                 actionListener.serverSelected(e.getValue());
+            }
         });
         horizontalLayout.add(serverInput, serverAddButton);
-        horizontalLayout.setWidth(20, Unit.PERCENTAGE);
+        horizontalLayout.setWidth(40, Unit.PERCENTAGE);
 
-        add(serverListBox);
-        add(horizontalLayout);
+        generationLayout.add(serverListBox);
+        generationLayout.add(horizontalLayout);
 
-        setSizeFull();
-        setJustifyContentMode(JustifyContentMode.CENTER);
-        setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-        getStyle().set("text-align", "center");
+        return generationLayout;
+    }
+
+    public VerticalLayout credentialLayout(ActionListener actionListener) {
+        VerticalLayout credentialLayout = new VerticalLayout();
+        credentialLayout.setAlignItems(Alignment.CENTER);
+
+        credentialLayout.setSpacing(false);
+
+        Label title = new Label("Credentials");
+        title.getStyle().set("font-size","large");
+        credentialLayout.add(title);
+
+        TextField usernameField = new TextField("Username");
+        credentialLayout.add(usernameField);
+
+        PasswordField passwordField = new PasswordField("Password");
+        credentialLayout.add(passwordField);
+
+        Button applyButton = new Button("Speichern");
+        applyButton.addClickListener(click -> actionListener.setCredential(usernameField.getValue(), passwordField.getValue()));
+        credentialLayout.add(applyButton);
+
+        return credentialLayout;
     }
 
     public void setServers(List<String> servers) {

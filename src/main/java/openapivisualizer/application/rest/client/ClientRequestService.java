@@ -32,7 +32,7 @@ public class ClientRequestService extends DefaultResponseErrorHandler {
 
     protected ResponseEntity<String> request(ClientRequestWrapper requestWrapper) {
         final var requestEntity = requestWrapper.getRequestEntity();
-        log.info("Sending {} request to: {} ",requestEntity.getMethod().toString(), requestEntity.getUrl());
+        log.info("Sending {} request to: {} ",requestEntity.getMethod(), requestEntity.getUrl());
         return restTemplate.exchange(requestEntity, String.class);
     }
 }

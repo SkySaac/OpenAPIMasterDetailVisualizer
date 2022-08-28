@@ -5,6 +5,7 @@ package openapivisualizer.application.ui.presenter;
 
 import openapivisualizer.application.generation.services.StructureProviderService;
 import openapivisualizer.application.rest.client.ClientDataService;
+import openapivisualizer.application.ui.controller.NotificationService;
 import openapivisualizer.application.ui.view.MainView;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
@@ -18,16 +19,18 @@ import java.util.List;
 @Slf4j
 public class MainPresenter implements MainView.ActionListener {
 
+    private final NotificationService notificationService;
     private final ClientDataService clientDataService;
     private final TagPresenter tagPresenter;
 
     private final List<String> serverList = new ArrayList<>();
 
     private String currentServerURL = "/";
-    private final MainView view  = new MainView(this, StructureProviderService.PARSE_OBJECT,currentServerURL,serverList);
+    private final MainView view  = new MainView(this, StructureProviderService.DEFAULT_PARSE_OBJECT,currentServerURL,serverList);
 
 
-    public MainPresenter(ClientDataService clientDataService, TagPresenter tagPresenter) {
+    public MainPresenter(NotificationService notificationService, ClientDataService clientDataService, TagPresenter tagPresenter) {
+        this.notificationService = notificationService;
         this.clientDataService = clientDataService;
         this.tagPresenter = tagPresenter;
     }
@@ -57,6 +60,13 @@ public class MainPresenter implements MainView.ActionListener {
         serverList.add(server);
         view.setServers(serverList);
         view.setSelectedServer(server);
+    }
+
+    @Override
+    public void setCredential(String username, String password) {
+        clientDataService.setUsername(username);
+        clientDataService.setPassword(password);
+        notificationService.postNotification("Credentials successfully set!",false);
     }
 
 

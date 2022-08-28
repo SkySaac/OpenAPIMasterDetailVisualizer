@@ -1,6 +1,7 @@
 package openapivisualizer.application.ui;
 
 
+import lombok.Getter;
 import openapivisualizer.application.ui.other.AccessPoint;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -13,6 +14,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
+import org.atmosphere.config.service.Get;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * The main view is a top-level placeholder for other views.
@@ -24,17 +30,17 @@ public class MainLayout extends AppLayout {
 
     public static class MenuItemInfo extends ListItem {
 
-        /**
-         * A simple navigation item component, based on ListItem element.
-         */
-        public MenuItemInfo(String menuTitle, String navRoute, String iconClass) {
+        @Getter
+        private final String tag;
+        public MenuItemInfo(String tag, String navRoute, String iconClass) {
+            this.tag = tag;
             Div link = new Div();
             link.addClassNames("menu-item-link");
             //link.setRoute(view, new RouteParameters("tag", navRoute));
             link.addClickListener(e ->
                     UI.getCurrent().navigate(navRoute));
 
-            Span text = new Span(menuTitle);
+            Span text = new Span(tag);
             text.addClassNames("menu-item-text");
 
             link.add(new LineAwesomeIcon(iconClass), text);
@@ -62,6 +68,8 @@ public class MainLayout extends AppLayout {
     private H1 viewTitle;
     private Nav nav;
 
+    private final List<MenuItemInfo> navItems = new ArrayList<>();
+
 
     public MainLayout() {
         setPrimarySection(Section.DRAWER);
@@ -71,6 +79,7 @@ public class MainLayout extends AppLayout {
     }
 
     public void removeAll() {
+        navItems.clear();
         nav.removeAll();
         nav.add(createBasicMenuItems());
     }
@@ -86,7 +95,12 @@ public class MainLayout extends AppLayout {
         } else {
             menuItemInfo = new MenuItemInfo(tagName, "/list/" + navRoute, "las la-list");
         }
-        nav.add(menuItemInfo);
+        navItems.add(menuItemInfo);
+    }
+
+    public void applyNavigationTargets(){
+        navItems.sort(Comparator.comparing(MenuItemInfo::getTag));
+        navItems.forEach(navItem -> nav.add(navItem));
     }
 
     private Component createHeaderContent() {
@@ -104,7 +118,7 @@ public class MainLayout extends AppLayout {
     }
 
     private Component createDrawerContent() {
-        H2 appName = new H2("My Bachelor");
+        H2 appName = new H2("Rest API Visualizer");
         appName.addClassNames("app-name");
 
         this.nav = createNavigation();

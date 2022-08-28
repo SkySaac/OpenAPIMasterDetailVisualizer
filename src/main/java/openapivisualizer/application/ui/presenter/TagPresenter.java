@@ -68,6 +68,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                 registerListPresenter(strucViewGroupLV);
             }
         });
+        AccessPoint.getMainLayout().applyNavigationTargets();
         this.strucOpenApi = strucOpenApi;
     }
 
@@ -84,7 +85,6 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     private void registerListPresenter(ViewGroupLV viewGroupLV) {
-        //TODO check if presenter name already exists
         log.info("Registering List Presenter for the {} view", viewGroupLV.getTagName());
 
         viewGroupLV.getStrucViewGroupMDVS().forEach(

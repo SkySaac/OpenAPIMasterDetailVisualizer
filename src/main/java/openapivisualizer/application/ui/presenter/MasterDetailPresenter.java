@@ -1,6 +1,7 @@
 package openapivisualizer.application.ui.presenter;
 
 import lombok.Getter;
+import openapivisualizer.application.rest.client.RequestException;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.rest.client.ClientDataService;
@@ -14,6 +15,7 @@ import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
 import openapivisualizer.application.ui.view.MasterDetailView;
 import com.vaadin.flow.component.Component;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Request;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -72,14 +74,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
                 strucViewGroup.getStrucSchemaMap().containsKey(HttpMethod.PUT),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),
                 !strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET).getQueryParams().isEmpty());
-        try {
-            view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
-                    strucViewGroup.getWrappedGetSchema(), pathParams, queryParams));
-        } catch (ResourceAccessException e) {
-            log.error("Error trying to access: {}", e.getMessage());
-            e.printStackTrace();
-            notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
-        }
+        refreshData();
         return view;
     }
 
@@ -112,10 +107,10 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         try {
             view.setData(clientDataService.getData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET),
                     strucViewGroup.getWrappedGetSchema(), pathParams, queryParams));
-        } catch (ResourceAccessException e) {
+        } catch (RequestException | ResourceAccessException e) {
             log.error("Error trying to access: {}", e.getMessage());
             e.printStackTrace();
-            notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+            notificationService.postNotification("Datenabruf fehlgeschlagen: "+e.getMessage(), true);
         }
     }
 

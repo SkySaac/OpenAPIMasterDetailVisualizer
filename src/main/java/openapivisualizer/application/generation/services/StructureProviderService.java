@@ -18,13 +18,15 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class StructureProviderService {
-    public static final String PARSE_OBJECT = "testOpenApi.yaml";
+    public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
 
     public static StrucOpenApi generateApiStructure(String pathToOpenApiFile) {
         OpenAPI openAPI = new OpenAPIV3Parser().read(pathToOpenApiFile);
 
         StrucOpenApi strucOpenApi = new StrucOpenApi();
 
+        if(openAPI.getSecurity()!=null)
+            strucOpenApi.setHasHttpBasic(openAPI.getSecurity().contains("basicAuth"));
 
         if (openAPI.getServers() != null) //TODO change -> server url can also come from lower objects
             strucOpenApi.setServers(openAPI.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));

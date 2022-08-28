@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 public class StrucOpenApi {
 
+    private boolean hasHttpBasic = false;
+
     private List<String> servers = new ArrayList<>();
 
     private List<ViewGroup> viewGroups = new ArrayList<>();

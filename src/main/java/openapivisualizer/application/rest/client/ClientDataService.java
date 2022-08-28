@@ -36,6 +36,11 @@ public class ClientDataService {
     @Getter
     private String serverUrl = "";
 
+    @Setter
+    private String username = null;
+    @Setter
+    private String password = null;
+
     public ClientDataService(ClientRequestService clientRequestService, NotificationService notificationService) {
         this.clientRequestService = clientRequestService;
         this.notificationService = notificationService;
@@ -49,6 +54,9 @@ public class ClientDataService {
                 .queryParams(queryParams)
                 .pathParams(pathParams)
                 .path(path);
+
+        if(username!=null && password!=null)
+            requestWrapper.requestBuilder().basicAuth(username,password);
 
         if (body != null) {
             requestWrapper.requestBuilder()
@@ -88,29 +96,26 @@ public class ClientDataService {
 
     }
 
-    public DataSchema getData(StrucPath strucPath, StrucSchema innerSchema, Map<String, String> pathParams, MultiValueMap<String, String> queryParameters) {
+    public DataSchema getData(StrucPath strucPath, StrucSchema innerSchema, Map<String, String> pathParams, MultiValueMap<String, String> queryParameters) throws RequestException {
 
-        DataSchema dataSchema = null;
-
-        //TODO http bzw https -> url aus openapi doc ändern
         ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), pathParams, queryParameters, null);
-        try {
-            JsonNode node = objectMapper.readTree(response.getBody());
-            dataSchema = convertToDataSchema("root", node);
-            if (innerSchema != null) {
-                String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
-                dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
-            }
-        } catch (JsonProcessingException je) {
-            notificationService.postNotification("Malformed body", true);
-            return dataSchema;
-        }
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            notificationService.postNotification("GET successful", false);
+            try {
+                JsonNode node = objectMapper.readTree(response.getBody());
+                DataSchema dataSchema = convertToDataSchema("root", node);
+                if (innerSchema != null) {
+                    String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
+                    dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
+                }
+                return dataSchema;
+            } catch (JsonProcessingException e) {
+                throw new RequestException("Malformed response body");
+            }
         }
-
-        return dataSchema;
+        else{
+            throw new RequestException(response.getStatusCode().toString());
+        }
     }
 
     private ObjectNode convertToJson(DataSchema dataSchema) {
