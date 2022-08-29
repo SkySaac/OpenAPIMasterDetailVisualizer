@@ -1,7 +1,5 @@
 package openapivisualizer.application.ui.components;
 
-import openapivisualizer.application.generation.structuremodel.DataPropertyType;
-import openapivisualizer.application.generation.structuremodel.StrucPath;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -12,6 +10,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import openapivisualizer.application.generation.structuremodel.DataPropertyType;
+import openapivisualizer.application.generation.structuremodel.StrucPath;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -68,7 +68,9 @@ public class DeleteDialog extends Dialog {
     }
 
     private boolean areRequiredFieldsFilled() {
-        return pathFieldComponents.stream().noneMatch(component -> component.getComponent().isEmpty());
+        return pathFieldComponents.stream().noneMatch(component -> component.getComponent().isEmpty())
+                && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
+                || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
     }
 
     private Map<String, String> collectPathParams() {
@@ -86,11 +88,17 @@ public class DeleteDialog extends Dialog {
 
         Map<String, String> pathParams = collectPathParams();
 
-        if(pathParams.size() == pathFieldComponents.size())
+        if (areRequiredFieldsFilled(pathParams))
             actionListener.deleteAction(path, pathParams, queryParams);
     }
 
-    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, boolean isPath) {
+    private boolean areRequiredFieldsFilled(Map<String,String> pathParams) {
+        return pathParams.size() == pathFieldComponents.size()
+                && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
+                || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
+    }
+
+    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, boolean isPath,boolean required) {
         AbstractField inputComponent;
         switch (type) {
             case INTEGER -> inputComponent = new IntegerField(title);
@@ -103,6 +111,7 @@ public class DeleteDialog extends Dialog {
             }
         } //TODO Objekte & Arrays
 
+        inputComponent.setRequiredIndicatorVisible(required);
 
         if (isPath)
             pathFieldComponents.add(new InputValueComponent(title, inputComponent, type));
@@ -116,8 +125,8 @@ public class DeleteDialog extends Dialog {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
-        strucPath.getQueryParams().forEach(queryParam -> { //TODO check if required
-                    AbstractField abstractField = createEditorComponent(queryParam.getType(),queryParam.getFormat(), queryParam.getName(), false);
+        strucPath.getQueryParams().forEach(queryParam -> {
+                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), false,queryParam.isRequired());
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -132,7 +141,7 @@ public class DeleteDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), true);
+                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), true,true);
                     verticalLayoutContent.add(abstractField);
                 }
         );

@@ -5,17 +5,21 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import lombok.extern.slf4j.Slf4j;
-import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
+import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
+import openapivisualizer.application.ui.components.SettingsDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class MasterDetailView extends Div {
@@ -27,7 +31,9 @@ public class MasterDetailView extends Div {
 
         void openDeleteDialog();
 
-        void openQueryDialog();
+        void openSettingsDialog();
+
+        void setInitialColumnSettings(List<SettingsDialog.ColumnGridElement> initialSettings);
 
         void refreshData();
 
@@ -36,18 +42,19 @@ public class MasterDetailView extends Div {
     private final MDActionListener mdActionListener;
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
-
     private final Label noDataLabel = new Label("Keine Daten erhalten");
 
+    private List<Grid.Column<DataSchema>> initialGridColumns;
+
     public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, boolean hasPost,
-                            boolean hasPut, boolean hasDelete, boolean hasQueryParams) { //change to 2 schemas 1 create 1 get
+                            boolean hasPut, boolean hasDelete) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        addTopButtons(hasPost, hasPut, hasQueryParams);
+        addTopButtons(hasPost, hasPut, hasDelete);
 
         splitLayout.addToPrimary(createGridLayout());
 
@@ -60,10 +67,10 @@ public class MasterDetailView extends Div {
         add(splitLayout);
 
         // Configure Grid
-        configureGrid(getSchema, hasDelete);
+        configureGrid(actionListener, getSchema);
     }
 
-    public void addTopButtons(boolean hasPost, boolean hasPut, boolean hasQueryParams) {
+    public void addTopButtons(boolean hasPost, boolean hasPut, boolean hasDelete) {
         //HorizontalLayout menubar = new HorizontalLayout();
         HorizontalLayout menuBar = new HorizontalLayout();
         menuBar.getStyle().set("padding-left", "10px");
@@ -72,11 +79,11 @@ public class MasterDetailView extends Div {
         refreshButton.addClickListener(e -> mdActionListener.refreshData());
         menuBar.add(refreshButton);
 
-        if (hasQueryParams) {
-            Button queryButton = new Button(VaadinIcon.SLIDERS.create());
-            queryButton.addClickListener(e -> mdActionListener.openQueryDialog());
-            menuBar.add(queryButton);
-        }
+
+        Button settingsButton = new Button(VaadinIcon.SLIDERS.create());
+        settingsButton.addClickListener(e -> mdActionListener.openSettingsDialog());
+        menuBar.add(settingsButton);
+
 
         if (hasPost) {
             Button postButton = new Button(VaadinIcon.PLUS_CIRCLE.create());
@@ -90,30 +97,62 @@ public class MasterDetailView extends Div {
             menuBar.add(putButton);
         }
 
+        if (hasDelete) {
+            Button putButton = new Button(VaadinIcon.TRASH.create());
+            putButton.addClickListener(e -> mdActionListener.openDeleteDialog());
+            menuBar.add(putButton);
+        }
+
         add(menuBar);
     }
 
+    public void setColumnSettings(List<SettingsDialog.ColumnGridElement> columnSettings) {
+        Map<String, Grid.Column<DataSchema>> columnMap = new HashMap<>();
+        columnMap.putAll(initialGridColumns.stream().collect(Collectors.toMap(Grid.Column::getKey, e -> e)));
+        List<Grid.Column<DataSchema>> sortedColumns = new ArrayList<>();
+        columnSettings.forEach(columnElement -> {
+            if (columnElement.isVisible())
+                sortedColumns.add(columnMap.get(columnElement.getColumnName()));
+            else if(grid.getColumns().contains(grid.getColumnByKey(columnElement.getColumnName())))
+                grid.removeColumn(grid.getColumnByKey(columnElement.getColumnName()));
 
-    public void configureGrid(StrucSchema getSchema, boolean showDelete) {
-        if (showDelete) {
-            grid.addComponentColumn(dataSchema -> {
-                final var button = new Button(new Icon(VaadinIcon.TRASH));
-                button.addClickListener(event -> mdActionListener.openDeleteDialog());
-                return button;
-            });
-        }
+        });
+        grid.setColumnOrder(sortedColumns);
+
+    }
+
+    private void setInitialGridColumns(MDActionListener actionListener) {
+        actionListener.setInitialColumnSettings(
+                initialGridColumns.stream()
+                        .map(column -> new SettingsDialog.ColumnGridElement(column.getKey(), true))
+                        .collect(Collectors.toList())
+        );
+    }
+
+
+    public void configureGrid(MDActionListener actionListener, StrucSchema getSchema) {
+//        if (showDelete) {
+//            this. grid.addComponentColumn(dataSchema -> {
+//                final var button = new Button(new Icon(VaadinIcon.TRASH));
+//                button.addClickListener(event -> mdActionListener.openDeleteDialog());
+//                return button;
+//            });
+//        }
 
         //Add all columns
-        getSchema.getStrucValue().getProperties().forEach((key,value) -> {
-                    if (value.getStrucValue().getType()!= DataPropertyType.OBJECT
-                    &&value.getStrucValue().getType()!= DataPropertyType.ARRAY) {
+        getSchema.getStrucValue().getProperties().forEach((key, value) -> {
+                    if (value.getStrucValue().getType() != DataPropertyType.OBJECT
+                            && value.getStrucValue().getType() != DataPropertyType.ARRAY) {
                         grid.addColumn(
                                 dataSchema -> dataSchema.getValue().getProperties().containsKey(key)
                                         ? dataSchema.getValue().getProperties().get(key).getValue().getPlainValue() : "-"
-                        ).setHeader(key).setAutoWidth(true).setResizable(true).setSortable(true);
+                        ).setHeader(key).setAutoWidth(true).setResizable(true).setSortable(true).setKey(key);
                     }
                 }
         );
+
+        initialGridColumns = new ArrayList<>(grid.getColumns());
+        setInitialGridColumns(actionListener);
 
 
         //grid.setItems();

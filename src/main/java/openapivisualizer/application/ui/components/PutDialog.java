@@ -32,7 +32,7 @@ public class PutDialog extends Dialog {
     private final PutActionListener actionListener;
 
     private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
-    private final List<InputValueComponent> querryFieldComponents = new ArrayList<>();
+    private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
     private final List<InputValueComponent> pathFieldComponents = new ArrayList<>();
 
     public PutDialog(PutActionListener actionListener) {
@@ -63,7 +63,7 @@ public class PutDialog extends Dialog {
     private MultiValueMap<String, String> collectQueryParams() {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>() {
         };
-        querryFieldComponents.forEach(component -> {
+        queryFieldComponents.forEach(component -> {
             if (!component.getComponent().isEmpty()) {
                 params.add(component.getTitle(), component.getComponent().getValue().toString());
             }
@@ -93,9 +93,14 @@ public class PutDialog extends Dialog {
         DataValue dataValue = new DataValue(dataInputMap, DataPropertyType.OBJECT);
         DataSchema dataSchema = new DataSchema("post", dataValue);
 
-        //TODO check if valid
-        if (pathParams.size() == pathFieldComponents.size())
+        if (areRequiredFieldsFilled(pathParams))
             actionListener.putAction(path, queryParams, pathParams, dataSchema);
+    }
+
+    private boolean areRequiredFieldsFilled(Map<String,String> pathParams) {
+        return pathParams.size() == pathFieldComponents.size()
+                && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
+                || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
     }
 
     private void createBodyFields(StrucSchema schema) {
@@ -103,7 +108,7 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         schema.getStrucValue().getProperties().keySet().forEach(key -> {
-                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), null, key, "input");
+                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), null, key, "input", false);
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -113,7 +118,7 @@ public class PutDialog extends Dialog {
         add(verticalLayout);
     }
 
-    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, String inputType) {
+    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, String inputType, boolean required) {
         AbstractField inputComponent;
         switch (type) {
             case INTEGER -> inputComponent = new IntegerField(title);
@@ -126,11 +131,13 @@ public class PutDialog extends Dialog {
             }
         } //TODO Objekte & Arrays
 
+        inputComponent.setRequiredIndicatorVisible(required);
+
         switch (inputType) {
             case "input" ->
-                    //TODO maybe add it later and not in this function
+                //TODO maybe add it later and not in this function
                     inputFieldComponents.add(new InputValueComponent(title, inputComponent, type));
-            case "query" -> querryFieldComponents.add(new InputValueComponent(title, inputComponent, type));
+            case "query" -> queryFieldComponents.add(new InputValueComponent(title, inputComponent, type));
             case "path" -> pathFieldComponents.add(new InputValueComponent(title, inputComponent, type));
         }
 
@@ -142,7 +149,7 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getQueryParams().forEach(queryParam -> { //TODO check if required
-                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), "query");
+                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), "query", queryParam.isRequired());
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -157,7 +164,7 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), "path");
+                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), "path", true);
                     verticalLayoutContent.add(abstractField);
                 }
         );
