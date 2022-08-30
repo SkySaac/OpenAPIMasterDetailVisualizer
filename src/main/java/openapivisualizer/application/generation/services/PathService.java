@@ -112,10 +112,6 @@ public class PathService {
                         StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
                     }
-
-                } else {
-                    StrucSchema strucSchema = new StrucSchema();
-                    strucSchema.setFreeSchema(true);
                 }
             }
         }

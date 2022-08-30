@@ -63,28 +63,41 @@ docker run -p 8080:8080 mybachelor:latest
 
 todo:
 
-fix not showing tags on the left at first start -> nicht wieder gesehen
-handle artifact data get
 url that points to asdgs/{id} as in space api -> needs help & fix
 css style für detailview array überschrift + pfad
-remove isFreeSchema
 post/put add direct input and add array
 
 api ids search wieso zeigt body an
 
-put not working ->  -> TESTEN
-TESTEN -> listview -> nicht anzeigen von pfaden die in anderen primaryviews drinne sind -> chekc if fixed ienmal einfach alle in listviews anzeigen alssen
-
-
-query params required -> optional
+TEST post put delete
+TEST -> listview -> nicht anzeigen von pfaden die in anderen primaryviews drinne sind -> chekc if fixed ienmal einfach alle in listviews anzeigen alssen
+TEST /{id}/... testen
+TEST rest parking ausprobieren -> Wo ist das repo
+TEST unit test
 application/octet-stream support -> button for up n download -> optional
+wrapped setting to select data
+UI english -> Deutsch
+credentials clear
+settings for array names in details tab
+/{id} needs own view
+setting for parameter select
+required auch bei anderen dingen in post und put angeben (nicht nur query&path)
+put/post object& array support
+sequenzdiagram von generierungsablauf
+readme schön machen
+google stylesheet
+
+
 change to using tabs -> optional
 support allOf -> optional
 checksum sollte string sein oder long
-Problem -> Tagesschau gibt unter /api/news gibt in return object mehr parameter zurück als in apidoc defined -> geht also nicht
 Problem -> jackson doesnt know the difference between double and int
+Problem -> Tagesschau gibt unter /api/news gibt in return object mehr parameter zurück als in apidoc defined -> geht also nicht
 
 
+remove isFreeSchema
+fix not showing tags on the left at first start -> nicht wieder gesehen
+query params required -> optional
 remove @Service von services die es nicht brauchen
 FIXED I THINK.../{id}/... without GET has no view -> no mdv -> WICHTIG
 FIXED I THINK ERROR GETTING PAGE FOR SCHEMA PagedModelObject at startup -> ??

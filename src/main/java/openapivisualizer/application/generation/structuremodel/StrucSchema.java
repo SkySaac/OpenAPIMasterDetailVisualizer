@@ -12,6 +12,5 @@ import lombok.Setter;
 public class StrucSchema {
     private String name;
     private StrucValue strucValue;
-    private boolean isFreeSchema = false; //TODO remove
 
 }
