@@ -1,11 +1,12 @@
 package openapivisualizer.application.generation.services;
 
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.Content;
+import lombok.extern.slf4j.Slf4j;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.Paths;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -51,7 +52,7 @@ public class PathService {
                 if (path.startsWith(finalSecondaryRegex) && (path.split("}").length == 1 || path.split("}/").length == 1)
                         && (path.endsWith("}") || path.endsWith("}/"))) {
                     secondaryPaths.put(primaryPath, path);
-                    log.debug("Secondary Path found {} for Primary Path {}",path,primaryPath);
+                    log.debug("Secondary Path found {} for Primary Path {}", path, primaryPath);
                 }
             });
         });
@@ -63,9 +64,9 @@ public class PathService {
 
         primaryPaths.forEach(primaryPath -> { //TODO annahme: primaryPath/{...id...}/... ohne noch ein{} am ende
             pathsForTag.keySet().forEach(path -> {
-                if(path.matches(primaryPath+"/\\{(\\w)+\\}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
+                if (path.matches(primaryPath + "/\\{(\\w)+}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
                     internalPrimary.add(primaryPath, path);
-                    log.info("Internal PrimaryPath found {} for Primary Path {}",path,primaryPath);
+                    log.info("Internal PrimaryPath found {} for Primary Path {}", path, primaryPath);
                 }
             });
         });
@@ -93,10 +94,10 @@ public class PathService {
             operation.getParameters().forEach(parameter -> {
                 if (parameter.getIn().equals("query"))
                     strucPath.getQueryParams().add(new StrucPath.StrucParameter(parameter.getName(),
-                            DataPropertyType.fromString(parameter.getSchema().getType()),parameter.getSchema().getFormat(), parameter.getRequired()));
-                else if(parameter.getIn().equals("path"))
+                            DataPropertyType.fromString(parameter.getSchema().getType()), parameter.getSchema().getFormat(), parameter.getRequired()));
+                else if (parameter.getIn().equals("path"))
                     strucPath.getPathParams().add(new StrucPath.StrucParameter(parameter.getName(),
-                            DataPropertyType.fromString(parameter.getSchema().getType()),parameter.getSchema().getFormat(), parameter.getRequired()));
+                            DataPropertyType.fromString(parameter.getSchema().getType()), parameter.getSchema().getFormat(), parameter.getRequired()));
             });
         }
 
@@ -114,8 +115,7 @@ public class PathService {
                     }
                 }
             }
-        }
-        else if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
+        } else if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
             if (operation.getResponses().containsKey("200") && operation.getResponses().get("200").getContent() != null) {
                 if (operation.getResponses().get("200").getContent().containsKey("*/*"))
                     setResponseSchema(strucPath, operation, "200", "*/*", strucSchemaMap);
@@ -142,11 +142,23 @@ public class PathService {
      * @param returnType the returnType to be searched
      */
     public static void setResponseSchema(StrucPath strucPath, Operation operation, String returnCode, String returnType, Map<String, StrucSchema> strucSchemaMap) {
-        if (operation.getResponses().get(returnCode).getContent().containsKey(returnType)) {
-            if (operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref() != null) {
-                String externalSchemaPath = operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().get$ref();
+        Content content = operation.getResponses().get(returnCode).getContent();
+
+        if (content.containsKey(returnType)) {
+            if (content.get(returnType).getSchema().get$ref() != null) {
+                String externalSchemaPath = content.get(returnType).getSchema().get$ref();
                 strucPath.setResponseStrucSchema(strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath)));
-            } else {
+            } else if (content.get(returnType).getSchema().getType() != null
+                    && content.get(returnType).getSchema().getType().equals("array")
+                    && content.get(returnType).getSchema().getItems().get$ref() != null) {
+                String externalSchemaPath = content.get(returnType).getSchema().getItems().get$ref();
+                strucPath.setResponseStrucSchema(strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath)));
+            }else if (content.get(returnType).getSchema().getType() != null
+                    && content.get(returnType).getSchema().getType().equals("array")
+                    && content.get(returnType).getSchema().getItems().get$ref() == null) {
+                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().getItems());
+                strucPath.setResponseStrucSchema(strucSchema);
+            }  else {
                 StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
                 strucPath.setResponseStrucSchema(strucSchema);
             }

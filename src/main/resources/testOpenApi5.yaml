@@ -1,0 +1,324 @@
+openapi: 3.0.1
+info:
+  title: "I2PANEMA BS-Dortmund: Parking Controller API"
+  description: "<h2>DSC ready</h2>\r\n<img src=\"https://www.imd.uni-rostock.de/storages/uni-rostock/Alle_IEF/IMD/Forschung/Dateien/IPANEMA-Logo.png\"\
+    \r\n     alt=\"I2PANEMA-Logo\">\r\n"
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Generated server url
+paths:
+  /api/subscription/parkingLots:
+    post:
+      tags:
+        - DSC Subscription Parking Lot
+      summary: Update occupied Parking Lots
+      description: Endpoint for DSC-Subscription pipeline.<br/>Accepts Octet Stream
+        as an JSON-Array.<br/>Returns Accepted 201 if succeeded.
+      operationId: notify
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/parkingLots:
+    get:
+      tags:
+        - Parking Lot
+      summary: Get all parking lots
+      description: Returns all parking lots
+      operationId: getParkingLots
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingLotOnlyRequiredFieldsProjection'
+  /api/parkingLots/{id}:
+    get:
+      tags:
+        - parking-lot-controller
+      operationId: getAllParkingLots
+      parameters:
+        - name: parkingAreaId
+          in: query
+          required: false
+          schema:
+            type: string
+            default: ""
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingLotOnlyRequiredFieldsProjection'
+  /api/parkingLots/GetParkingLotInfo:
+    get:
+      tags:
+        - parking-lot-controller
+      operationId: GetParkingLotInfo
+      parameters:
+        - name: parkingLotPosX
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+            default: 0.0
+        - name: parkingLotPosY
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+            default: 0.0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingLotOnlyRequiredFieldsProjection'
+  /api/parkingAreas:
+    get:
+      tags:
+        - Parking Area
+      summary: Get all parking areas
+      description: Returns all parking areas
+      operationId: getParkingAreas
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingAreaWithOptionalFieldsProjection'
+  /api/parkingAreas/{parkingAreaId}/parkingLots/{parkingLotId}:
+    get:
+      tags:
+        - Parking Area
+      summary: Get all parking lots for given parking area id
+      description: Returns all parking lots of a parking area
+      operationId: getParkingLotsById
+      parameters:
+        - name: parkingAreaId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: parkingLotId
+          in: path
+          required: true
+          schema:
+            pattern: "([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"
+            type: string
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParkingLotOnlyRequiredFieldsProjection'
+  /api/parkingAreas/{id}:
+    get:
+      tags:
+        - Parking Area
+      summary: Find parking area by id
+      description: Returns a single parking area
+      operationId: getParkingArea
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            pattern: "([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"
+            type: string
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParkingAreaWithOptionalFieldsProjection'
+  /api/parkingAreas/{id}/parkingLots:
+    get:
+      tags:
+        - Parking Area
+      summary: Get all parking lots for given parking area id
+      description: Returns all parking lots of a parking area
+      operationId: getParkingLots_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            pattern: "([a-f0-9]{8}(-[a-f0-9]{4}){4}[a-f0-9]{8})"
+            type: string
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingLotOnlyRequiredFieldsProjection'
+  /api/parkingAreas/harbors:
+    get:
+      tags:
+        - Parking Area
+      summary: Get all harbors
+      description: Returns all harbors
+      operationId: getHarbors
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                uniqueItems: true
+                type: array
+                items:
+                  type: string
+  /api/parkingAreas/harbors/{harborName}:
+    get:
+      tags:
+        - Parking Area
+      summary: Find parkingAreas by harborName
+      description: Returns a list for a given harborName
+      operationId: getAllParkingAreasByHarborName
+      parameters:
+        - name: harborName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingAreaWithOptionalFieldsProjection'
+components:
+  schemas:
+    ErrorMessage:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+    ParkingLotOnlyRequiredFieldsProjection:
+      type: object
+      properties:
+        isOccupied:
+          type: boolean
+        id:
+          type: string
+    ParkingAreaWithOptionalFieldsProjection:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        maxDriveThroughHeight:
+          type: number
+          format: double

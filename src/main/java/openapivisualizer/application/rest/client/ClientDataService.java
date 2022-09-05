@@ -69,7 +69,9 @@ public class ClientDataService {
     }
 
     public void postData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams, Map<String, String> pathVariables) {
-        String body = convertToJson(bodyData).toString();
+        String body = null;
+        if(bodyData.getValue().getProperties().size()!=0)
+            body = convertToJson(bodyData).toString();
         ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), pathVariables, queryParams, body);
         log.info(response.getStatusCode().toString());
 
@@ -78,7 +80,9 @@ public class ClientDataService {
     }
 
     public void putData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams, Map<String, String> pathVariables) {
-        String body = convertToJson(bodyData).toString();
+        String body = null;
+        if(bodyData.getValue().getProperties().size()!=0)
+            body = convertToJson(bodyData).toString();
         ResponseEntity<String> response = sendRequest(HttpMethod.PUT, serverUrl, strucPath.getPath(), pathVariables, queryParams, body);
         log.info(response.getStatusCode().toString());
 

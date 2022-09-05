@@ -7,6 +7,8 @@ public enum DataPropertyType {
     BOOLEAN,
     SCHEMA,
     ARRAY,
+
+    FILE,
     OBJECT;
 
     public static DataPropertyType fromString(String value) {

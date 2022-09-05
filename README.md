@@ -72,20 +72,22 @@ api ids search wieso zeigt body an
 TEST post put delete
 TEST -> listview -> nicht anzeigen von pfaden die in anderen primaryviews drinne sind -> chekc if fixed ienmal einfach alle in listviews anzeigen alssen
 TEST /{id}/... testen
-TEST rest parking ausprobieren -> Wo ist das repo
+TEST rest parking ausprobieren
 TEST unit test
-application/octet-stream support -> button for up n download -> optional
-wrapped setting to select data
+TEST button to show all paths in listview
+WICHTIG application/octet-stream support -> button for up n download -> optional
+WICHTIG wrapped setting to select data
+WICHTIG /{id} needs own view
+WICHTIG readme schön machen
+WICHTIG setting for parameter select
+WICHTIG sequenzdiagram von generierungsablauf
+Oneof in request
+ArrayDetail -> change way to fill data
 UI english -> Deutsch
-credentials clear
-settings for array names in details tab
-/{id} needs own view
-setting for parameter select
 required auch bei anderen dingen in post und put angeben (nicht nur query&path)
 put/post object& array support
-sequenzdiagram von generierungsablauf
-readme schön machen
 google stylesheet
+merge to main branch
 
 
 change to using tabs -> optional
@@ -95,6 +97,8 @@ Problem -> jackson doesnt know the difference between double and int
 Problem -> Tagesschau gibt unter /api/news gibt in return object mehr parameter zurück als in apidoc defined -> geht also nicht
 
 
+credentials clear
+WICHTIG settings for array names in details tab
 remove isFreeSchema
 fix not showing tags on the left at first start -> nicht wieder gesehen
 query params required -> optional

@@ -3,6 +3,7 @@ package openapivisualizer.application.ui.view;
 import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -16,6 +17,8 @@ public class MainView extends HorizontalLayout {
 
     public interface ActionListener {
         void openApiAction(String source);
+
+        void openSettings();
 
         void serverSelected(String server);
 
@@ -38,7 +41,7 @@ public class MainView extends HorizontalLayout {
         generationLayout.setAlignItems(Alignment.CENTER);
 
         Label title = new Label("OpenAPI Generierung");
-        title.getStyle().set("font-size","large");
+        title.getStyle().set("font-size", "large");
         generationLayout.add(title);
 
         TextField textField = new TextField("OpenAPI Doc");
@@ -47,9 +50,12 @@ public class MainView extends HorizontalLayout {
         textField.setWidth(40, Unit.PERCENTAGE);
         generationLayout.add(textField);
 
-        Button button = new Button("Extract OpenAPI Structure!");
-        button.addClickListener(e -> actionListener.openApiAction(textField.getValue()));
-        generationLayout.add(button);
+        Button extractButton = new Button("Extract OpenAPI Structure!");
+        extractButton.addClickListener(e -> actionListener.openApiAction(textField.getValue()));
+        Button settingsButton = new Button(VaadinIcon.SLIDERS.create());
+        settingsButton.addClickListener(event -> actionListener.openSettings());
+        HorizontalLayout buttons = new HorizontalLayout(extractButton, settingsButton);
+        generationLayout.add(buttons);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField serverInput = new TextField();
@@ -79,7 +85,7 @@ public class MainView extends HorizontalLayout {
         credentialLayout.setSpacing(false);
 
         Label title = new Label("Credentials");
-        title.getStyle().set("font-size","large");
+        title.getStyle().set("font-size", "large");
         credentialLayout.add(title);
 
         TextField usernameField = new TextField("Username");
@@ -91,6 +97,13 @@ public class MainView extends HorizontalLayout {
         Button applyButton = new Button("Speichern");
         applyButton.addClickListener(click -> actionListener.setCredential(usernameField.getValue(), passwordField.getValue()));
         credentialLayout.add(applyButton);
+        Button clearButton = new Button("Löschen");
+        clearButton.addClickListener(click -> {
+            usernameField.clear();
+            passwordField.clear();
+            actionListener.setCredential(null, null);
+        });
+        credentialLayout.add(clearButton);
 
         return credentialLayout;
     }

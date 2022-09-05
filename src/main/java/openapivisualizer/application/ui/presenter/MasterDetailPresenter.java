@@ -122,10 +122,10 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     }
 
     @Override
-    public void postAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema properties) {
+    public void postAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema body) {
         if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST)) {
             try {
-                clientDataService.postData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), properties, queryParameters, pathVariables);
+                clientDataService.postData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), body, queryParameters, pathVariables);
                 refreshData();
             } catch (ResourceAccessException e) {
                 log.error("Error trying to access: {}", e.getMessage());
@@ -156,10 +156,8 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
 
     @Override
     public void putAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathParams, DataSchema properties) {
-        //TODO put functional
-
         if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT)) {
-            try { //TODO
+            try {
                 clientDataService.putData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.PUT), properties, queryParameters, pathParams);
                 refreshData();
             } catch (ResourceAccessException e) {

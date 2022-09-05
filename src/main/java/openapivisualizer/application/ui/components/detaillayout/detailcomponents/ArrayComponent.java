@@ -1,9 +1,15 @@
 package openapivisualizer.application.ui.components.detaillayout.detailcomponents;
 
+import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataValue;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
+import openapivisualizer.application.ui.components.ExtractionSettingsDialog;
+import openapivisualizer.application.ui.components.detaillayout.ArrayNameDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailSwitchListener;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -16,29 +22,39 @@ import java.util.stream.Collectors;
 
 @Slf4j
 
-public class ArrayComponent extends DetailComponent {
+public class ArrayComponent extends DetailComponent implements ArrayNameDialog.ArrayNameDialogListener {
 
     private final VerticalLayout verticalLayout = new VerticalLayout();
     private final List<StrucSchema> arrayElements;
     private final DetailSwitchListener detailSwitchListener;
+    private final ArrayNameDialog arrayNameDialog = new ArrayNameDialog(this);
+
+    private DataValue currentDataValue;
+    private String currentArrayNameSetter;
 
     public ArrayComponent(String title, List<StrucSchema> arrayElements, DetailSwitchListener detailSwitchListener) {
         super(title);
         this.arrayElements = arrayElements;
         this.detailSwitchListener = detailSwitchListener;
 
-        Label titleLabel = new Label(title);
-        add(titleLabel);
 
-        add(verticalLayout);
+        Label titleLabel = new Label(title);
+        Button settingsButton = new Button(VaadinIcon.SLIDERS.create());
+        settingsButton.addClickListener(e -> arrayNameDialog.open());
+        HorizontalLayout topbar = new HorizontalLayout(titleLabel, settingsButton);
+        topbar.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        add(topbar, verticalLayout);
     }
 
     @Override
     public void fillDetailLayout(DataValue dataValue) {
+        this.currentDataValue = dataValue;
         dataValue.getDataSchemas().forEach(dataSchemaElement -> {
-            Component component = createDetailComponent(this.getComponentTitle(), dataSchemaElement);
+            Component component = createDetailComponent(dataSchemaElement);
             verticalLayout.add(component);
         });
+
     }
 
     private StrucSchema getArrayFittingStructure(DataSchema dataSchema) {
@@ -50,7 +66,7 @@ public class ArrayComponent extends DetailComponent {
         if (strucProperties.size() > 1) {
             log.warn("ArrayComponent has multiple elements with the same name: {} ", strucProperties);
         }
-        if(strucProperties.size()==0){
+        if (strucProperties.size() == 0) {
             log.error("The returned objects structure is different from the structure defined in the openapi document");
         }
         return strucProperties.get(0);
@@ -62,14 +78,19 @@ public class ArrayComponent extends DetailComponent {
             return dataSchema.getValue().getProperties().keySet().stream()
                     .allMatch(propertyName -> strucSchema.getStrucValue().getProperties().containsKey(propertyName)); //TODO and is obj
         } else if (dataSchema.getValue().getDataPropertyType().equals(DataPropertyType.ARRAY)) {
-            log.warn("Unsafe comparison of strucSchema and dataSchema for {}",strucSchema.getName());
+            log.warn("Unsafe comparison of strucSchema and dataSchema for {}", strucSchema.getName());
             return strucSchema.getStrucValue().getType().equals(DataPropertyType.ARRAY); //TODO: How do you compare and array if the type equals another array ?
         } else {
             return strucSchema.getStrucValue().getType().equals(dataSchema.getValue().getDataPropertyType());
         }
     }
 
-    private Component createDetailComponent(String title, DataSchema dataSchema) {
+    private Component createDetailComponent(DataSchema dataSchema) {
+        String title;
+        if(dataSchema.getValue().getProperties().containsKey(currentArrayNameSetter))
+            title = dataSchema.getValue().getProperties().get(currentArrayNameSetter).getValue().getPlainValue();
+        else
+            title = dataSchema.getName(); //this.getComponentTitle();
         if (dataSchema.getValue().getDataPropertyType().equals(DataPropertyType.OBJECT)) {
             StrucSchema schema = getArrayFittingStructure(dataSchema);
 
@@ -103,5 +124,13 @@ public class ArrayComponent extends DetailComponent {
     @Override
     public void clearDetailLayout() {
         verticalLayout.removeAll();
+    }
+
+    @Override
+    public void setArrayName(String arrayName) {
+        clearDetailLayout();
+        this.currentArrayNameSetter = arrayName;
+        if (currentDataValue != null)
+            fillDetailLayout(currentDataValue);
     }
 }

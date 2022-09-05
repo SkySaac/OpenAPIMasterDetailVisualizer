@@ -13,7 +13,7 @@ import java.util.Map;
 @Setter
 public class DataValue {
     private DataPropertyType dataPropertyType;
-    private String plainValue; //If this value is a string or number
+    private String plainValue; //If this value is a string or number or boolean
     private List<DataSchema> dataSchemas = new ArrayList<>(); //If this value is an array
     private Map<String, DataSchema> properties = new HashMap<>(); //If this value is an object
     public DataValue(String plainValue, DataPropertyType dataPropertyType){

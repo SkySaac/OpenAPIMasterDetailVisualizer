@@ -16,10 +16,10 @@ import javax.annotation.PostConstruct;
 @RouteAlias(value = "", layout = MainLayout.class)
 @PreserveOnRefresh
 @UIScope
-public class MainView extends Div {
+public class MainRoute extends Div {
     private final MainPresenter presenter;
 
-    public MainView(MainPresenter presenter) {
+    public MainRoute(MainPresenter presenter) {
         this.presenter = presenter;
         setSizeFull();
     }

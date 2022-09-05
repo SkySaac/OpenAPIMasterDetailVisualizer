@@ -51,21 +51,21 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         masterDetailPresenters.clear();
     }
 
-    public void prepareStructure(String source) {
+    public void prepareStructure(String source, boolean onlyListViews, boolean showAllPaths) {
         StrucOpenApi strucOpenApi = StructureProviderService.generateApiStructure(source);
-        registerPresenters(strucOpenApi);
+        registerPresenters(strucOpenApi,onlyListViews,showAllPaths);
     }
 
-    public void registerPresenters(StrucOpenApi strucOpenApi) {
+    public void registerPresenters(StrucOpenApi strucOpenApi, boolean onlyListViews, boolean showAllPaths) {
         clearOldPresenters();
         log.info("Registering presenters...");
         strucOpenApi.getViewGroups().forEach(strucViewGroup -> {
-            if (ViewGroupConverterService.isMDVStructure(strucViewGroup)) {
+            if (ViewGroupConverterService.isMDVStructure(strucViewGroup) && !onlyListViews) {
                 ViewGroupMDV viewGroupMDV = ViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(viewGroupMDV, true);
             } else {
-                ViewGroupLV strucViewGroupLV = ViewGroupConverterService.createViewGroupLV(strucViewGroup);
-                registerListPresenter(strucViewGroupLV);
+                ViewGroupLV strucViewGroupLV = ViewGroupConverterService.createViewGroupLV(strucViewGroup,showAllPaths);
+                registerListPresenter(strucViewGroupLV, showAllPaths);
             }
         });
         AccessPoint.getMainLayout().applyNavigationTargets();
@@ -84,14 +84,14 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                     , viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
     }
 
-    private void registerListPresenter(ViewGroupLV viewGroupLV) {
+    private void registerListPresenter(ViewGroupLV viewGroupLV,boolean showAllPaths) {
         log.info("Registering List Presenter for the {} view", viewGroupLV.getTagName());
 
         viewGroupLV.getStrucViewGroupMDVS().forEach(
                 (k, v) -> registerMasterDetailPresenter(v, false));
 
 
-        ListPresenter listPresenter = new ListPresenter(notificationService,clientDataService, viewGroupLV, this);
+        ListPresenter listPresenter = new ListPresenter(notificationService,clientDataService, viewGroupLV, this,showAllPaths);
 
         listPresenters.put(viewGroupLV.getTagName(), listPresenter);
 

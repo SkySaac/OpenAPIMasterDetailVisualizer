@@ -12,6 +12,7 @@ import openapivisualizer.application.ui.controller.NotificationService;
 import openapivisualizer.application.ui.view.ListView;
 import com.vaadin.flow.component.Component;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.patterns.HasMemberTypePatternForPerThisMatching;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
@@ -29,12 +30,12 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
     private final ClientDataService clientDataService;
     private final ListView view;
 
-    public ListPresenter(NotificationService notificationService, ClientDataService clientDataService, ViewGroupLV viewGroupLV, DetailLayout.NavigationListener navigationListener) {
+    public ListPresenter(NotificationService notificationService, ClientDataService clientDataService, ViewGroupLV viewGroupLV, DetailLayout.NavigationListener navigationListener, boolean showAllPaths) {
         this.clientDataService = clientDataService;
         this.notificationService = notificationService;
         this.viewGroupLV = viewGroupLV;
         this.navigationListener = navigationListener;
-        view = new ListView(viewGroupLV.getTagName(), this, viewGroupLV.getStrucViewGroupMDVS(), viewGroupLV.getNotMatchedStrucPathMap());
+        view = new ListView(showAllPaths, this, viewGroupLV.getStrucViewGroupMDVS(), viewGroupLV.getNotMatchedStrucPathMap());
     }
 
     public Component getView() {
@@ -73,7 +74,7 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void postAction(String path, MultiValueMap<String, String> queryParameters,Map<String, String> pathVariables, DataSchema properties) { //TODO use queryparams
-        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path)) { //TODO map passt nich
+        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path) && viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.POST)) { //TODO map passt nich
             try {
                 clientDataService.postData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST), properties, queryParameters,pathVariables);
             } catch (ResourceAccessException e) {
@@ -86,7 +87,7 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String, String> queryParameters) {
-        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path)) { //TODO map passt nich
+        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path)&& viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.DELETE)) { //TODO map passt nich
             try {
                 clientDataService.deleteData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE).getPath()
                         , pathVariables, queryParameters);
@@ -100,6 +101,14 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void putAction(String path, MultiValueMap<String, String> queryParameters,Map<String,String> pathParams, DataSchema properties) {
-        //TODO
+        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path)&& viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.PUT)) {
+            try {
+                clientDataService.putData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT), properties, queryParameters, pathParams);
+            } catch (ResourceAccessException e) {
+                log.error("Error trying to access: {}", e.getMessage());
+                e.printStackTrace();
+                notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
+            }
+        }
     }
 }

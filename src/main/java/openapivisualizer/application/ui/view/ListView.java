@@ -1,13 +1,13 @@
 package openapivisualizer.application.ui.view;
 
-import openapivisualizer.application.generation.structuremodel.StrucPath;
-import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import openapivisualizer.application.generation.structuremodel.StrucPath;
+import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
 import org.springframework.http.HttpMethod;
 
 import java.util.Map;
@@ -26,16 +26,17 @@ public class ListView extends Div {
 
     private final LActionListener actionListener;
 
-    public ListView(String tagName, LActionListener actionListener, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    public ListView(boolean showAllPaths, LActionListener actionListener, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         this.actionListener = actionListener;
 
-        add(createListContent(mdvGroups, strucPathMap));
+        add(createListContent(showAllPaths, mdvGroups, strucPathMap));
     }
 
-    private VerticalLayout createListContent(Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    private VerticalLayout createListContent(boolean showAllPaths, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         VerticalLayout verticalLayout = new VerticalLayout();
 
-        mdvGroups.forEach((path, v) -> verticalLayout.add(createMDVComponent("GET: " + path, path)));
+        if (!showAllPaths)
+            mdvGroups.forEach((path, v) -> verticalLayout.add(createMDVComponent("GET: " + path, path)));
 
         strucPathMap.forEach((path, v) -> v.forEach((httpMethod, strucPath) -> {
             switch (httpMethod) {

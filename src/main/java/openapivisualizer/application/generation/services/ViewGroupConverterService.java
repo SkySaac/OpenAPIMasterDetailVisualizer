@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ViewGroupConverterService {
 
-    public static ViewGroupLV createViewGroupLV(ViewGroup viewGroup) {
+    public static ViewGroupLV createViewGroupLV(ViewGroup viewGroup, boolean showAllPaths) {
         log.debug("List LV primary paths for {}: {}", viewGroup.getTagName(), viewGroup.getPrimaryPaths());
 
         //creates internal MDVs
@@ -27,13 +27,19 @@ public class ViewGroupConverterService {
             internalMDVStrucViewGroups.put(primaryPath, createStrucViewGroupMDV(viewGroupInternalMD));
         });
 
-        return new ViewGroupLV(viewGroup.getTagName(), viewGroup.getStrucSchemaMap(), //TODO remove secondary paths
-                viewGroup.getStrucPathMap().entrySet().stream()
-                        .filter(entry -> !viewGroup.getSecondaryPaths().containsValue(entry.getKey()) //TODO mal strucviewgroup angucken ob alles richtig zugeordnet ist
-                                && !viewGroup.getPrimaryPaths().contains(entry.getKey())
-                                && viewGroup.getInternalPrimaryPaths().values().stream().noneMatch(values -> values.contains(entry.getKey())))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
-                internalMDVStrucViewGroups);
+        Map<String, Map<HttpMethod, StrucPath>> notMatchedPaths;
+        if (showAllPaths) {
+            notMatchedPaths = viewGroup.getStrucPathMap();
+        } else {
+            notMatchedPaths = viewGroup.getStrucPathMap().entrySet().stream()
+                    .filter(entry -> !viewGroup.getSecondaryPaths().containsValue(entry.getKey()) //TODO mal strucviewgroup angucken ob alles richtig zugeordnet ist
+                            && !viewGroup.getPrimaryPaths().contains(entry.getKey())
+                            && viewGroup.getInternalPrimaryPaths().values().stream().noneMatch(values -> values.contains(entry.getKey())))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        return new ViewGroupLV(viewGroup.getTagName(), viewGroup.getStrucSchemaMap(), notMatchedPaths//TODO remove secondary paths
+                , internalMDVStrucViewGroups);
     }
 
     public static ViewGroupMDV createStrucViewGroupMDV(ViewGroup viewGroup) {
