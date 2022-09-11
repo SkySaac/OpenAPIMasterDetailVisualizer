@@ -39,6 +39,7 @@ public class ArrayComponent extends DetailComponent implements ArrayNameDialog.A
 
 
         Label titleLabel = new Label(title);
+        titleLabel.getStyle().set("font-size", "large");
         Button settingsButton = new Button(VaadinIcon.SLIDERS.create());
         settingsButton.addClickListener(e -> arrayNameDialog.open());
         HorizontalLayout topbar = new HorizontalLayout(titleLabel, settingsButton);

@@ -55,8 +55,8 @@ public class ClientDataService {
                 .pathParams(pathParams)
                 .path(path);
 
-        if(username!=null && password!=null)
-            requestWrapper.requestBuilder().basicAuth(username,password);
+        if (username != null && password != null)
+            requestWrapper.requestBuilder().basicAuth(username, password);
 
         if (body != null) {
             requestWrapper.requestBuilder()
@@ -70,7 +70,7 @@ public class ClientDataService {
 
     public void postData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams, Map<String, String> pathVariables) {
         String body = null;
-        if(bodyData.getValue().getProperties().size()!=0)
+        if (bodyData.getValue().getProperties().size() != 0)
             body = convertToJson(bodyData).toString();
         ResponseEntity<String> response = sendRequest(HttpMethod.POST, serverUrl, strucPath.getPath(), pathVariables, queryParams, body);
         log.info(response.getStatusCode().toString());
@@ -81,7 +81,7 @@ public class ClientDataService {
 
     public void putData(StrucPath strucPath, DataSchema bodyData, MultiValueMap<String, String> queryParams, Map<String, String> pathVariables) {
         String body = null;
-        if(bodyData.getValue().getProperties().size()!=0)
+        if (bodyData.getValue().getProperties().size() != 0)
             body = convertToJson(bodyData).toString();
         ResponseEntity<String> response = sendRequest(HttpMethod.PUT, serverUrl, strucPath.getPath(), pathVariables, queryParams, body);
         log.info(response.getStatusCode().toString());
@@ -100,24 +100,35 @@ public class ClientDataService {
 
     }
 
-    public DataSchema getData(StrucPath strucPath, StrucSchema innerSchema, Map<String, String> pathParams, MultiValueMap<String, String> queryParameters) throws RequestException {
+    public DataSchema getData(StrucPath strucPath, String wrappedPath, Map<String, String> pathParams, MultiValueMap<String, String> queryParameters) throws RequestException {
 
         ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), pathParams, queryParameters, null);
 
-        if (response.getStatusCode().is2xxSuccessful()) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody()!=null) {
             try {
                 JsonNode node = objectMapper.readTree(response.getBody());
                 DataSchema dataSchema = convertToDataSchema("root", node);
-                if (innerSchema != null) {
-                    String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
-                    dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
+                if (wrappedPath != null) {
+                    //String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
+                    //dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
+                    DataSchema tempSchema = dataSchema;
+                    for (String attributeName : wrappedPath.split(",")) {
+                        if (tempSchema.getValue().getProperties().containsKey(attributeName)) {
+                            tempSchema = tempSchema.getValue().getProperties().get(attributeName);
+                        } else {
+                            tempSchema = dataSchema;
+                            break;
+                        }
+                    }
+                    dataSchema = tempSchema;
                 }
                 return dataSchema;
             } catch (JsonProcessingException e) {
-                throw new RequestException("Malformed response body");
+                throw new RequestException("Server Antwort ist nicht gültig");
             }
-        }
-        else{
+        } else if (response.getBody()==null){
+            throw new RequestException("Server Antwort ist leer");
+        }else {
             throw new RequestException(response.getStatusCode().toString());
         }
     }

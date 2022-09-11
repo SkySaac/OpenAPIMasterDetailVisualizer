@@ -1,5 +1,6 @@
 package openapivisualizer.application.ui.components;
 
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -16,6 +17,8 @@ public class ExtractionSettingsDialog extends Dialog {
     private final Checkbox showAllPathsListView = new Checkbox("Show all paths in List Views");
 
     public ExtractionSettingsDialog(ActionListener actionListener) {
+
+        setWidth(50, Unit.PERCENTAGE);
 
         VerticalLayout content = new VerticalLayout(onlyListViewCheckbox,showAllPathsListView);
         add(content);

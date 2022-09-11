@@ -9,7 +9,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import lombok.extern.slf4j.Slf4j;
-import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.ui.components.SettingsDialog;
@@ -46,7 +45,7 @@ public class MasterDetailView extends Div {
 
     private List<Grid.Column<DataSchema>> initialGridColumns;
 
-    public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, boolean isPaged, StrucSchema getSchema, boolean hasPost,
+    public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
                             boolean hasPut, boolean hasDelete) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
@@ -113,7 +112,7 @@ public class MasterDetailView extends Div {
         columnSettings.forEach(columnElement -> {
             if (columnElement.isVisible())
                 sortedColumns.add(columnMap.get(columnElement.getColumnName()));
-            else if(grid.getColumns().contains(grid.getColumnByKey(columnElement.getColumnName())))
+            else if (grid.getColumns().contains(grid.getColumnByKey(columnElement.getColumnName())))
                 grid.removeColumn(grid.getColumnByKey(columnElement.getColumnName()));
 
         });
@@ -141,13 +140,22 @@ public class MasterDetailView extends Div {
 
         //Add all columns
         getSchema.getStrucValue().getProperties().forEach((key, value) -> {
-                    if (value.getStrucValue().getType() != DataPropertyType.OBJECT
-                            && value.getStrucValue().getType() != DataPropertyType.ARRAY) {
-                        grid.addColumn(
-                                dataSchema -> dataSchema.getValue().getProperties().containsKey(key)
-                                        ? dataSchema.getValue().getProperties().get(key).getValue().getPlainValue() : "-"
-                        ).setHeader(key).setAutoWidth(true).setResizable(true).setSortable(true).setKey(key);
-                    }
+                    //if (value.getStrucValue().getType() != DataPropertyType.OBJECT
+                    //        && value.getStrucValue().getType() != DataPropertyType.ARRAY) {
+                    grid.addColumn(
+                            dataSchema -> {
+                                if (dataSchema.getValue().getProperties().containsKey(key)) {
+                                    if (dataSchema.getValue().getProperties().get(key).getValue().getPlainValue() != null)
+                                        return dataSchema.getValue().getProperties().get(key).getValue().getPlainValue();
+                                    else
+                                        return dataSchema.getValue().getProperties().get(key).getValue().getDataPropertyType().toString();
+                                } else
+                                    return "-";
+                                //return dataSchema.getValue().getProperties().containsKey(key)
+                                //        ? dataSchema.getValue().getProperties().get(key).getValue().getPlainValue() : "-"
+                            }
+                    ).setHeader(key).setAutoWidth(true).setResizable(true).setSortable(true).setKey(key);
+                    //}
                 }
         );
 
@@ -172,7 +180,9 @@ public class MasterDetailView extends Div {
         if (data != null && data.getValue() != null && (!data.getValue().getDataSchemas().isEmpty() || !data.getValue().getProperties().isEmpty())) {
             noDataLabel.setVisible(false);
             if (data.getValue().getDataSchemas().isEmpty() && !data.getValue().getProperties().isEmpty()) {
-                grid.setItems(List.of(data));
+                List<DataSchema> dataSchemaList = new ArrayList<>();
+                dataSchemaList.add(data);
+                grid.setItems(dataSchemaList);
             } else {
                 grid.setItems(data.getValue().getDataSchemas());
             }

@@ -10,6 +10,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.grid.dnd.GridDropLocation;
 import com.vaadin.flow.component.grid.dnd.GridDropMode;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -24,10 +25,7 @@ import openapivisualizer.application.generation.structuremodel.StrucPath;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SettingsDialog extends Dialog {
@@ -36,13 +34,18 @@ public class SettingsDialog extends Dialog {
         void setQueryParams(MultiValueMap<String, String> queryParams);
 
         void setGridColumnSettings(List<ColumnGridElement> columns);
+
+        void setWrappedSchemaPath(String pathToSchema);
+
+        void refreshFromSettings();
     }
 
     private final SettingsActionListener actionListener;
 
     private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
     private final Grid<ColumnGridElement> grid = new Grid<>(ColumnGridElement.class);
-    private final Map<String, Checkbox> visibleMap = new HashMap<>();
+    private final TextField wrappedSchemaTextfield = new TextField("Pfad zum WrappedSchema");
+    private final Map<String, Checkbox> visibleMap = new HashMap<>(); //TODO wofür
 
 
     public SettingsDialog(SettingsActionListener actionListener) {
@@ -50,23 +53,38 @@ public class SettingsDialog extends Dialog {
         setWidth(50, Unit.PERCENTAGE);
     }
 
-    public void open(StrucPath strucPath, List<ColumnGridElement> columnSortation) {
+    public void open(StrucPath strucPath, List<ColumnGridElement> columnSorting, String currentPath) {
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
 
-        createGridSettings(columnSortation);
+        createWrappedSchemaSettings(currentPath);
+
+        createGridSettings(columnSorting);
 
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
 
         Button postButton = new Button("Save");
-        postButton.addClickListener(e -> this.save());
+        postButton.addClickListener(e -> this.save(currentPath));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(postButton, closePostViewButton);
         add(horizontalLayout);
 
         this.open();
+    }
+
+    private void createWrappedSchemaSettings(String currentPath) {
+        Label currentPathLabel = new Label("Derzeitiger Pfad: " + currentPath);
+
+        wrappedSchemaTextfield.setPlaceholder("attribut1,attribut2,wrappedSchemaArray");
+        if (currentPath != null)
+            wrappedSchemaTextfield.setValue(currentPath);
+
+        VerticalLayout content = new VerticalLayout();
+        content.add(currentPathLabel, wrappedSchemaTextfield);
+        Details details = new Details("Wrapped schema location", content);
+        add(details);
     }
 
     private MultiValueMap<String, String> collectQueryParams() {
@@ -79,14 +97,19 @@ public class SettingsDialog extends Dialog {
         return params;
     }
 
-    private void save() {
+    private void save(String currentPath) {
         MultiValueMap<String, String> queryParams = collectQueryParams();
 
-        if(areRequiredFieldsFilled())
+        if (areRequiredFieldsFilled())
             actionListener.setQueryParams(queryParams);
 
         actionListener.setGridColumnSettings(grid.getDataProvider().fetch(new Query<>())
                 .collect(Collectors.toList()));
+
+        if (!wrappedSchemaTextfield.getValue().equals(currentPath))
+            actionListener.setWrappedSchemaPath(wrappedSchemaTextfield.getValue());
+
+        actionListener.refreshFromSettings();
         this.close();
     }
 

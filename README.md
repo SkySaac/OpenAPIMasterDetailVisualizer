@@ -75,13 +75,20 @@ TEST /{id}/... testen
 TEST rest parking ausprobieren
 TEST unit test
 TEST button to show all paths in listview
+TEST clearing wrappedPathSetting
 WICHTIG application/octet-stream support -> button for up n download -> optional
-WICHTIG wrapped setting to select data
-WICHTIG /{id} needs own view
 WICHTIG readme schön machen
 WICHTIG setting for parameter select
+WICHTIG POST hat bei /api/artiufacts/id/representations nicht angezeigt
 WICHTIG sequenzdiagram von generierungsablauf
+WICHTIG DIalog abstand zwischen titel zb query param und textfields verkleinern
+WICHTIG wenn path File:// ist geht routing nicht
+WICHTIG /data/** finded er nicht
+WICHTIG bug nach 404 und dann auf listview klicken
+WICHTIG IRGENDWAS MIT PARAMETER 
+WICHTIG art von responese object in path packen und bei rest aufrufen diese art auch nutzen
 Oneof in request
+setting wrappedSchema to something and then the api doesnt send that thing back -> Problem
 ArrayDetail -> change way to fill data
 UI english -> Deutsch
 required auch bei anderen dingen in post und put angeben (nicht nur query&path)
@@ -89,7 +96,7 @@ put/post object& array support
 google stylesheet
 merge to main branch
 
-
+dsc hat falsche links bei data bei artifact (** fehlt)
 change to using tabs -> optional
 support allOf -> optional
 checksum sollte string sein oder long
@@ -97,6 +104,7 @@ Problem -> jackson doesnt know the difference between double and int
 Problem -> Tagesschau gibt unter /api/news gibt in return object mehr parameter zurück als in apidoc defined -> geht also nicht
 
 
+WICHTIG wrapped setting to select data
 credentials clear
 WICHTIG settings for array names in details tab
 remove isFreeSchema

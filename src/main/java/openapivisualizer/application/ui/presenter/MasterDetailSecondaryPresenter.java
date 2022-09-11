@@ -27,13 +27,10 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class MasterDetailPresenter implements MasterDetailView.MDActionListener, SettingsDialog.SettingsActionListener,
-        PostDialog.PostActionListener, DeleteDialog.DeleteActionListener, PutDialog.PutActionListener {
+public class MasterDetailSecondaryPresenter implements MasterDetailView.MDActionListener, SettingsDialog.SettingsActionListener,DeleteDialog.DeleteActionListener, PutDialog.PutActionListener {
 
     private final ClientDataService clientDataService;
     private final NotificationService notificationService;
-    private final Map<String, MasterDetailPresenter> internalPresenters = new HashMap<>();
-    private MasterDetailSecondaryPresenter secondaryPresenter = null;
     private final DetailLayout.NavigationListener navigationListener;
     @Getter
     private final ViewGroupMDV strucViewGroup;
@@ -45,21 +42,14 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     private String currentWrappedPath = null;
 
 
-    public MasterDetailPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, ViewGroupMDV viewGroup) {
+    public MasterDetailSecondaryPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, ViewGroupMDV viewGroup) {
         this.clientDataService = clientDataService;
         this.navigationListener = navigationListener;
         this.notificationService = notificationService;
         this.strucViewGroup = viewGroup;
 
         if (!viewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.GET))
-            log.error("Master Detail Presenter created with no Get path or schema: {}", viewGroup.getTagName());
-
-        if (viewGroup.getSecondaryViewGroup() != null)
-            secondaryPresenter = new MasterDetailSecondaryPresenter(notificationService, navigationListener, clientDataService, viewGroup.getSecondaryViewGroup());
-
-        viewGroup.getInternalMDVs().forEach((key, value) -> { //TODO if id is needed put id in path
-            internalPresenters.put(key, new MasterDetailPresenter(notificationService, navigationListener, clientDataService, value));
-        });
+            log.error("Secondary Master Detail Presenter created with no Get path or schema: {}", viewGroup.getTagName());
 
         createNewView();
 
@@ -91,13 +81,8 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         }
         view = new MasterDetailView(navigationListener, this,
                 shownGetSchema,
-                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST),
-                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
+                false, strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE));
-    }
-
-    public Component getView() {
-        return getView(new HashMap<>());
     }
 
     public Component getView(Map<String, String> pathParams) {
@@ -107,11 +92,9 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         return view;
     }
 
-
     @Override
     public void openPostDialog() {
-        PostDialog postDialog = new PostDialog(this);
-        postDialog.open(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), pathParams);
+        //NOTHING AS IT CANT EXIST HERE
     }
 
     @Override
@@ -148,20 +131,6 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
             log.error("Error trying to access: {}", e.getMessage());
             e.printStackTrace();
             notificationService.postNotification("Datenabruf fehlgeschlagen: " + e.getMessage(), true);
-        }
-    }
-
-    @Override
-    public void postAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema body) {
-        if (strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST)) {
-            try {
-                clientDataService.postData(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.POST), body, queryParameters, pathVariables);
-                refreshData();
-            } catch (ResourceAccessException e) {
-                log.error("Error trying to access: {}", e.getMessage());
-                e.printStackTrace();
-                notificationService.postNotification("Es konnte keine Verbindung zum Server hergestellt werden.", true);
-            }
         }
     }
 
@@ -226,52 +195,5 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     public void refreshFromSettings() {
         refreshData();
     }
-
-    public Component getIfHasInternalTargetView(String path) {
-        String[] splittedPath = path.split("/");
-        Map<String, String> pathParams = new HashMap<>();
-        for (Map.Entry<String, MasterDetailPresenter> presenterEntry : internalPresenters.entrySet()) {
-            String[] splittedPresenterPath = presenterEntry.getKey().split("/");
-            if (splittedPath.length == splittedPresenterPath.length) {
-                boolean matching = true;
-                for (int i = 0; i < splittedPath.length; i++) {
-                    if (!splittedPresenterPath[i].startsWith("{") && !splittedPath[i].equals(splittedPresenterPath[i])
-                    ) {
-                        matching = false;
-                        break;
-                    } else if (splittedPresenterPath[i].startsWith("{")) {
-                        pathParams.put(splittedPresenterPath[i].substring(1, splittedPresenterPath[i].length() - 1), splittedPath[i]);
-                    }
-                }
-                if (matching) {
-                    return presenterEntry.getValue().getView(pathParams);
-                } else {
-                    pathParams.clear();
-                }
-            }
-        }
-        if(strucViewGroup.getSecondaryViewGroup()!=null) {
-            String secondaryPath = strucViewGroup.getSecondaryViewGroup().getPrimaryStrucPathMap().get(HttpMethod.GET).getPath();
-            //checking the secondary path here
-            if (secondaryPath != null) {
-                String[] splittedPresenterPath = secondaryPath.split("/");
-                if (splittedPath.length == splittedPresenterPath.length) {
-                    boolean matching = true;
-                    for (int i = 0; i < splittedPath.length; i++) {
-                        if (!splittedPresenterPath[i].startsWith("{") && !splittedPath[i].equals(splittedPresenterPath[i])
-                        ) {
-                            matching = false;
-                            break;
-                        } else if (splittedPresenterPath[i].startsWith("{")) {
-                            pathParams.put(splittedPresenterPath[i].substring(1, splittedPresenterPath[i].length() - 1), splittedPath[i]);
-                        }
-                    }
-                    if (matching) {
-                        return secondaryPresenter.getView(pathParams);
-                    }
-                }
-            }
-        }
-        return null;
-    }
 }
+

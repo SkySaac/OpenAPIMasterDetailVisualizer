@@ -1,6 +1,7 @@
 package openapivisualizer.application.ui.components;
 
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -33,13 +34,18 @@ public class DeleteDialog extends Dialog {
 
     public DeleteDialog(DeleteActionListener actionListener) {
         this.actionListener = actionListener;
+        setWidth(50, Unit.PERCENTAGE);
+
     }
 
     public void open(StrucPath strucPath) {
+        this.open(strucPath, new HashMap<>());
+    }
+
+    public void open(StrucPath strucPath, Map<String, String> pathParams) {
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
-        createPathParamFields(strucPath);
-
+        createPathParamFields(strucPath, pathParams);
 
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
@@ -92,13 +98,13 @@ public class DeleteDialog extends Dialog {
             actionListener.deleteAction(path, pathParams, queryParams);
     }
 
-    private boolean areRequiredFieldsFilled(Map<String,String> pathParams) {
+    private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {
         return pathParams.size() == pathFieldComponents.size()
                 && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
                 || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
     }
 
-    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, boolean isPath,boolean required) {
+    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, boolean isPath, boolean required) {
         AbstractField inputComponent;
         switch (type) {
             case INTEGER -> inputComponent = new IntegerField(title);
@@ -126,7 +132,7 @@ public class DeleteDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getQueryParams().forEach(queryParam -> {
-                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), false,queryParam.isRequired());
+                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), false, queryParam.isRequired());
                     verticalLayoutContent.add(abstractField);
                 }
         );
@@ -136,13 +142,15 @@ public class DeleteDialog extends Dialog {
         add(verticalLayout);
     }
 
-    private void createPathParamFields(StrucPath strucPath) {
+    private void createPathParamFields(StrucPath strucPath, Map<String, String> pathParams) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), true,true);
+                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), true, true);
                     verticalLayoutContent.add(abstractField);
+                    if (pathParams.containsKey(pathParam.getName()))
+                        abstractField.setValue(pathParams.get(pathParam.getName()));
                 }
         );
 

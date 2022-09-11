@@ -1,5 +1,6 @@
 package openapivisualizer.application.ui.components;
 
+import com.vaadin.flow.component.Unit;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataValue;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
@@ -37,11 +38,17 @@ public class PutDialog extends Dialog {
 
     public PutDialog(PutActionListener actionListener) {
         this.actionListener = actionListener;
+        setWidth(50, Unit.PERCENTAGE);
+
     }
 
     public void open(StrucPath strucPath) {
+        this.open(strucPath, new HashMap<>());
+    }
+
+    public void open(StrucPath strucPath, Map<String, String> pathParams) {
         if (!strucPath.getPathParams().isEmpty()) //TODO check if all required params are in it instead
-            createPathParamFields(strucPath); //TODO
+            createPathParamFields(strucPath, pathParams);
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
         if (strucPath.getRequestStrucSchema() != null)
@@ -97,7 +104,7 @@ public class PutDialog extends Dialog {
             actionListener.putAction(path, queryParams, pathParams, dataSchema);
     }
 
-    private boolean areRequiredFieldsFilled(Map<String,String> pathParams) {
+    private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {
         return pathParams.size() == pathFieldComponents.size()
                 && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
                 || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
@@ -159,13 +166,15 @@ public class PutDialog extends Dialog {
         add(verticalLayout);
     }
 
-    private void createPathParamFields(StrucPath strucPath) {
+    private void createPathParamFields(StrucPath strucPath, Map<String, String> pathParams) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
                     AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), "path", true);
                     verticalLayoutContent.add(abstractField);
+                    if (pathParams.containsKey(pathParam.getName()))
+                        abstractField.setValue(pathParams.get(pathParam.getName()));
                 }
         );
 

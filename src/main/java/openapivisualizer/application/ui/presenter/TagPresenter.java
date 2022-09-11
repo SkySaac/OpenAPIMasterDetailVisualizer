@@ -1,5 +1,6 @@
 package openapivisualizer.application.ui.presenter;
 
+import lombok.Setter;
 import openapivisualizer.application.generation.structuremodel.StrucOpenApi;
 import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
 import openapivisualizer.application.rest.client.ClientDataService;
@@ -15,6 +16,7 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import openapivisualizer.application.ui.route.MasterDetailRoute;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 
@@ -32,6 +34,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
     private final NotificationService notificationService;
+
 
     @Getter
     private StrucOpenApi strucOpenApi;
@@ -132,7 +135,6 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         List<Component> foundMDVPresenters = masterDetailPresenters.values().stream()
                 .map(masterDetailPresenter -> masterDetailPresenter.getIfHasInternalTargetView(path))
                 .filter(Objects::nonNull).toList();
-
         if (foundMDVPresenters.size() > 0) {
             return foundMDVPresenters.get(0);
         }

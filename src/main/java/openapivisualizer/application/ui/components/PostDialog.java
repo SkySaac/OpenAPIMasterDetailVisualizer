@@ -1,6 +1,7 @@
 package openapivisualizer.application.ui.components;
 
 import com.vaadin.flow.component.AbstractField;
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -39,11 +40,17 @@ public class PostDialog extends Dialog {
 
     public PostDialog(PostActionListener actionListener) {
         this.actionListener = actionListener;
+        setWidth(50, Unit.PERCENTAGE);
+
     }
 
-    public void open(StrucPath strucPath) { //TODO only needs strucpath since the schema is in there
+    public void open(StrucPath strucPath) {
+        this.open(strucPath,new HashMap<>());
+    }
+
+    public void open(StrucPath strucPath,Map<String,String> pathParams) { //TODO only needs strucpath since the schema is in there
         if (!strucPath.getPathParams().isEmpty())
-            createPathParamFields(strucPath);
+            createPathParamFields(strucPath,pathParams);
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
         if (strucPath.getRequestStrucSchema() != null)
@@ -188,13 +195,15 @@ public class PostDialog extends Dialog {
         add(verticalLayout);
     }
 
-    private void createPathParamFields(StrucPath strucPath) {
+    private void createPathParamFields(StrucPath strucPath,Map<String,String> pathParams) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
-        strucPath.getQueryParams().forEach(pathParam -> {
+        strucPath.getPathParams().forEach(pathParam -> {
                     AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), "path",true);
                     verticalLayoutContent.add(abstractField);
+                    if(pathParams.containsKey(pathParam.getName()))
+                        abstractField.setValue(pathParams.get(pathParam.getName()));
                 }
         );
 
