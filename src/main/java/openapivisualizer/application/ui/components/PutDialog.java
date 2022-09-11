@@ -1,21 +1,17 @@
 package openapivisualizer.application.ui.components;
 
 import com.vaadin.flow.component.Unit;
-import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
-import openapivisualizer.application.rest.client.restdatamodel.DataValue;
-import openapivisualizer.application.generation.structuremodel.DataPropertyType;
-import openapivisualizer.application.generation.structuremodel.StrucPath;
-import openapivisualizer.application.generation.structuremodel.StrucSchema;
-import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.textfield.TextField;
+import openapivisualizer.application.generation.structuremodel.DataPropertyType;
+import openapivisualizer.application.generation.structuremodel.StrucPath;
+import openapivisualizer.application.generation.structuremodel.StrucSchema;
+import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
+import openapivisualizer.application.rest.client.restdatamodel.DataValue;
+import openapivisualizer.application.ui.components.createComponents.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -32,9 +28,11 @@ public class PutDialog extends Dialog {
 
     private final PutActionListener actionListener;
 
-    private final List<InputValueComponent> inputFieldComponents = new ArrayList<>();
-    private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
-    private final List<InputValueComponent> pathFieldComponents = new ArrayList<>();
+    protected final List<CreateComponent> inputFieldComponents = new ArrayList<>();
+    private final List<CreateComponent> queryFieldComponents = new ArrayList<>();
+    private final List<CreateComponent> pathFieldComponents = new ArrayList<>();
+    private final Button putButton = new Button("Put");
+    private DataPropertyType bodyPropertyType = DataPropertyType.OBJECT;
 
     public PutDialog(PutActionListener actionListener) {
         this.actionListener = actionListener;
@@ -46,22 +44,23 @@ public class PutDialog extends Dialog {
         this.open(strucPath, new HashMap<>());
     }
 
-    public void open(StrucPath strucPath, Map<String, String> pathParams) {
-        if (!strucPath.getPathParams().isEmpty()) //TODO check if all required params are in it instead
+    public void open(StrucPath strucPath, Map<String, String> pathParams) { //TODO only needs strucpath since the schema is in there
+        if (!strucPath.getPathParams().isEmpty())
             createPathParamFields(strucPath, pathParams);
         if (!strucPath.getQueryParams().isEmpty())
             createQueryParamFields(strucPath);
-        if (strucPath.getRequestStrucSchema() != null)
+        if (strucPath.getRequestStrucSchema() != null) {
+            bodyPropertyType = strucPath.getRequestStrucSchema().getStrucValue().getType();
             createBodyFields(strucPath.getRequestStrucSchema());
+        }
 
-        Button closePostViewButton = new Button("Close");
-        closePostViewButton.addClickListener(e -> this.close());
+        Button closePutViewButton = new Button("Close");
+        closePutViewButton.addClickListener(e -> this.close());
 
-        Button postButton = new Button("Put");
-        postButton.addClickListener(e -> this.putAction(strucPath.getPath()));
+        putButton.addClickListener(e -> this.putAction(strucPath.getPath()));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(postButton, closePostViewButton);
+        horizontalLayout.add(putButton, closePutViewButton);
         add(horizontalLayout);
 
         this.open();
@@ -71,8 +70,8 @@ public class PutDialog extends Dialog {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>() {
         };
         queryFieldComponents.forEach(component -> {
-            if (!component.getComponent().isEmpty()) {
-                params.add(component.getTitle(), component.getComponent().getValue().toString());
+            if (!component.isEmpty()) {
+                params.add(component.getLabel(), component.getValue()); //TODO toString correct ?
             }
         });
         return params;
@@ -81,24 +80,32 @@ public class PutDialog extends Dialog {
     private Map<String, String> collectPathParams() {
         Map<String, String> params = new HashMap<>() {
         };
-        pathFieldComponents.forEach(component ->
-                params.put(component.getTitle(), component.getComponent().getValue().toString()));
+        pathFieldComponents.forEach(component -> {
+            params.put(component.getLabel(), component.getValue()); //TODO toString correct ?
+        });
         return params;
     }
 
-    private void putAction(String path) {
+    private void putAction(String path) { //TODO IF IT EVEN HAS BODY CHECK
         MultiValueMap<String, String> queryParams = collectQueryParams();
         Map<String, String> pathParams = collectPathParams();
 
-        Map<String, DataSchema> dataInputMap = new HashMap<>();
-        inputFieldComponents.forEach(inputValueComponent -> {
-            DataValue inputFieldValue = new DataValue(inputValueComponent.getComponent().getValue().toString(), inputValueComponent.getDataPropertyType());
-            DataSchema inputFieldSchema = new DataSchema(inputValueComponent.getTitle(), inputFieldValue);
-            dataInputMap.put(inputValueComponent.getTitle(), inputFieldSchema);
+        DataSchema dataSchema;
+        if (bodyPropertyType.equals(DataPropertyType.OBJECT)) {
+            Map<String, DataSchema> dataInputMap = new HashMap<>();
+            inputFieldComponents.forEach(inputValueComponent -> {
+                DataValue inputFieldValue = new DataValue(inputValueComponent.getValue(), inputValueComponent.getDataPropertyType());
+                DataSchema inputFieldSchema = new DataSchema(inputValueComponent.getLabel(), inputFieldValue);
+                dataInputMap.put(inputValueComponent.getLabel(), inputFieldSchema);
 
-        });
-        DataValue dataValue = new DataValue(dataInputMap, DataPropertyType.OBJECT);
-        DataSchema dataSchema = new DataSchema("post", dataValue);
+            });
+            DataValue dataValue = new DataValue(dataInputMap, DataPropertyType.OBJECT);
+            dataSchema = new DataSchema("put", dataValue);
+
+        } else {
+            DataValue inputFieldValue = new DataValue(inputFieldComponents.get(0).getValue(), inputFieldComponents.get(0).getDataPropertyType());
+            dataSchema = new DataSchema(inputFieldComponents.get(0).getLabel(), inputFieldValue);
+        }
 
         if (areRequiredFieldsFilled(pathParams))
             actionListener.putAction(path, queryParams, pathParams, dataSchema);
@@ -106,47 +113,41 @@ public class PutDialog extends Dialog {
 
     private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {
         return pathParams.size() == pathFieldComponents.size()
-                && queryFieldComponents.stream().allMatch(component -> !component.getComponent().isRequiredIndicatorVisible()
-                || (component.getComponent().isRequiredIndicatorVisible() && !component.getComponent().isEmpty()));
+                && queryFieldComponents.stream().allMatch(component -> !component.isRequired()
+                || (component.isRequired() && !component.isEmpty()));
     }
 
     private void createBodyFields(StrucSchema schema) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
-        schema.getStrucValue().getProperties().keySet().forEach(key -> {
-                    AbstractField abstractField = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), null, key, "input", false);
-                    verticalLayoutContent.add(abstractField);
-                }
-        );
+        if (schema.getStrucValue().getType().equals(DataPropertyType.OBJECT))
+            schema.getStrucValue().getProperties().keySet().forEach(key -> {
+                CreateComponent createComponent = createEditorComponent(schema.getStrucValue().getProperties().get(key).getStrucValue().getType(), schema.getStrucValue().getFormat(), key);
+                verticalLayoutContent.add(createComponent);
+                inputFieldComponents.add(createComponent);
+            });
+        else {
+            CreateComponent createComponent = createEditorComponent(schema.getStrucValue().getType(), schema.getStrucValue().getFormat(), schema.getName());
+            verticalLayoutContent.add(createComponent);
+        }
 
         verticalLayout.add(new Label("Body"));
         verticalLayout.add(verticalLayoutContent);
         add(verticalLayout);
     }
 
-    private AbstractField createEditorComponent(DataPropertyType type, String format, String title, String inputType, boolean required) {
-        AbstractField inputComponent;
+    private CreateComponent createEditorComponent(DataPropertyType type, String format, String title) {
+        CreateComponent inputComponent;
         switch (type) {
-            case INTEGER -> inputComponent = new IntegerField(title);
-            case DOUBLE -> inputComponent = new NumberField(title);
-            case BOOLEAN -> inputComponent = new Checkbox(title);
-            default -> {
-                TextField textField = new TextField(title);
-                textField.setPlaceholder(format != null ? format : "");
-                inputComponent = textField;
-            }
-        } //TODO Objekte & Arrays
+            case INTEGER -> inputComponent = new IntegerfieldComponent(title);
+            case DOUBLE -> inputComponent = new NumberfieldComponent(title);
+            case BOOLEAN -> inputComponent = new CheckboxComponent(title);
+            case ARRAY -> inputComponent = new ArrayComponent(title, DataPropertyType.STRING, null);
+            default -> inputComponent = new TextfieldComponent(title, format);
 
-        inputComponent.setRequiredIndicatorVisible(required);
+        } //TODO Objekte
 
-        switch (inputType) {
-            case "input" ->
-                //TODO maybe add it later and not in this function
-                    inputFieldComponents.add(new InputValueComponent(title, inputComponent, type));
-            case "query" -> queryFieldComponents.add(new InputValueComponent(title, inputComponent, type));
-            case "path" -> pathFieldComponents.add(new InputValueComponent(title, inputComponent, type));
-        }
 
         return inputComponent;
     }
@@ -155,9 +156,11 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
-        strucPath.getQueryParams().forEach(queryParam -> { //TODO check if required
-                    AbstractField abstractField = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName(), "query", queryParam.isRequired());
-                    verticalLayoutContent.add(abstractField);
+        strucPath.getQueryParams().forEach(queryParam -> {
+                    CreateComponent createComponent = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName());
+                    verticalLayoutContent.add(createComponent);
+                    queryFieldComponents.add(createComponent);
+                    createComponent.setRequired(queryParam.isRequired());
                 }
         );
 
@@ -171,10 +174,13 @@ public class PutDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    AbstractField abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName(), "path", true);
-                    verticalLayoutContent.add(abstractField);
+                    CreateComponent createComponent = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName());
+                    verticalLayoutContent.add(createComponent);
+                    pathFieldComponents.add(createComponent);
+                    createComponent.setRequired(true);
+
                     if (pathParams.containsKey(pathParam.getName()))
-                        abstractField.setValue(pathParams.get(pathParam.getName()));
+                        createComponent.setValue(pathParams.get(pathParam.getName()));
                 }
         );
 

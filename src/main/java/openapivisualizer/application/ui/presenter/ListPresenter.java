@@ -53,7 +53,6 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void openPutDialog(String path) {
-        //TODO
         PutDialog putDialog = new PutDialog(this);
         putDialog.open(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT));
     }

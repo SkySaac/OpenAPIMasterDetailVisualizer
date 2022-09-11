@@ -80,7 +80,8 @@ public class SchemaService {
             } else {
                 //schema is string or other
                 strucValue = new StrucValue(DataPropertyType.fromString(schema.getType()));
-
+                if(schema.getFormat()!=null)
+                    strucValue.setFormat(schema.getFormat());
             }
 
         } else {

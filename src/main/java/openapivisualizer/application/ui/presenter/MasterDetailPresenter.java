@@ -227,8 +227,10 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         refreshData();
     }
 
-    public Component getIfHasInternalTargetView(String path) {
+    public Component getIfHasTargetView(String path) {
         String[] splittedPath = path.split("/");
+
+        //what if part of internal presenter
         Map<String, String> pathParams = new HashMap<>();
         for (Map.Entry<String, MasterDetailPresenter> presenterEntry : internalPresenters.entrySet()) {
             String[] splittedPresenterPath = presenterEntry.getKey().split("/");
@@ -250,6 +252,8 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
                 }
             }
         }
+
+        //what if secondary path
         if(strucViewGroup.getSecondaryViewGroup()!=null) {
             String secondaryPath = strucViewGroup.getSecondaryViewGroup().getPrimaryStrucPathMap().get(HttpMethod.GET).getPath();
             //checking the secondary path here
@@ -268,6 +272,34 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
                     }
                     if (matching) {
                         return secondaryPresenter.getView(pathParams);
+                    } else {
+                        pathParams.clear();
+                    }
+                }
+            }
+        }
+
+        //what if primaryPath with {}
+        if(strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath().contains("{")){
+            String primaryPath = strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath();
+            //checking the secondary path here
+            if (primaryPath != null) {
+                String[] splittedPresenterPath = primaryPath.split("/");
+                if (splittedPath.length == splittedPresenterPath.length) {
+                    boolean matching = true;
+                    for (int i = 0; i < splittedPath.length; i++) {
+                        if (!splittedPresenterPath[i].startsWith("{") && !splittedPath[i].equals(splittedPresenterPath[i])
+                        ) {
+                            matching = false;
+                            break;
+                        } else if (splittedPresenterPath[i].startsWith("{")) {
+                            pathParams.put(splittedPresenterPath[i].substring(1, splittedPresenterPath[i].length() - 1), splittedPath[i]);
+                        }
+                    }
+                    if (matching) {
+                        return getView(pathParams);
+                    } else {
+                        pathParams.clear();
                     }
                 }
             }

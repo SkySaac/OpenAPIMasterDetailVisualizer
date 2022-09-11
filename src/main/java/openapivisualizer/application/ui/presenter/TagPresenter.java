@@ -1,22 +1,20 @@
 package openapivisualizer.application.ui.presenter;
 
-import lombok.Setter;
-import openapivisualizer.application.generation.structuremodel.StrucOpenApi;
-import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
-import openapivisualizer.application.rest.client.ClientDataService;
-import openapivisualizer.application.generation.services.ViewGroupConverterService;
-import openapivisualizer.application.generation.services.StructureProviderService;
-import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
-import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
-import openapivisualizer.application.ui.controller.NotificationService;
-import openapivisualizer.application.ui.other.AccessPoint;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import openapivisualizer.application.ui.route.MasterDetailRoute;
+import openapivisualizer.application.generation.services.StructureProviderService;
+import openapivisualizer.application.generation.services.ViewGroupConverterService;
+import openapivisualizer.application.generation.structuremodel.StrucOpenApi;
+import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
+import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
+import openapivisualizer.application.rest.client.ClientDataService;
+import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
+import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.other.AccessPoint;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 
@@ -56,7 +54,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
 
     public void prepareStructure(String source, boolean onlyListViews, boolean showAllPaths) {
         StrucOpenApi strucOpenApi = StructureProviderService.generateApiStructure(source);
-        registerPresenters(strucOpenApi,onlyListViews,showAllPaths);
+        registerPresenters(strucOpenApi, onlyListViews, showAllPaths);
     }
 
     public void registerPresenters(StrucOpenApi strucOpenApi, boolean onlyListViews, boolean showAllPaths) {
@@ -67,7 +65,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
                 ViewGroupMDV viewGroupMDV = ViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(viewGroupMDV, true);
             } else {
-                ViewGroupLV strucViewGroupLV = ViewGroupConverterService.createViewGroupLV(strucViewGroup,showAllPaths);
+                ViewGroupLV strucViewGroupLV = ViewGroupConverterService.createViewGroupLV(strucViewGroup, showAllPaths);
                 registerListPresenter(strucViewGroupLV, showAllPaths);
             }
         });
@@ -78,23 +76,25 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     private void registerMasterDetailPresenter(ViewGroupMDV viewGroupMDV, boolean menuNavigationable) {
         log.info("Registering Master-Detail Presenter for the {} view", viewGroupMDV.getTagName());
 
-        MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService,this, clientDataService, viewGroupMDV);
+        if(viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getResponseStrucSchema()!=null) {
+            MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService, this, clientDataService, viewGroupMDV);
 
-        masterDetailPresenters.put(viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
+            masterDetailPresenters.put(viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
 
-        if (menuNavigationable)
-            AccessPoint.getMainLayout().addNavigationTarget(viewGroupMDV.getTagName(), true
-                    , viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+            if (menuNavigationable)
+                AccessPoint.getMainLayout().addNavigationTarget(viewGroupMDV.getTagName(), true
+                        , viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+        }else{
+            log.warn("{} has no valid response",viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+        }
     }
 
-    private void registerListPresenter(ViewGroupLV viewGroupLV,boolean showAllPaths) {
+    private void registerListPresenter(ViewGroupLV viewGroupLV, boolean showAllPaths) {
         log.info("Registering List Presenter for the {} view", viewGroupLV.getTagName());
 
-        viewGroupLV.getStrucViewGroupMDVS().forEach(
-                (k, v) -> registerMasterDetailPresenter(v, false));
+        viewGroupLV.getStrucViewGroupMDVS().forEach((k, v) -> registerMasterDetailPresenter(v, false));
 
-
-        ListPresenter listPresenter = new ListPresenter(notificationService,clientDataService, viewGroupLV, this,showAllPaths);
+        ListPresenter listPresenter = new ListPresenter(notificationService, clientDataService, viewGroupLV, this, showAllPaths);
 
         listPresenters.put(viewGroupLV.getTagName(), listPresenter);
 
@@ -103,10 +103,10 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     public MasterDetailPresenter getMasterDetailPresenter(String path) {
-        if(masterDetailPresenters.containsKey(path))
+        if (masterDetailPresenters.containsKey(path))
             return masterDetailPresenters.get(path);
         else
-            return masterDetailPresenters.get(path+"/");
+            return masterDetailPresenters.get(path + "/");
     }
 
     public ListPresenter getListPresenter(String name) {
@@ -116,7 +116,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     @Override
     public void navigate(String path) {
         log.info("Navigation to {}", path);
-        log.info("CurrentServerURl: {}",clientDataService.getServerUrl());
+        log.info("CurrentServerURl: {}", clientDataService.getServerUrl());
         if (path.startsWith(clientDataService.getServerUrl())) {
             //TODO kann es zu kollisionen kommen ? (glaube nich außer wenn path param = nem pfadteil ist)
 
@@ -131,9 +131,9 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         }
     }
 
-    public Component getMDVInternalNavigationTargetFromPath(String path) {
+    public Component getMDVNavigationView(String path) {
         List<Component> foundMDVPresenters = masterDetailPresenters.values().stream()
-                .map(masterDetailPresenter -> masterDetailPresenter.getIfHasInternalTargetView(path))
+                .map(masterDetailPresenter -> masterDetailPresenter.getIfHasTargetView(path))
                 .filter(Objects::nonNull).toList();
         if (foundMDVPresenters.size() > 0) {
             return foundMDVPresenters.get(0);
@@ -141,7 +141,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         return null;
     }
 
-    public boolean hasMasterDetailPresenter(String path){
-        return masterDetailPresenters.containsKey(path) || masterDetailPresenters.containsKey(path+"/") ;
+    public boolean hasMasterDetailPresenter(String path) {
+        return masterDetailPresenters.containsKey(path) || masterDetailPresenters.containsKey(path + "/");
     }
 }

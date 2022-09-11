@@ -13,16 +13,6 @@ You can also import the project to your IDE of choice as you would with any
 Maven project. Read more on [how to import Vaadin projects to different 
 IDEs](https://vaadin.com/docs/latest/flow/guide/step-by-step/importing) (Eclipse, IntelliJ IDEA, NetBeans, and VS Code).
 
-## Deploying to Production
-
-To create a production build, call `mvnw clean package -Pproduction` (Windows),
-or `./mvnw clean package -Pproduction` (Mac & Linux).
-This will build a JAR file with all the dependencies and front-end resources,
-ready to be deployed. The file can be found in the `target` folder after the build completes.
-
-Once the JAR file is built, you can run it using
-`java -jar target/mybachelor-1.0-SNAPSHOT.jar`
-
 ## Project structure
 
 - `MainLayout.java` in `src/main/java` contains the navigation setup (i.e., the
@@ -32,36 +22,8 @@ Once the JAR file is built, you can run it using
 - `views` folder in `frontend/` contains the client-side JavaScript views of your application.
 - `themes` folder in `frontend/` contains the custom CSS styles.
 
-## Useful links
 
-- Read the documentation at [vaadin.com/docs](https://vaadin.com/docs).
-- Follow the tutorials at [vaadin.com/tutorials](https://vaadin.com/tutorials).
-- Watch training videos and get certified at [vaadin.com/learn/training](https://vaadin.com/learn/training).
-- Create new projects at [start.vaadin.com](https://start.vaadin.com/).
-- Search UI components and their usage examples at [vaadin.com/components](https://vaadin.com/components).
-- View use case applications that demonstrate Vaadin capabilities at [vaadin.com/examples-and-demos](https://vaadin.com/examples-and-demos).
-- Discover Vaadin's set of CSS utility classes that enable building any UI without custom CSS in the [docs](https://vaadin.com/docs/latest/ds/foundation/utility-classes). 
-- Find a collection of solutions to common use cases in [Vaadin Cookbook](https://cookbook.vaadin.com/).
-- Find Add-ons at [vaadin.com/directory](https://vaadin.com/directory).
-- Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Discord channel](https://discord.gg/MYFq5RTbBn).
-- Report issues, create pull requests in [GitHub](https://github.com/vaadin/platform).
-
-
-## Deploying using Docker
-
-To build the Dockerized version of the project, run
-
-```
-docker build . -t mybachelor:latest
-```
-
-Once the Docker image is correctly built, you can test it locally using
-
-```
-docker run -p 8080:8080 mybachelor:latest
-```
-
-todo:
+## todo:
 
 url that points to asdgs/{id} as in space api -> needs help & fix
 css style für detailview array überschrift + pfad
@@ -76,23 +38,20 @@ TEST rest parking ausprobieren
 TEST unit test
 TEST button to show all paths in listview
 TEST clearing wrappedPathSetting
-WICHTIG application/octet-stream support -> button for up n download -> optional
+WICHTIG application/octet-stream support -> button for up n download -> FÜR REQUESTS (get zb)
 WICHTIG readme schön machen
 WICHTIG setting for parameter select
-WICHTIG POST hat bei /api/artiufacts/id/representations nicht angezeigt
+WICHTIG use restactiondialog instead of put post dleete
 WICHTIG sequenzdiagram von generierungsablauf
 WICHTIG DIalog abstand zwischen titel zb query param und textfields verkleinern
 WICHTIG wenn path File:// ist geht routing nicht
-WICHTIG /data/** finded er nicht
 WICHTIG bug nach 404 und dann auf listview klicken
-WICHTIG IRGENDWAS MIT PARAMETER 
-WICHTIG art von responese object in path packen und bei rest aufrufen diese art auch nutzen
+WICHTIG SHOW DELETE AND EDIT ROW IN secondarypaths und path
 Oneof in request
-setting wrappedSchema to something and then the api doesnt send that thing back -> Problem
 ArrayDetail -> change way to fill data
 UI english -> Deutsch
 required auch bei anderen dingen in post und put angeben (nicht nur query&path)
-put/post object& array support
+put/post object support
 google stylesheet
 merge to main branch
 

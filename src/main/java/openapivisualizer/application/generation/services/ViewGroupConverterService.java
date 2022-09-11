@@ -1,7 +1,10 @@
 package openapivisualizer.application.generation.services;
 
 import lombok.extern.slf4j.Slf4j;
-import openapivisualizer.application.generation.structuremodel.*;
+import openapivisualizer.application.generation.structuremodel.StrucPath;
+import openapivisualizer.application.generation.structuremodel.ViewGroup;
+import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
+import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -24,11 +27,13 @@ public class ViewGroupConverterService {
             MultiValueMap<String, String> internalPaths = new LinkedMultiValueMap<>();
             internalPaths.put(primaryPath, viewGroup.getInternalPrimaryPaths().get(primaryPath));
 
-            ViewGroup viewGroupInternalMD = new ViewGroup(viewGroup.getTagName(), List.of(primaryPath)
+            ViewGroup viewGroupInternalMD = new ViewGroup(
+                    viewGroup.getTagName(), List.of(primaryPath)
                     , viewGroup.getSecondaryPaths().entrySet().stream().filter(e -> e.getKey().equals(primaryPath)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
                     , internalPaths
                     , viewGroup.getStrucSchemaMap()
-                    , viewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(primaryPath)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                    , viewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(primaryPath)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            );
             internalMDVStrucViewGroups.put(primaryPath, createStrucViewGroupMDV(viewGroupInternalMD));
         });
 
@@ -43,13 +48,30 @@ public class ViewGroupConverterService {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
-        return new ViewGroupLV(viewGroup.getTagName(), viewGroup.getStrucSchemaMap(), notMatchedPaths//TODO remove secondary paths
-                , internalMDVStrucViewGroups);
+        notMatchedPaths.forEach((path, httpMethodStrucPathMap) -> {
+            if (httpMethodStrucPathMap.containsKey(HttpMethod.GET)) {
+
+                MultiValueMap<String, String> internalPaths = new LinkedMultiValueMap<>();
+                internalPaths.put(path, viewGroup.getInternalPrimaryPaths().get(path));
+
+                ViewGroup viewGroupInternalMD = new ViewGroup(
+                        viewGroup.getTagName(), List.of(path)
+                        , viewGroup.getSecondaryPaths().entrySet().stream().filter(e -> e.getKey().equals(path)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                        , internalPaths
+                        , viewGroup.getStrucSchemaMap()
+                        , viewGroup.getStrucPathMap().entrySet().stream().filter(entry -> entry.getKey().startsWith(path)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                );
+                internalMDVStrucViewGroups.put(path, createStrucViewGroupMDV(viewGroupInternalMD));
+            }
+        });
+
+        notMatchedPaths.forEach((key, value) -> value.remove(HttpMethod.GET));
+
+        return new ViewGroupLV(viewGroup.getTagName(), viewGroup.getStrucSchemaMap(),
+                notMatchedPaths, internalMDVStrucViewGroups);
     }
 
     public static ViewGroupMDV createStrucViewGroupMDV(ViewGroup viewGroup) {
-        //if (!isMDVStructure(strucViewGroup)) return null; //TODO glaube kann raus, würde sonst listview dinger
-
         ViewGroupMDV primaryStrucViewGroup = createSingleViewGroupMDV(viewGroup.getTagName(),
                 viewGroup.getPrimaryPaths().get(0),
                 viewGroup.getSecondaryPaths().get(viewGroup.getPrimaryPaths().get(0)),
@@ -67,15 +89,6 @@ public class ViewGroupConverterService {
 
         return primaryStrucViewGroup;
     }
-
-    private static ViewGroupMDV createSecondaryStrucViewGroupMDV(String tagName, String secondaryPath, Map<String, Map<HttpMethod, StrucPath>> groupStrucPathMap) {
-        Map<HttpMethod, StrucPath> strucPathMap = new HashMap<>();
-        Map<HttpMethod, StrucSchema> strucSchemaMap = new HashMap<>();
-
-        StrucPath primaryGetPath = groupStrucPathMap.get("primaryPath").get(HttpMethod.GET);
-        return null;
-    }
-
 
     private static ViewGroupMDV createSingleViewGroupMDV(String tagName, String primaryPath,
                                                          String secondaryPath,

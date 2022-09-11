@@ -20,31 +20,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PostDialog extends Dialog {
+public class RestActionDialog extends Dialog {
 
-    public interface PostActionListener {
-        void postAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema properties);
+    public interface ActionListener {
+        void action(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema properties);
     }
 
-    private final PostActionListener actionListener;
+    private final ActionListener actionListener;
 
     protected final List<CreateComponent> inputFieldComponents = new ArrayList<>();
     private final List<CreateComponent> queryFieldComponents = new ArrayList<>();
     private final List<CreateComponent> pathFieldComponents = new ArrayList<>();
-    private final Button postButton = new Button("Post");
     private DataPropertyType bodyPropertyType = DataPropertyType.OBJECT;
 
-    public PostDialog(PostActionListener actionListener) {
+    public RestActionDialog(ActionListener actionListener) {
         this.actionListener = actionListener;
         setWidth(50, Unit.PERCENTAGE);
-
     }
 
-    public void open(StrucPath strucPath) {
-        this.open(strucPath, new HashMap<>());
+    public void open(StrucPath strucPath, String action) {
+        this.open(strucPath, new HashMap<>(), action);
     }
 
-    public void open(StrucPath strucPath, Map<String, String> pathParams) { //TODO only needs strucpath since the schema is in there
+    public void open(StrucPath strucPath, Map<String, String> pathParams, String action) { //TODO only needs strucpath since the schema is in there
         if (!strucPath.getPathParams().isEmpty())
             createPathParamFields(strucPath, pathParams);
         if (!strucPath.getQueryParams().isEmpty())
@@ -57,10 +55,11 @@ public class PostDialog extends Dialog {
         Button closePostViewButton = new Button("Close");
         closePostViewButton.addClickListener(e -> this.close());
 
-        postButton.addClickListener(e -> this.postAction(strucPath.getPath()));
+        Button actionButton = new Button(action);
+        actionButton.addClickListener(e -> this.action(strucPath.getPath(), action));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(postButton, closePostViewButton);
+        horizontalLayout.add(actionButton, closePostViewButton);
         add(horizontalLayout);
 
         this.open();
@@ -86,7 +85,7 @@ public class PostDialog extends Dialog {
         return params;
     }
 
-    private void postAction(String path) { //TODO IF IT EVEN HAS BODY CHECK
+    private void action(String path, String action) { //TODO IF IT EVEN HAS BODY CHECK
         MultiValueMap<String, String> queryParams = collectQueryParams();
         Map<String, String> pathParams = collectPathParams();
 
@@ -100,7 +99,12 @@ public class PostDialog extends Dialog {
 
             });
             DataValue dataValue = new DataValue(dataInputMap, DataPropertyType.OBJECT);
-            dataSchema = new DataSchema("post", dataValue);
+            dataSchema = new DataSchema(action, dataValue);
+
+        } else if (bodyPropertyType.equals(DataPropertyType.ARRAY)) {
+            //TODO
+            DataValue dataValue = new DataValue("", DataPropertyType.ARRAY);
+            dataSchema = new DataSchema(action, dataValue);
 
         } else {
             DataValue inputFieldValue = new DataValue(inputFieldComponents.get(0).getValue(), inputFieldComponents.get(0).getDataPropertyType());
@@ -108,7 +112,7 @@ public class PostDialog extends Dialog {
         }
 
         if (areRequiredFieldsFilled(pathParams))
-            actionListener.postAction(path, queryParams, pathParams, dataSchema);
+            actionListener.action(path, queryParams, pathParams, dataSchema);
     }
 
     private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {
@@ -127,7 +131,9 @@ public class PostDialog extends Dialog {
                 verticalLayoutContent.add(createComponent);
                 inputFieldComponents.add(createComponent);
             });
-        else {
+        else if (schema.getStrucValue().getType().equals(DataPropertyType.ARRAY)) {
+            //TODO
+        } else {
             CreateComponent createComponent = createEditorComponent(schema.getStrucValue().getType(), null, schema.getName());
             verticalLayoutContent.add(createComponent);
         }
@@ -143,12 +149,9 @@ public class PostDialog extends Dialog {
             case INTEGER -> inputComponent = new IntegerfieldComponent(title);
             case DOUBLE -> inputComponent = new NumberfieldComponent(title);
             case BOOLEAN -> inputComponent = new CheckboxComponent(title);
-            case ARRAY -> inputComponent = new ArrayComponent(title, DataPropertyType.STRING, null);
             default -> inputComponent = new TextfieldComponent(title, format);
 
-        } //TODO Objekte
-
-
+        } //TODO Objekte & Arrays
         return inputComponent;
     }
 
@@ -157,13 +160,11 @@ public class PostDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getQueryParams().forEach(queryParam -> {
-                    CreateComponent createComponent = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName());
-                    verticalLayoutContent.add(createComponent);
-                    queryFieldComponents.add(createComponent);
-                    createComponent.setRequired(queryParam.isRequired());
-                }
-        );
-
+            CreateComponent createComponent = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName());
+            verticalLayoutContent.add(createComponent);
+            queryFieldComponents.add(createComponent);
+            createComponent.setRequired(queryParam.isRequired());
+        });
         verticalLayout.add(new Label("Query Parameters"));
         verticalLayout.add(verticalLayoutContent);
         add(verticalLayout);
@@ -174,15 +175,14 @@ public class PostDialog extends Dialog {
         VerticalLayout verticalLayoutContent = new VerticalLayout();
 
         strucPath.getPathParams().forEach(pathParam -> {
-                    CreateComponent createComponent = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName());
-                    verticalLayoutContent.add(createComponent);
-                    pathFieldComponents.add(createComponent);
-                    createComponent.setRequired(true);
+            CreateComponent abstractField = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName());
+            verticalLayoutContent.add(abstractField);
+            pathFieldComponents.add(abstractField);
+            abstractField.setRequired(true);
 
-                    if (pathParams.containsKey(pathParam.getName()))
-                        createComponent.setValue(pathParams.get(pathParam.getName()));
-                }
-        );
+            if (pathParams.containsKey(pathParam.getName()))
+                abstractField.setValue(pathParams.get(pathParam.getName()));
+        });
 
         verticalLayout.add(new Label("Path Parameters"));
         verticalLayout.add(verticalLayoutContent);
@@ -191,3 +191,4 @@ public class PostDialog extends Dialog {
 
 
 }
+

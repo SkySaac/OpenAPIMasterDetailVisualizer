@@ -57,7 +57,7 @@ public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUr
             add(activeView);
         } else {
             log.info("Route with parameter {} detected", targetedPath);
-            activeView = tagPresenter.getMDVInternalNavigationTargetFromPath(targetedPath);
+            activeView = tagPresenter.getMDVNavigationView(targetedPath);
             //activeView = presenter.getMasterDetailPresenter(targetedPath).getInternalView(List.of(parameter.split("/")));
             if (activeView == null) {
                 add(notFoundPresenter.getView());

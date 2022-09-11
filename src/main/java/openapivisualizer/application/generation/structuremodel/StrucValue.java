@@ -12,6 +12,7 @@ import java.util.Map;
 @Setter
 public class StrucValue {
     private DataPropertyType type;
+    private String format;
     private String ref; //if type is array this is the reference to the schema
     private List<StrucSchema> arrayElements = new ArrayList<>();
     private Map<String, StrucSchema> properties = new HashMap<>();
