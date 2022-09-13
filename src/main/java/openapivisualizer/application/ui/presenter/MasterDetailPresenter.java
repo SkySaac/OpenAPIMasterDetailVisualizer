@@ -93,7 +93,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
                 shownGetSchema,
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
-                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE));
+                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),false);
     }
 
     public Component getView() {
@@ -211,15 +211,16 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
 
     @Override
     public void setWrappedSchemaPath(String pathToSchema) {
-        currentWrappedPath = pathToSchema;
-        columnsSettings = null;
-        MasterDetailView oldView = view;
-        createNewView();
+            currentWrappedPath = pathToSchema;
+            columnsSettings = null;
+            MasterDetailView oldView = view;
+            createNewView();
 
-        if (oldView.getParent().isPresent()) {
-            Div masterDetailRoute = (Div) oldView.getParent().get();
-            masterDetailRoute.replace(oldView, view);
-        }
+            if (oldView.getParent().isPresent()) {
+                Div masterDetailRoute = (Div) oldView.getParent().get();
+                masterDetailRoute.replace(oldView, view);
+            }
+
     }
 
     @Override

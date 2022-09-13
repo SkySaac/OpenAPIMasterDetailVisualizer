@@ -82,7 +82,7 @@ public class MasterDetailSecondaryPresenter implements MasterDetailView.MDAction
         view = new MasterDetailView(navigationListener, this,
                 shownGetSchema,
                 false, strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
-                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE));
+                strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),true);
     }
 
     public Component getView(Map<String, String> pathParams) {
@@ -180,14 +180,16 @@ public class MasterDetailSecondaryPresenter implements MasterDetailView.MDAction
 
     @Override
     public void setWrappedSchemaPath(String pathToSchema) {
-        currentWrappedPath = pathToSchema;
-        columnsSettings = null;
-        MasterDetailView oldView = view;
-        createNewView();
+        if(pathToSchema!=null) {
+            currentWrappedPath = pathToSchema;
+            columnsSettings = null;
+            MasterDetailView oldView = view;
+            createNewView();
 
-        if (oldView.getParent().isPresent()) {
-            Div masterDetailRoute = (Div) oldView.getParent().get();
-            masterDetailRoute.replace(oldView, view);
+            if (oldView.getParent().isPresent()) {
+                Div masterDetailRoute = (Div) oldView.getParent().get();
+                masterDetailRoute.replace(oldView, view);
+            }
         }
     }
 

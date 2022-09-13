@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import openapivisualizer.application.generation.services.StructureProviderService;
 import openapivisualizer.application.generation.services.ViewGroupConverterService;
-import openapivisualizer.application.generation.structuremodel.StrucOpenApi;
+import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
 import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
 import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
 import openapivisualizer.application.rest.client.ClientDataService;
@@ -35,7 +35,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
 
 
     @Getter
-    private StrucOpenApi strucOpenApi;
+    private OpenApiStructure openApiStructure;
 
     public TagPresenter(ClientDataService clientDataService, NotificationService notificationService) {
         this.clientDataService = clientDataService;
@@ -43,7 +43,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     public List<String> getServers() {
-        return strucOpenApi.getServers();
+        return openApiStructure.getServers();
     }
 
     private void clearOldPresenters() {
@@ -53,14 +53,14 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     public void prepareStructure(String source, boolean onlyListViews, boolean showAllPaths) {
-        StrucOpenApi strucOpenApi = StructureProviderService.generateApiStructure(source);
-        registerPresenters(strucOpenApi, onlyListViews, showAllPaths);
+        OpenApiStructure openApiStructure = StructureProviderService.generateApiStructure(source);
+        registerPresenters(openApiStructure, onlyListViews, showAllPaths);
     }
 
-    public void registerPresenters(StrucOpenApi strucOpenApi, boolean onlyListViews, boolean showAllPaths) {
+    public void registerPresenters(OpenApiStructure openApiStructure, boolean onlyListViews, boolean showAllPaths) {
         clearOldPresenters();
         log.info("Registering presenters...");
-        strucOpenApi.getViewGroups().forEach(strucViewGroup -> {
+        openApiStructure.getViewGroups().forEach(strucViewGroup -> {
             if (ViewGroupConverterService.isMDVStructure(strucViewGroup) && !onlyListViews) {
                 ViewGroupMDV viewGroupMDV = ViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
                 registerMasterDetailPresenter(viewGroupMDV, true);
@@ -70,7 +70,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
             }
         });
         AccessPoint.getMainLayout().applyNavigationTargets();
-        this.strucOpenApi = strucOpenApi;
+        this.openApiStructure = openApiStructure;
     }
 
     private void registerMasterDetailPresenter(ViewGroupMDV viewGroupMDV, boolean menuNavigationable) {

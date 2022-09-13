@@ -42,6 +42,7 @@ public class ClientRequestWrapper {
         requestBuilder.headers.add("accept","application/json");
         requestBuilder.headers.add("accept","application/hal+json");
         requestBuilder.headers.add("accept","application/ld+json");
+        requestBuilder.headers.add("accept","*/*");
         builder.headers(requestBuilder.headers);
         builder.contentType(MediaType.APPLICATION_JSON);
         //builder.accept(MediaType.APPLICATION_JSON);
@@ -57,7 +58,7 @@ public class ClientRequestWrapper {
 
         RequestBuilder body(String body);
 
-        RequestBuilder accept(MediaType mediaType);
+        RequestBuilder accept(String mediaType);
 
         RequestBuilder path(String path);
 
@@ -91,8 +92,8 @@ public class ClientRequestWrapper {
         }
 
         @Override
-        public RequestBuilder accept(MediaType mediaType) {
-            headers.getAccept().add(mediaType);
+        public RequestBuilder accept(String mediaType) {
+            headers.add("accept",mediaType);
             return this;
         }
 

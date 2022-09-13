@@ -10,8 +10,8 @@ public class TextfieldComponent extends CreateComponent {
     private final TextField textField;
 
     public TextfieldComponent(String label, String format) {
-        if (Objects.equals(label, "noName") && format != null)
-            textField = new TextField(format);
+        if (Objects.equals(label, "noName"))
+            textField = new TextField();
         else {
             textField = new TextField(label);
         }

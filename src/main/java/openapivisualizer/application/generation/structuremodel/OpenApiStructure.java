@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class StrucOpenApi {
+public class OpenApiStructure {
 
     private boolean hasHttpBasic = false;
 

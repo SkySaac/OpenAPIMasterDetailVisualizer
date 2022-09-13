@@ -120,6 +120,7 @@ public class PostDialog extends Dialog {
     private void createBodyFields(StrucSchema schema) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
+        verticalLayoutContent.setPadding(false);
 
         if (schema.getStrucValue().getType().equals(DataPropertyType.OBJECT))
             schema.getStrucValue().getProperties().keySet().forEach(key -> {
@@ -155,6 +156,7 @@ public class PostDialog extends Dialog {
     private void createQueryParamFields(StrucPath strucPath) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
+        verticalLayoutContent.setPadding(false);
 
         strucPath.getQueryParams().forEach(queryParam -> {
                     CreateComponent createComponent = createEditorComponent(queryParam.getType(), queryParam.getFormat(), queryParam.getName());
@@ -172,6 +174,7 @@ public class PostDialog extends Dialog {
     private void createPathParamFields(StrucPath strucPath, Map<String, String> pathParams) {
         VerticalLayout verticalLayout = new VerticalLayout();
         VerticalLayout verticalLayoutContent = new VerticalLayout();
+        verticalLayoutContent.setPadding(false);
 
         strucPath.getPathParams().forEach(pathParam -> {
                     CreateComponent createComponent = createEditorComponent(pathParam.getType(), pathParam.getFormat(), pathParam.getName());

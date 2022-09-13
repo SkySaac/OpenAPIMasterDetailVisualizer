@@ -42,18 +42,19 @@ public class MasterDetailView extends Div {
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
     private final Label noDataLabel = new Label("Keine Daten erhalten");
+    private final List<Grid.Column<DataSchema>> inlineGridColumns = new ArrayList<>();
 
     private List<Grid.Column<DataSchema>> initialGridColumns;
 
     public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
-                            boolean hasPut, boolean hasDelete) { //change to 2 schemas 1 create 1 get
+                            boolean hasPut, boolean hasDelete, boolean showInline) { //change to 2 schemas 1 create 1 get
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        addTopButtons(hasPost, hasPut, hasDelete);
+        addTopButtons(hasPost, hasPut, hasDelete, showInline);
 
         splitLayout.addToPrimary(createGridLayout());
 
@@ -66,10 +67,10 @@ public class MasterDetailView extends Div {
         add(splitLayout);
 
         // Configure Grid
-        configureGrid(actionListener, getSchema);
+        configureGrid(actionListener, getSchema, hasPut, hasDelete, showInline);
     }
 
-    public void addTopButtons(boolean hasPost, boolean hasPut, boolean hasDelete) {
+    public void addTopButtons(boolean hasPost, boolean hasPut, boolean hasDelete, boolean showInline) {
         //HorizontalLayout menubar = new HorizontalLayout();
         HorizontalLayout menuBar = new HorizontalLayout();
         menuBar.getStyle().set("padding-left", "10px");
@@ -90,13 +91,13 @@ public class MasterDetailView extends Div {
             menuBar.add(postButton);
         }
 
-        if (hasPut) {
+        if (hasPut && !showInline) {
             Button putButton = new Button(VaadinIcon.EDIT.create());
             putButton.addClickListener(e -> mdActionListener.openPutDialog());
             menuBar.add(putButton);
         }
 
-        if (hasDelete) {
+        if (hasDelete && !showInline) {
             Button putButton = new Button(VaadinIcon.TRASH.create());
             putButton.addClickListener(e -> mdActionListener.openDeleteDialog());
             menuBar.add(putButton);
@@ -107,7 +108,7 @@ public class MasterDetailView extends Div {
 
     public void setColumnSettings(List<SettingsDialog.ColumnGridElement> columnSettings) {
         Map<String, Grid.Column<DataSchema>> columnMap = new HashMap<>();
-        columnMap.putAll(initialGridColumns.stream().collect(Collectors.toMap(Grid.Column::getKey, e -> e)));
+        columnMap.putAll(initialGridColumns.stream().filter(column -> column.getKey() != null).collect(Collectors.toMap(Grid.Column::getKey, e -> e)));
         List<Grid.Column<DataSchema>> sortedColumns = new ArrayList<>();
         columnSettings.forEach(columnElement -> {
             if (columnElement.isVisible())
@@ -116,6 +117,9 @@ public class MasterDetailView extends Div {
                 grid.removeColumn(grid.getColumnByKey(columnElement.getColumnName()));
 
         });
+        for (int i = 0; i < inlineGridColumns.size(); i++) {
+            sortedColumns.add(i, inlineGridColumns.get(i));
+        }
         grid.setColumnOrder(sortedColumns);
 
     }
@@ -129,14 +133,24 @@ public class MasterDetailView extends Div {
     }
 
 
-    public void configureGrid(MDActionListener actionListener, StrucSchema getSchema) {
-//        if (showDelete) {
-//            this. grid.addComponentColumn(dataSchema -> {
-//                final var button = new Button(new Icon(VaadinIcon.TRASH));
-//                button.addClickListener(event -> mdActionListener.openDeleteDialog());
-//                return button;
-//            });
-//        }
+    public void configureGrid(MDActionListener actionListener, StrucSchema getSchema, boolean hasput, boolean hasdelete, boolean showInline) {
+
+        if (hasdelete && showInline) {
+            Grid.Column<DataSchema> column = grid.addComponentColumn(dataSchema -> {
+                final var deleteButton = new Button(VaadinIcon.TRASH.create());
+                deleteButton.addClickListener(event -> mdActionListener.openDeleteDialog());
+                return deleteButton;
+            });
+            inlineGridColumns.add(column);
+        }
+        if (hasput && showInline) {
+            Grid.Column<DataSchema> column = grid.addComponentColumn(dataSchema -> {
+                final var putButton = new Button(VaadinIcon.EDIT.create());
+                putButton.addClickListener(event -> mdActionListener.openPutDialog());
+                return putButton;
+            });
+            inlineGridColumns.add(column);
+        }
 
         //Add all columns
         getSchema.getStrucValue().getProperties().forEach((key, value) -> {
@@ -159,7 +173,7 @@ public class MasterDetailView extends Div {
                 }
         );
 
-        initialGridColumns = new ArrayList<>(grid.getColumns());
+        initialGridColumns = grid.getColumns().stream().filter(column -> column.getKey() != null).collect(Collectors.toList());
         setInitialGridColumns(actionListener);
 
 

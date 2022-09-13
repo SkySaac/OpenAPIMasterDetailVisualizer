@@ -1,6 +1,6 @@
 package openapivisualizer.application.generation.services;
 
-import openapivisualizer.application.generation.structuremodel.StrucOpenApi;
+import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.generation.structuremodel.ViewGroup;
@@ -20,16 +20,16 @@ import java.util.stream.Collectors;
 public class StructureProviderService {
     public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
 
-    public static StrucOpenApi generateApiStructure(String pathToOpenApiFile) {
+    public static OpenApiStructure generateApiStructure(String pathToOpenApiFile) {
         OpenAPI openAPI = new OpenAPIV3Parser().read(pathToOpenApiFile);
 
-        StrucOpenApi strucOpenApi = new StrucOpenApi();
+        OpenApiStructure openApiStructure = new OpenApiStructure();
 
         if(openAPI.getSecurity()!=null)
-            strucOpenApi.setHasHttpBasic(openAPI.getSecurity().contains("basicAuth"));
+            openApiStructure.setHasHttpBasic(openAPI.getSecurity().contains("basicAuth"));
 
         if (openAPI.getServers() != null) //TODO change -> server url can also come from lower objects
-            strucOpenApi.setServers(openAPI.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));
+            openApiStructure.setServers(openAPI.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));
 
         List<ViewGroup> viewGroupList = new ArrayList<>();
 
@@ -49,7 +49,7 @@ public class StructureProviderService {
             log.debug("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
 
             //alle components die zu path gehören aus strucSchemaMap holen und in strucViewGroup eintragen
-            Map<String, StrucSchema> strucViewGroupSchemaMap = createStrucViewGroupSchemaMap(strucSchemaMap, pathsForTag);
+            Map<String, StrucSchema> strucViewGroupSchemaMap = createViewGroupSchemaMap(strucSchemaMap, pathsForTag);
             log.debug("A total of {} schemas have been found for the tag {}", pathsForTag.size(), tag);
 
             //Find primarypaths for this viewgroup
@@ -73,9 +73,9 @@ public class StructureProviderService {
             viewGroupList.add(viewGroup);
         });
 
-        strucOpenApi.setViewGroups(viewGroupList);
+        openApiStructure.setViewGroups(viewGroupList);
 
-        return strucOpenApi;
+        return openApiStructure;
     }
 
     private static Set<String> collectTags(OpenAPI openAPI) {
@@ -107,7 +107,7 @@ public class StructureProviderService {
         return tags;
     }
 
-    private static Map<String, StrucSchema> createStrucViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
+    private static Map<String, StrucSchema> createViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema

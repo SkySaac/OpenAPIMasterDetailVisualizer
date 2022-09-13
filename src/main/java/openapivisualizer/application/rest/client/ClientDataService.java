@@ -53,6 +53,7 @@ public class ClientDataService {
         requestWrapper.requestBuilder()
                 .queryParams(queryParams)
                 .pathParams(pathParams)
+                //.accept(mediaType)
                 .path(path);
 
         if (username != null && password != null)

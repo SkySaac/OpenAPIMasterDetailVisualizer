@@ -113,6 +113,16 @@ public class PathService {
                         StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
                     }
+                }else if (operation.getRequestBody().getContent().containsKey("application/octet-stream") && operation.getRequestBody().getContent().get("application/octet-stream").getSchema() != null) { //Has actual Schema (Example /artifacts/id/data)
+                    //TODO application/octet-stream (data PUT)
+                    String externalSchemaPath = operation.getRequestBody().getContent().get("application/octet-stream").getSchema().get$ref(); //TODO was wenn kein href & für andere arten von content
+                    if (externalSchemaPath != null) {
+                        StrucSchema strucSchema = strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                        strucPath.setRequestStrucSchema(strucSchema);
+                    } else {
+                        StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/octet-stream").getSchema());
+                        strucPath.setRequestStrucSchema(strucSchema);
+                    }
                 }
             }
         } else if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
@@ -125,7 +135,6 @@ public class PathService {
                     setResponseSchema(strucPath, operation, "200", "application/ld+json", strucSchemaMap);
                 else if (operation.getResponses().get("200").getContent().containsKey("application/hal+json"))
                     setResponseSchema(strucPath, operation, "200", "application/hal+json", strucSchemaMap);
-
             }
         } else {
             log.debug("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
@@ -156,10 +165,10 @@ public class PathService {
             }else if (content.get(returnType).getSchema().getType() != null
                     && content.get(returnType).getSchema().getType().equals("array")
                     && content.get(returnType).getSchema().getItems().get$ref() == null) {
-                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().getItems());
+                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().getItems());
                 strucPath.setResponseStrucSchema(strucSchema);
             }  else {
-                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
+                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
                 strucPath.setResponseStrucSchema(strucSchema);
             }
         }

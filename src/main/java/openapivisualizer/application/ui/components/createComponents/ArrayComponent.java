@@ -21,20 +21,24 @@ public class ArrayComponent extends CreateComponent implements ArrayElementCompo
 
     public ArrayComponent(String label, DataPropertyType type, String format) {
         this.label = label;
+        this.getStyle().set("padding-top","0px");
         verticalLayout = new VerticalLayout(new Label(label));
+        verticalLayout.setPadding(false);
+        verticalLayout.getStyle().set("border","1px solid rgba(0, 0, 0, .1)");
+        verticalLayout.getStyle().set("padding","5px 5px 5px 5px");
 
-        basicCreateComponent = createEditorComponent(type, format, label);
+        basicCreateComponent = createEditorComponent(type, format, "");
 
         Button addButton = new Button(VaadinIcon.PLUS.create());
         addButton.addClickListener(click -> addArrayElement(basicCreateComponent.getValue(), type));
         HorizontalLayout mainComponent = new HorizontalLayout(basicCreateComponent, addButton);
-        mainComponent.setAlignItems(FlexComponent.Alignment.CENTER);
+        mainComponent.setAlignItems(FlexComponent.Alignment.END);
         verticalLayout.add(mainComponent);
         this.add(verticalLayout);
     }
 
-    private void addArrayElement(String value, DataPropertyType dataPropertyType) {
-        CreateComponent createComponent = new TextfieldComponent("", null);
+    private void addArrayElement(String value,DataPropertyType dataPropertyType) {
+        CreateComponent createComponent = createEditorComponent(dataPropertyType,null,"");
         createComponent.setValue(value);
         ArrayElementComponent arrayElementComponent = new ArrayElementComponent(this, createComponent);
         arrayElements.add(createComponent);
