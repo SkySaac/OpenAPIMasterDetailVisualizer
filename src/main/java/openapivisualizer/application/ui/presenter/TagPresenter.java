@@ -15,6 +15,7 @@ import openapivisualizer.application.rest.client.ClientDataService;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
 import openapivisualizer.application.ui.controller.NotificationService;
 import openapivisualizer.application.ui.other.AccessPoint;
+import openapivisualizer.application.ui.view.View;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 
@@ -131,8 +132,8 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         }
     }
 
-    public Component getMDVNavigationView(String path) {
-        List<Component> foundMDVPresenters = masterDetailPresenters.values().stream()
+    public View getMDVNavigationView(String path) {
+        List<View> foundMDVPresenters = masterDetailPresenters.values().stream()
                 .map(masterDetailPresenter -> masterDetailPresenter.getIfHasTargetView(path))
                 .filter(Objects::nonNull).toList();
         if (foundMDVPresenters.size() > 0) {

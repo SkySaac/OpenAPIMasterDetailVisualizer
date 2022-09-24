@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class MasterDetailView extends Div {
+public class MasterDetailView extends View {
 
     public interface MDActionListener {
         void openPostDialog();
@@ -46,8 +46,9 @@ public class MasterDetailView extends Div {
 
     private List<Grid.Column<DataSchema>> initialGridColumns;
 
-    public MasterDetailView(DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
+    public MasterDetailView(String tag,DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
                             boolean hasPut, boolean hasDelete, boolean showInline) { //change to 2 schemas 1 create 1 get
+        super(tag);
         this.mdActionListener = actionListener;
         addClassNames("master-detail-view");
 

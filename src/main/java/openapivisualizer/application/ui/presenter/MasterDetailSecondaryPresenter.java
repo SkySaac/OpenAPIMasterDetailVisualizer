@@ -17,6 +17,7 @@ import openapivisualizer.application.ui.components.SettingsDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
 import openapivisualizer.application.ui.controller.NotificationService;
 import openapivisualizer.application.ui.view.MasterDetailView;
+import openapivisualizer.application.ui.view.View;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -34,6 +35,7 @@ public class MasterDetailSecondaryPresenter implements MasterDetailView.MDAction
     private final DetailLayout.NavigationListener navigationListener;
     @Getter
     private final ViewGroupMDV strucViewGroup;
+    private final String tag;
 
     private MasterDetailView view;
     private MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
@@ -42,11 +44,12 @@ public class MasterDetailSecondaryPresenter implements MasterDetailView.MDAction
     private String currentWrappedPath = null;
 
 
-    public MasterDetailSecondaryPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, ViewGroupMDV viewGroup) {
+    public MasterDetailSecondaryPresenter(String tag,NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, ViewGroupMDV viewGroup) {
         this.clientDataService = clientDataService;
         this.navigationListener = navigationListener;
         this.notificationService = notificationService;
         this.strucViewGroup = viewGroup;
+        this.tag = tag;
 
         if (!viewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.GET))
             log.error("Secondary Master Detail Presenter created with no Get path or schema: {}", viewGroup.getTagName());
@@ -79,13 +82,13 @@ public class MasterDetailSecondaryPresenter implements MasterDetailView.MDAction
             }
 
         }
-        view = new MasterDetailView(navigationListener, this,
+        view = new MasterDetailView(strucViewGroup.getTagName(),navigationListener, this,
                 shownGetSchema,
                 false, strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),true);
     }
 
-    public Component getView(Map<String, String> pathParams) {
+    public View getView(Map<String, String> pathParams) {
         this.pathParams = pathParams;
 
         refreshData();

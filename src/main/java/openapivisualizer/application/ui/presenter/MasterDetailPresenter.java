@@ -17,6 +17,7 @@ import openapivisualizer.application.ui.components.SettingsDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
 import openapivisualizer.application.ui.controller.NotificationService;
 import openapivisualizer.application.ui.view.MasterDetailView;
+import openapivisualizer.application.ui.view.View;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -42,7 +43,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     private MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     private Map<String, String> pathParams = new HashMap<>();
     private List<SettingsDialog.ColumnGridElement> columnsSettings = null;
-    private String currentWrappedPath = null;
+    private String currentWrappedPath = "";
 
 
     public MasterDetailPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, ViewGroupMDV viewGroup) {
@@ -55,7 +56,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
             log.error("Master Detail Presenter created with no Get path or schema: {}", viewGroup.getTagName());
 
         if (viewGroup.getSecondaryViewGroup() != null)
-            secondaryPresenter = new MasterDetailSecondaryPresenter(notificationService, navigationListener, clientDataService, viewGroup.getSecondaryViewGroup());
+            secondaryPresenter = new MasterDetailSecondaryPresenter(viewGroup.getTagName(),notificationService, navigationListener, clientDataService, viewGroup.getSecondaryViewGroup());
 
         viewGroup.getInternalMDVs().forEach((key, value) -> { //TODO if id is needed put id in path
             internalPresenters.put(key, new MasterDetailPresenter(notificationService, navigationListener, clientDataService, value));
@@ -68,7 +69,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     private void createNewView() {
         StrucSchema shownGetSchema = strucViewGroup.getPrimaryStrucPathMap().get(HttpMethod.GET).getResponseStrucSchema();
 
-        if (currentWrappedPath != null && currentWrappedPath.split(",").length != 0) {
+        if (currentWrappedPath != "" && currentWrappedPath.split(",").length != 0) {
             String[] wrappedPath = currentWrappedPath.split(",");
 
             StrucSchema tempSchema = shownGetSchema;
@@ -89,18 +90,18 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
             }
 
         }
-        view = new MasterDetailView(navigationListener, this,
+        view = new MasterDetailView(strucViewGroup.getTagName(),navigationListener, this,
                 shownGetSchema,
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.POST),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.PUT),
                 strucViewGroup.getPrimaryStrucPathMap().containsKey(HttpMethod.DELETE),false);
     }
 
-    public Component getView() {
+    public View getView() {
         return getView(new HashMap<>());
     }
 
-    public Component getView(Map<String, String> pathParams) {
+    public View getView(Map<String, String> pathParams) {
         this.pathParams = pathParams;
 
         refreshData();
@@ -228,7 +229,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         refreshData();
     }
 
-    public Component getIfHasTargetView(String path) {
+    public View getIfHasTargetView(String path) {
         String[] splittedPath = path.split("/");
 
         //what if part of internal presenter

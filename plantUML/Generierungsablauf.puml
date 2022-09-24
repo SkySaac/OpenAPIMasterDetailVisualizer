@@ -1,0 +1,63 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor Nutzer
+Nutzer -> MainView: klickt Extrahieren Knopf
+activate MainView
+MainView -> MainPresenter: openApiAction(sourcePath))
+activate MainPresenter
+MainPresenter -> TagPresenter: prepareStructure(sourcePath)
+activate TagPresenter
+TagPresenter -> StructureProviderService: generateApiStructure(sourcePath))
+activate StructureProviderService
+StructureProviderService -> StructureProviderService: download OpenAPI doc vom Source path
+activate StructureProviderService
+deactivate StructureProviderService
+StructureProviderService -> StructureProviderService: collectSchemas()
+activate StructureProviderService
+deactivate StructureProviderService
+StructureProviderService -> StructureProviderService: collectTags()
+activate StructureProviderService
+deactivate StructureProviderService
+loop für alle Tags
+    StructureProviderService -> PathService:getPathsForTag()
+    activate PathService
+    PathService --> StructureProviderService: paths
+    deactivate PathService
+    StructureProviderService -> StructureProviderService: createViewGroupSchemaMap()
+    activate StructureProviderService
+    deactivate StructureProviderService
+    StructureProviderService -> PathService: getPrimaryViewPaths()
+    activate PathService
+    PathService --> StructureProviderService: primaryPaths
+    deactivate PathService
+    StructureProviderService -> PathService: getSecondaryViewPaths()
+    activate PathService
+    PathService --> StructureProviderService: secondaryPaths
+    deactivate PathService
+    StructureProviderService -> PathService: getInternalPrimaryViewPaths()
+    activate PathService
+    PathService --> StructureProviderService: internalPrimaryPaths
+    deactivate PathService
+end
+activate StructureProviderService
+StructureProviderService --> TagPresenter: openApiStructure
+deactivate StructureProviderService
+deactivate StructureProviderService
+activate TagPresenter
+TagPresenter -> TagPresenter: registerPresenters(openApiStructure)
+
+loop collectedTags
+    alt isMDVStructure(collectedTag)
+        TagPresenter -> TagPresenter: registerMDVPresenter(collectedTag))
+        activate TagPresenter
+        deactivate TagPresenter
+    else
+        TagPresenter -> TagPresenter: registerListPresenter(collectedTag))
+        activate TagPresenter
+                deactivate TagPresenter
+    end
+end
+@enduml

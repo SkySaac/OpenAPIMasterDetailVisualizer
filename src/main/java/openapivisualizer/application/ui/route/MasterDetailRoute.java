@@ -10,6 +10,7 @@ import openapivisualizer.application.ui.MainLayout;
 import openapivisualizer.application.ui.other.AccessPoint;
 import openapivisualizer.application.ui.presenter.NotFoundPresenter;
 import openapivisualizer.application.ui.presenter.TagPresenter;
+import openapivisualizer.application.ui.view.View;
 
 
 @PageTitle("MasterDetail")
@@ -57,7 +58,8 @@ public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUr
             add(activeView);
         } else {
             log.info("Route with parameter {} detected", targetedPath);
-            activeView = tagPresenter.getMDVNavigationView(targetedPath);
+            View activeView = tagPresenter.getMDVNavigationView(targetedPath);
+            this.activeView = activeView;
             //activeView = presenter.getMasterDetailPresenter(targetedPath).getInternalView(List.of(parameter.split("/")));
             if (activeView == null) {
                 add(notFoundPresenter.getView());
@@ -65,6 +67,8 @@ public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUr
             } else {
                 add(activeView);
             }
+            AccessPoint.getMainLayout().setCurrentPageTitle(activeView.getTag());
+
         }
     }
 

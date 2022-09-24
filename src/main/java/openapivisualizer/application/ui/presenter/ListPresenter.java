@@ -38,7 +38,7 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
         this.notificationService = notificationService;
         this.viewGroupLV = viewGroupLV;
         this.navigationListener = navigationListener;
-        view = new ListView(showAllPaths, this, viewGroupLV.getStrucViewGroupMDVS(), viewGroupLV.getNotMatchedStrucPathMap());
+        view = new ListView(viewGroupLV.getTagName(),showAllPaths, this, viewGroupLV.getStrucViewGroupMDVS(), viewGroupLV.getNotMatchedStrucPathMap());
     }
 
     public Component getView() {

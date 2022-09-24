@@ -12,7 +12,7 @@ import org.springframework.http.HttpMethod;
 
 import java.util.Map;
 
-public class ListView extends Div {
+public class ListView extends View {
 
     public interface LActionListener {
         void openPostDialog(String path);
@@ -26,7 +26,8 @@ public class ListView extends Div {
 
     private final LActionListener actionListener;
 
-    public ListView(boolean showAllPaths, LActionListener actionListener, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    public ListView(String tag,boolean showAllPaths, LActionListener actionListener, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+        super(tag);
         this.actionListener = actionListener;
 
         add(createListContent(showAllPaths, mdvGroups, strucPathMap));

@@ -106,7 +106,7 @@ public class SettingsDialog extends Dialog {
         actionListener.setGridColumnSettings(grid.getDataProvider().fetch(new Query<>())
                 .collect(Collectors.toList()));
 
-        if (!wrappedSchemaTextfield.isEmpty() && !wrappedSchemaTextfield.getValue().equals(currentPath))
+        if (!wrappedSchemaTextfield.getValue().equals(currentPath))
             actionListener.setWrappedSchemaPath(wrappedSchemaTextfield.getValue());
 
         actionListener.refreshFromSettings();

@@ -1,12 +1,10 @@
 package openapivisualizer.application.ui.route;
 
+import com.vaadin.flow.router.*;
 import openapivisualizer.application.ui.MainLayout;
+import openapivisualizer.application.ui.other.AccessPoint;
 import openapivisualizer.application.ui.presenter.MainPresenter;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.spring.annotation.UIScope;
 
 import javax.annotation.PostConstruct;
@@ -16,7 +14,7 @@ import javax.annotation.PostConstruct;
 @RouteAlias(value = "", layout = MainLayout.class)
 @PreserveOnRefresh
 @UIScope
-public class MainRoute extends Div {
+public class MainRoute extends Div implements BeforeEnterObserver {
     private final MainPresenter presenter;
 
     public MainRoute(MainPresenter presenter) {
@@ -28,4 +26,10 @@ public class MainRoute extends Div {
     public void init() {
         add(presenter.getView());
     }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        AccessPoint.getMainLayout().setCurrentPageTitle("Main");
+    }
+
 }
