@@ -5,13 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.generation.structuremodel.StrucValue;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Slf4j
+@Service
 public class SchemaService {
 
-    public static String getPagedSchemaName(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
+    public String getPagedSchemaName(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
         Map<String, StrucSchema> properties = schema.getStrucValue().getProperties().get("_embedded").getStrucValue().getProperties();
         Map.Entry<String, StrucSchema> entry = properties.entrySet().iterator().next();
         if (entry.getValue().getStrucValue().getRef() == null || entry.getValue().getStrucValue().getType().equals(DataPropertyType.SCHEMA)) {
@@ -21,14 +23,14 @@ public class SchemaService {
         return entry.getValue().getStrucValue().getRef();
     }
 
-    public static boolean isPagedSchema(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
+    public boolean isPagedSchema(StrucSchema schema) { //TODO GENERALISIEREN -> geht überhaupt?
         if (schema == null)
             log.debug("schema is null while trying to find out if its a paged schema or not");
         Map<String, StrucSchema> properties = schema.getStrucValue().getProperties();
         return properties != null && properties.containsKey("_embedded");
     }
 
-    public static StrucSchema mapSchemaToStrucSchema(String name, Schema schema) {
+    public StrucSchema mapSchemaToStrucSchema(String name, Schema schema) {
         StrucSchema strucSchema = new StrucSchema();
         strucSchema.setName(name);
         StrucValue strucValue;
@@ -99,7 +101,7 @@ public class SchemaService {
     }
 
 
-    public static Map<String, StrucSchema> mapSchemasToStrucSchemas(Map<String, Schema> schemaMap) {
+    public Map<String, StrucSchema> mapSchemasToStrucSchemas(Map<String, Schema> schemaMap) {
         Map<String, StrucSchema> strucSchemaMap = new HashMap<>();
 
         //Map all schemas to StrucSchemas
@@ -115,7 +117,7 @@ public class SchemaService {
         return strucSchemaMap;
     }
 
-    public static void replaceInternalRefs(StrucSchema schema, Map<String, StrucSchema> schemaMap) {
+    public void replaceInternalRefs(StrucSchema schema, Map<String, StrucSchema> schemaMap) {
         if (schema.getStrucValue().getType().equals(DataPropertyType.OBJECT)) {
             //If any of the properties is a ref, replace it with the actual schema, otherwise repeat this function for it
             List<Map.Entry<String, StrucSchema>> properties = schema.getStrucValue().getProperties().entrySet().stream().toList();
@@ -160,7 +162,7 @@ public class SchemaService {
         }
     }
 
-    public static String stripSchemaRefPath(String schemaRef) {
+    public String stripSchemaRefPath(String schemaRef) {
         return schemaRef.substring(schemaRef.lastIndexOf('/') + 1);
     }
 

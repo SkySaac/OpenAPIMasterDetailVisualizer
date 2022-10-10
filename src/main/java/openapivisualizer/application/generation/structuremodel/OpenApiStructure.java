@@ -16,5 +16,5 @@ public class OpenApiStructure {
 
     private List<String> servers = new ArrayList<>();
 
-    private List<ViewGroup> viewGroups = new ArrayList<>();
+    private List<TagGroup> tagGroups = new ArrayList<>();
 }

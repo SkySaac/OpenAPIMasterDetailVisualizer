@@ -1,6 +1,6 @@
 package openapivisualizer.application.rest.client;
 
-import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.service.NotificationService;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;

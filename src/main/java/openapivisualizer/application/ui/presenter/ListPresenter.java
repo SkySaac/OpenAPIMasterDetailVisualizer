@@ -3,7 +3,7 @@ package openapivisualizer.application.ui.presenter;
 import com.vaadin.flow.component.Component;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
+import openapivisualizer.application.generation.structuremodel.TagGroupLV;
 import openapivisualizer.application.rest.client.ClientDataService;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.ui.components.DeleteDialog;
@@ -11,7 +11,7 @@ import openapivisualizer.application.ui.components.PathParamsDialog;
 import openapivisualizer.application.ui.components.PostDialog;
 import openapivisualizer.application.ui.components.PutDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
-import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.service.NotificationService;
 import openapivisualizer.application.ui.view.ListView;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
@@ -27,18 +27,18 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
         DeleteDialog.DeleteActionListener, PutDialog.PutActionListener, PathParamsDialog.PathParamsActionListener {
 
     @Getter
-    private final ViewGroupLV viewGroupLV;
+    private final TagGroupLV tagGroupLV;
     private final NotificationService notificationService;
     private final DetailLayout.NavigationListener navigationListener;
     private final ClientDataService clientDataService;
     private final ListView view;
 
-    public ListPresenter(NotificationService notificationService, ClientDataService clientDataService, ViewGroupLV viewGroupLV, DetailLayout.NavigationListener navigationListener, boolean showAllPaths) {
+    public ListPresenter(NotificationService notificationService, ClientDataService clientDataService, TagGroupLV tagGroupLV, DetailLayout.NavigationListener navigationListener, boolean showAllPaths) {
         this.clientDataService = clientDataService;
         this.notificationService = notificationService;
-        this.viewGroupLV = viewGroupLV;
+        this.tagGroupLV = tagGroupLV;
         this.navigationListener = navigationListener;
-        view = new ListView(viewGroupLV.getTagName(),showAllPaths, this, viewGroupLV.getStrucViewGroupMDVS(), viewGroupLV.getNotMatchedStrucPathMap());
+        view = new ListView(tagGroupLV.getTagName(),showAllPaths, this, tagGroupLV.getStrucViewGroupMDVS(), tagGroupLV.getNotMatchedStrucPathMap());
     }
 
     public Component getView() {
@@ -48,19 +48,19 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
     @Override
     public void openPostDialog(String path) {
         PostDialog postDialog = new PostDialog(this);
-        postDialog.open(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST));
+        postDialog.open(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST));
     }
 
     @Override
     public void openPutDialog(String path) {
         PutDialog putDialog = new PutDialog(this);
-        putDialog.open(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT));
+        putDialog.open(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT));
     }
 
     @Override
     public void openDeleteDialog(String path) {
         DeleteDialog deleteDialog = new DeleteDialog(this);
-        deleteDialog.open(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE));
+        deleteDialog.open(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE));
     }
 
     @Override
@@ -99,9 +99,9 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void postAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathVariables, DataSchema properties) { //TODO use queryparams
-        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path) && viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.POST)) { //TODO map passt nich
+        if (tagGroupLV.getNotMatchedStrucPathMap().containsKey(path) && tagGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.POST)) { //TODO map passt nich
             try {
-                clientDataService.postData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST), properties, queryParameters, pathVariables);
+                clientDataService.postData(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.POST), properties, queryParameters, pathVariables);
             } catch (ResourceAccessException e) {
                 log.error("Error trying to access: {}", e.getMessage());
                 e.printStackTrace();
@@ -112,9 +112,9 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String, String> queryParameters) {
-        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path) && viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.DELETE)) { //TODO map passt nich
+        if (tagGroupLV.getNotMatchedStrucPathMap().containsKey(path) && tagGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.DELETE)) { //TODO map passt nich
             try {
-                clientDataService.deleteData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE).getPath()
+                clientDataService.deleteData(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.DELETE).getPath()
                         , pathVariables, queryParameters);
             } catch (ResourceAccessException e) {
                 log.error("Error trying to access: {}", e.getMessage());
@@ -126,9 +126,9 @@ public class ListPresenter implements ListView.LActionListener, PostDialog.PostA
 
     @Override
     public void putAction(String path, MultiValueMap<String, String> queryParameters, Map<String, String> pathParams, DataSchema properties) {
-        if (viewGroupLV.getNotMatchedStrucPathMap().containsKey(path) && viewGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.PUT)) {
+        if (tagGroupLV.getNotMatchedStrucPathMap().containsKey(path) && tagGroupLV.getNotMatchedStrucPathMap().get(path).containsKey(HttpMethod.PUT)) {
             try {
-                clientDataService.putData(viewGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT), properties, queryParameters, pathParams);
+                clientDataService.putData(tagGroupLV.getNotMatchedStrucPathMap().get(path).get(HttpMethod.PUT), properties, queryParameters, pathParams);
             } catch (ResourceAccessException e) {
                 log.error("Error trying to access: {}", e.getMessage());
                 e.printStackTrace();

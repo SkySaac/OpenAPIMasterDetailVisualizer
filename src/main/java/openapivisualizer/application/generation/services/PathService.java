@@ -8,6 +8,7 @@ import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -17,73 +18,70 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
+@Service
 public class PathService {
 
-    public static List<String> getPrimaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
-        List<String> primaryPaths = new ArrayList<>();
+    private final SchemaService schemaService;
+
+    public PathService(SchemaService schemaService) {
+        this.schemaService = schemaService;
+    }
+
+    public List<String> getApiPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
+        List<String> apiPaths = new ArrayList<>();
 
         pathsForTag.forEach((key, value) -> {
-            //wenn kein {} drinne kanns n primary path sein
+            //wenn kein {} drinne kanns n api path sein
             if (!key.contains("{") && value.containsKey(HttpMethod.GET)) {
-                if (value.get(HttpMethod.GET).getResponseStrucSchema() != null) { //TODO geht null überhaupt ?
-                    primaryPaths.add(value.get(HttpMethod.GET).getPath());
-                    log.debug("Detected primary path: " + value.get(HttpMethod.GET).getPath());
+                if (value.get(HttpMethod.GET).getResponseStrucSchema() != null) {
+                    apiPaths.add(value.get(HttpMethod.GET).getPath());
+                    log.debug("Detected apiPath: " + value.get(HttpMethod.GET).getPath());
                 }
             }
         });
         //Master Detail View (BSP Artifacts)
-        return primaryPaths;
+        return apiPaths;
     }
 
-    public static Map<String, String> getSecondaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> primaryPaths) {
-        //primary: /artifact/ -> secondary: /artifact/{id}/
+    public Map<String, String> getUriPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> apiPaths) {
+        //apiPath: /artifact/ -> uriPath: /artifact/{id}/
 
-        //secondaryPath -> primaryPath //TODO mach regex daraus
-        Map<String, String> secondaryPaths = new HashMap<>();
+        //uriPath -> apiPath
+        Map<String, String> uriPaths = new HashMap<>();
 
-        primaryPaths.forEach(primaryPath -> {
-            String secondaryRegex = primaryPath;
-            if (!primaryPath.endsWith("/")) {
-                secondaryRegex += "/";
+        apiPaths.forEach(apiPath -> {
+            String uriRegex = apiPath;
+            if (!apiPath.endsWith("/")) {
+                uriRegex += "/";
             }
-            secondaryRegex += "{";
-            String finalSecondaryRegex = secondaryRegex;
+            uriRegex += "{";
+            String finalUriRegex = uriRegex;
             pathsForTag.keySet().forEach(path -> {
-                if (path.startsWith(finalSecondaryRegex) && (path.split("}").length == 1 || path.split("}/").length == 1)
+                if (path.startsWith(finalUriRegex) && (path.split("}").length == 1 || path.split("}/").length == 1)
                         && (path.endsWith("}") || path.endsWith("}/"))) {
-                    secondaryPaths.put(primaryPath, path);
-                    log.debug("Secondary Path found {} for Primary Path {}", path, primaryPath);
+                    uriPaths.put(apiPath, path);
+                    log.debug("URIPath found {} for APIPath {}", path, apiPath);
                 }
             });
         });
-        return secondaryPaths;
+        return uriPaths;
     }
 
-    public static MultiValueMap<String, String> getInternalPrimaryViewPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> primaryPaths) {
-        MultiValueMap<String, String> internalPrimary = new LinkedMultiValueMap<>();
+    public MultiValueMap<String, String> getRelationPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> apiPaths) {
+        MultiValueMap<String, String> relationPath = new LinkedMultiValueMap<>();
 
-        primaryPaths.forEach(primaryPath -> { //TODO annahme: primaryPath/{...id...}/... ohne noch ein{} am ende
+        apiPaths.forEach(apiPath -> {
             pathsForTag.keySet().forEach(path -> {
-                if (path.matches(primaryPath + "/\\{(\\w)+}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
-                    internalPrimary.add(primaryPath, path);
-                    log.info("Internal PrimaryPath found {} for Primary Path {}", path, primaryPath);
+                if (path.matches(apiPath + "/\\{(\\w)+}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
+                    relationPath.add(apiPath, path);
+                    log.info("Relation Path found {} for APIPath {}", path, apiPath);
                 }
             });
         });
-        return internalPrimary;
+        return relationPath;
     }
 
-    private static String stripPath(String path) {
-        //TODO strip path-> / in front ok in the back not
-        if (!path.startsWith("/"))
-            path = '/' + path;
-
-        if (path.endsWith("/"))
-            path = path.substring(0, path.length() - 2);
-        return path;
-    }
-
-    public static StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation, Map<String, StrucSchema> strucSchemaMap) {
+    public StrucPath operationToStrucPath(String path, HttpMethod httpMethod, Operation operation, Map<String, StrucSchema> strucSchemaMap) {
         StrucPath strucPath = new StrucPath();
         strucPath.setPath(path);
         strucPath.setHttpMethod(httpMethod);
@@ -107,25 +105,25 @@ public class PathService {
                     //TODO application/octet-stream (data PUT)
                     String externalSchemaPath = operation.getRequestBody().getContent().get("application/json").getSchema().get$ref(); //TODO was wenn kein href & für andere arten von content
                     if (externalSchemaPath != null) {
-                        StrucSchema strucSchema = strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                        StrucSchema strucSchema = strucSchemaMap.get(schemaService.stripSchemaRefPath(externalSchemaPath));
                         strucPath.setRequestStrucSchema(strucSchema);
                     } else {
-                        StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
+                        StrucSchema strucSchema = schemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/json").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
                     }
                 }else if (operation.getRequestBody().getContent().containsKey("application/octet-stream") && operation.getRequestBody().getContent().get("application/octet-stream").getSchema() != null) { //Has actual Schema (Example /artifacts/id/data)
                     //TODO application/octet-stream (data PUT)
                     String externalSchemaPath = operation.getRequestBody().getContent().get("application/octet-stream").getSchema().get$ref(); //TODO was wenn kein href & für andere arten von content
                     if (externalSchemaPath != null) {
-                        StrucSchema strucSchema = strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath));
+                        StrucSchema strucSchema = strucSchemaMap.get(schemaService.stripSchemaRefPath(externalSchemaPath));
                         strucPath.setRequestStrucSchema(strucSchema);
                     } else {
-                        StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/octet-stream").getSchema());
+                        StrucSchema strucSchema = schemaService.mapSchemaToStrucSchema("noName", operation.getRequestBody().getContent().get("application/octet-stream").getSchema());
                         strucPath.setRequestStrucSchema(strucSchema);
                     }
                 }
             }
-        } else if (HttpMethod.GET.equals(httpMethod)) { //TODO was wenn mehrere rückgaben möglich
+        } else if (HttpMethod.GET.equals(httpMethod)) {
             if (operation.getResponses().containsKey("200") && operation.getResponses().get("200").getContent() != null) {
                 if (operation.getResponses().get("200").getContent().containsKey("*/*"))
                     setResponseSchema(strucPath, operation, "200", "*/*", strucSchemaMap);
@@ -150,31 +148,31 @@ public class PathService {
      * @param returnCode the http returnCode to be searched
      * @param returnType the returnType to be searched
      */
-    public static void setResponseSchema(StrucPath strucPath, Operation operation, String returnCode, String returnType, Map<String, StrucSchema> strucSchemaMap) {
+    public void setResponseSchema(StrucPath strucPath, Operation operation, String returnCode, String returnType, Map<String, StrucSchema> strucSchemaMap) {
         Content content = operation.getResponses().get(returnCode).getContent();
 
         if (content.containsKey(returnType)) {
             if (content.get(returnType).getSchema().get$ref() != null) {
                 String externalSchemaPath = content.get(returnType).getSchema().get$ref();
-                strucPath.setResponseStrucSchema(strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath)));
+                strucPath.setResponseStrucSchema(strucSchemaMap.get(schemaService.stripSchemaRefPath(externalSchemaPath)));
             } else if (content.get(returnType).getSchema().getType() != null
                     && content.get(returnType).getSchema().getType().equals("array")
                     && content.get(returnType).getSchema().getItems().get$ref() != null) {
                 String externalSchemaPath = content.get(returnType).getSchema().getItems().get$ref();
-                strucPath.setResponseStrucSchema(strucSchemaMap.get(SchemaService.stripSchemaRefPath(externalSchemaPath)));
+                strucPath.setResponseStrucSchema(strucSchemaMap.get(schemaService.stripSchemaRefPath(externalSchemaPath)));
             }else if (content.get(returnType).getSchema().getType() != null
                     && content.get(returnType).getSchema().getType().equals("array")
                     && content.get(returnType).getSchema().getItems().get$ref() == null) {
-                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().getItems());
+                StrucSchema strucSchema = schemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema().getItems());
                 strucPath.setResponseStrucSchema(strucSchema);
             }  else {
-                StrucSchema strucSchema = SchemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
+                StrucSchema strucSchema = schemaService.mapSchemaToStrucSchema("Array", operation.getResponses().get(returnCode).getContent().get(returnType).getSchema());
                 strucPath.setResponseStrucSchema(strucSchema);
             }
         }
     }
 
-    public static Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths, Map<String, StrucSchema> strucSchemaMap) {
+    public Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths, Map<String, StrucSchema> strucSchemaMap) {
         Map<String, Map<HttpMethod, StrucPath>> pathOperationMap = new HashMap<>(); //Path -> List
         paths.keySet().forEach(path -> { //TODO all paths without recognised tags into one sonstiges tag
             Map<HttpMethod, StrucPath> methodOperationMap = new HashMap<>();

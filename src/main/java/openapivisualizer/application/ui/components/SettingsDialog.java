@@ -45,8 +45,6 @@ public class SettingsDialog extends Dialog {
     private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
     private final Grid<ColumnGridElement> grid = new Grid<>(ColumnGridElement.class);
     private final TextField wrappedSchemaTextfield = new TextField("Pfad zum WrappedSchema");
-    private final Map<String, Checkbox> visibleMap = new HashMap<>(); //TODO wofür
-
 
     public SettingsDialog(SettingsActionListener actionListener) {
         this.actionListener = actionListener;
@@ -91,7 +89,7 @@ public class SettingsDialog extends Dialog {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         queryFieldComponents.forEach(component -> {
             if (!component.getComponent().isEmpty()) {
-                params.add(component.getTitle(), component.getComponent().getValue().toString()); //TODO toString correct ?
+                params.add(component.getTitle(), component.getComponent().getValue().toString());
             }
         });
         return params;
@@ -124,7 +122,7 @@ public class SettingsDialog extends Dialog {
             case DOUBLE -> new NumberField(title);
             case BOOLEAN -> new Checkbox(title);
             case STRING -> new TextField(title);
-            case OBJECT -> //TODO change, wenns n object is sindse ja ineinander verschachtelt
+            case OBJECT ->
                     new TextField(title);
             default -> new TextField(title);
         };

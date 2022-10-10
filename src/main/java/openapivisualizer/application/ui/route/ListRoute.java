@@ -10,7 +10,7 @@ import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
 
 @PageTitle("List")
-@Route(value="list/:tag", layout = MainLayout.class) //TODO rename "tag"
+@Route(value="list/:tag", layout = MainLayout.class)
 @PreserveOnRefresh
 @Slf4j
 @UIScope
@@ -42,6 +42,6 @@ public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObs
             log.warn("activeView is null when it should be removed");
         else
             remove(activeView);
-        activeView = null; //TODO immer neu erstellen oder nur einmal und dann abspeichern und abrufen über ne Map ?
+        activeView = null;
     }
 }

@@ -1,40 +1,49 @@
 package openapivisualizer.application.generation.services;
 
-import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
-import openapivisualizer.application.generation.structuremodel.StrucPath;
-import openapivisualizer.application.generation.structuremodel.StrucSchema;
-import openapivisualizer.application.generation.structuremodel.ViewGroup;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import lombok.extern.slf4j.Slf4j;
+import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
+import openapivisualizer.application.generation.structuremodel.StrucPath;
+import openapivisualizer.application.generation.structuremodel.StrucSchema;
+import openapivisualizer.application.generation.structuremodel.TagGroup;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Service
 public class StructureProviderService {
     public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
 
-    public static OpenApiStructure generateApiStructure(String pathToOpenApiFile) {
+    private final SchemaService schemaService;
+    private final PathService pathService;
+
+    public StructureProviderService(SchemaService schemaService, PathService pathService) {
+        this.schemaService = schemaService;
+        this.pathService = pathService;
+    }
+
+    public OpenApiStructure generateApiStructure(String pathToOpenApiFile) {
         OpenAPI openAPI = new OpenAPIV3Parser().read(pathToOpenApiFile);
 
         OpenApiStructure openApiStructure = new OpenApiStructure();
 
-        if(openAPI.getSecurity()!=null)
+        if (openAPI.getSecurity() != null)
             openApiStructure.setHasHttpBasic(openAPI.getSecurity().contains("basicAuth"));
 
         if (openAPI.getServers() != null) //TODO change -> server url can also come from lower objects
             openApiStructure.setServers(openAPI.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));
 
-        List<ViewGroup> viewGroupList = new ArrayList<>();
+        List<TagGroup> tagGroupList = new ArrayList<>();
 
-        //alle components in dataschemas übersetzen und in liste tun
-        Map<String, StrucSchema> strucSchemaMap = SchemaService.mapSchemasToStrucSchemas(openAPI.getComponents().getSchemas());
+        Map<String, StrucSchema> strucSchemaMap = schemaService.mapSchemasToStrucSchemas(openAPI.getComponents().getSchemas());
 
         //TODO was wenn kein Tag vorhanden
 
@@ -44,41 +53,38 @@ public class StructureProviderService {
         tagNames.forEach(tag -> {
             log.info("Now looking for tag: " + tag);
 
-            //sucht alle paths die zu diesem tag gehören und wandelt sie in StrucPath Objekte um
-            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = PathService.getPathsForTag(tag, openAPI.getPaths(), strucSchemaMap);
+            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = pathService.getPathsForTag(tag, openAPI.getPaths(), strucSchemaMap);
             log.debug("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
 
-            //alle components die zu path gehören aus strucSchemaMap holen und in strucViewGroup eintragen
             Map<String, StrucSchema> strucViewGroupSchemaMap = createViewGroupSchemaMap(strucSchemaMap, pathsForTag);
             log.debug("A total of {} schemas have been found for the tag {}", pathsForTag.size(), tag);
 
-            //Find primarypaths for this viewgroup
-            List<String> primaryPaths = PathService.getPrimaryViewPaths(pathsForTag);
-            log.debug("Primary Paths for tag " + tag + " are: " + primaryPaths);
+            //Find apipaths for this viewgroup
+            List<String> apiPaths = pathService.getApiPaths(pathsForTag);
+            log.debug("API Paths for tag " + tag + " are: " + apiPaths);
 
 
-            //TODO rethink how secondary and primaryPath get saved -> maybe List of primary+secondary List
-            //Find secondaryPaths
-            Map<String, String> secondaryPaths = PathService.getSecondaryViewPaths(pathsForTag, primaryPaths);
-            log.debug("Secondary Paths for tag " + tag + " are: " + secondaryPaths);
+            //Find uriPaths
+            Map<String, String> uriPaths = pathService.getUriPaths(pathsForTag, apiPaths);
+            log.debug("URI Paths for tag " + tag + " are: " + uriPaths);
 
-            //TODO collect internal primary paths like /api/artifacts/{id}/representations -> make another list like primary paths
-            //TODO internal primary path need to have following pattern: primarypath/{...}/...
-            MultiValueMap<String, String> internalPrimaryPaths = PathService.getInternalPrimaryViewPaths(pathsForTag,primaryPaths);
-            log.debug("Internal Primary Paths for tag " + tag + " are: " + internalPrimaryPaths);
+            //TODO collect relation paths like /api/artifacts/{id}/representations -> make another list like api paths
+            //TODO relation path need to have following pattern: apipath/{...}/...
+            MultiValueMap<String, String> relationPaths = pathService.getRelationPaths(pathsForTag, apiPaths);
+            log.debug("Relation Paths for tag " + tag + " are: " + relationPaths);
 
-            //TODO put internal primaryPath into StrucViewGroup, Put internal primaryPath into MDVStrucViewGroup
-            ViewGroup viewGroup = new ViewGroup(tag, primaryPaths, secondaryPaths, internalPrimaryPaths,strucViewGroupSchemaMap, pathsForTag);
+            //TODO put relationPath into StrucViewGroup, Put relationPath into MDVStrucViewGroup
+            TagGroup tagGroup = new TagGroup(tag, apiPaths, uriPaths, relationPaths, strucViewGroupSchemaMap, pathsForTag);
 
-            viewGroupList.add(viewGroup);
+            tagGroupList.add(tagGroup);
         });
 
-        openApiStructure.setViewGroups(viewGroupList);
+        openApiStructure.setTagGroups(tagGroupList);
 
         return openApiStructure;
     }
 
-    private static Set<String> collectTags(OpenAPI openAPI) {
+    private Set<String> collectTags(OpenAPI openAPI) {
         Set<String> tags = new HashSet<>();
         if (openAPI.getTags() != null) {
             tags.addAll(openAPI.getTags().stream().map(Tag::getName).toList());
@@ -90,7 +96,7 @@ public class StructureProviderService {
         return tags;
     }
 
-    private static Set<String> collectTags(PathItem pathItem) {
+    private Set<String> collectTags(PathItem pathItem) {
         Set<String> tags = new HashSet<>();
         if (pathItem.getGet() != null && pathItem.getGet().getTags() != null)
             tags.addAll(pathItem.getGet().getTags());
@@ -107,7 +113,7 @@ public class StructureProviderService {
         return tags;
     }
 
-    private static Map<String, StrucSchema> createViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
+    private Map<String, StrucSchema> createViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
         Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
         pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
             //Check Request Body Schema
@@ -118,19 +124,12 @@ public class StructureProviderService {
             //Check Response Body Schema
             if (pathValue.getResponseStrucSchema() != null) {
                 strucViewGroupSchemaMap.put(pathValue.getResponseStrucSchema().getName(), pathValue.getResponseStrucSchema());
-                //If Response is a PagedObject -> Add whats behind the paged Object //TODO replace with add all nested objects
-                if (SchemaService.isPagedSchema(pathValue.getResponseStrucSchema())) {
-                    String pagedSchemaName = SchemaService.getPagedSchemaName(pathValue.getResponseStrucSchema());
+                if (schemaService.isPagedSchema(pathValue.getResponseStrucSchema())) {
+                    String pagedSchemaName = schemaService.getPagedSchemaName(pathValue.getResponseStrucSchema());
                     strucViewGroupSchemaMap.put(pagedSchemaName, strucSchemaMap.get(pagedSchemaName));
                 }
 
             }
-
-            //TODO collect get refs from pathValue.getExternalResponseBodySchemaName()
-            //TODO add those refs
-            //TODO check internal (nested) Schemas
-            //SchemaService.getNestedSchemaNames();
-
         }));
         return strucViewGroupSchemaMap;
     }

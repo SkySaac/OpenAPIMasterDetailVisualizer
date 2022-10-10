@@ -13,8 +13,7 @@ import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataValue;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
-import openapivisualizer.application.generation.structuremodel.StrucSchema;
-import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.service.NotificationService;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -135,7 +134,6 @@ public class ClientDataService {
     }
 
     private ObjectNode convertToJson(DataSchema dataSchema) {
-        //TODO make dynamic, get nested objects
         ObjectNode node = objectMapper.createObjectNode();
         dataSchema.getValue().getProperties().forEach((key, value) -> {
             switch (value.getValue().getDataPropertyType()) {

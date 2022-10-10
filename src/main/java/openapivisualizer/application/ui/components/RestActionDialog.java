@@ -42,7 +42,7 @@ public class RestActionDialog extends Dialog {
         this.open(strucPath, new HashMap<>(), action);
     }
 
-    public void open(StrucPath strucPath, Map<String, String> pathParams, String action) { //TODO only needs strucpath since the schema is in there
+    public void open(StrucPath strucPath, Map<String, String> pathParams, String action) {
         if (!strucPath.getPathParams().isEmpty())
             createPathParamFields(strucPath, pathParams);
         if (!strucPath.getQueryParams().isEmpty())
@@ -70,7 +70,7 @@ public class RestActionDialog extends Dialog {
         };
         queryFieldComponents.forEach(component -> {
             if (!component.isEmpty()) {
-                params.add(component.getLabel(), component.getValue()); //TODO toString correct ?
+                params.add(component.getLabel(), component.getValue());
             }
         });
         return params;
@@ -80,7 +80,7 @@ public class RestActionDialog extends Dialog {
         Map<String, String> params = new HashMap<>() {
         };
         pathFieldComponents.forEach(component -> {
-            params.put(component.getLabel(), component.getValue()); //TODO toString correct ?
+            params.put(component.getLabel(), component.getValue());
         });
         return params;
     }
@@ -89,6 +89,7 @@ public class RestActionDialog extends Dialog {
         MultiValueMap<String, String> queryParams = collectQueryParams();
         Map<String, String> pathParams = collectPathParams();
 
+        //collect body
         DataSchema dataSchema;
         if (bodyPropertyType.equals(DataPropertyType.OBJECT)) {
             Map<String, DataSchema> dataInputMap = new HashMap<>();

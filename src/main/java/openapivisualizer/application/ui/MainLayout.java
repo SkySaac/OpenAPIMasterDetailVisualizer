@@ -88,7 +88,7 @@ public class MainLayout extends AppLayout {
         if (navRoute.startsWith("/"))
             navRoute = navRoute.substring(1);
 
-        log.info("Adding a View with the name: {} and route: {}", tagName, navRoute); //TODO add replacement of " " ? maybe %20 directly ?
+        log.info("Adding a View with the name: {} and route: {}", tagName, navRoute);
         MenuItemInfo menuItemInfo;
         if (isMDV) {
             menuItemInfo = new MenuItemInfo(tagName, "/masterDetail/" + navRoute, "las la-table");

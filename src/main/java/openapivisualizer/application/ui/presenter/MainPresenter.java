@@ -6,12 +6,10 @@ package openapivisualizer.application.ui.presenter;
 import openapivisualizer.application.generation.services.StructureProviderService;
 import openapivisualizer.application.rest.client.ClientDataService;
 import openapivisualizer.application.ui.components.ExtractionSettingsDialog;
-import openapivisualizer.application.ui.components.SettingsDialog;
-import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.service.NotificationService;
 import openapivisualizer.application.ui.view.MainView;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;

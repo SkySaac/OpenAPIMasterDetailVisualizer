@@ -1,19 +1,18 @@
 package openapivisualizer.application.ui.presenter;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import openapivisualizer.application.generation.services.StructureProviderService;
-import openapivisualizer.application.generation.services.ViewGroupConverterService;
+import openapivisualizer.application.generation.services.TagGroupConverterService;
 import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
-import openapivisualizer.application.generation.structuremodel.ViewGroupLV;
-import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
+import openapivisualizer.application.generation.structuremodel.TagGroupLV;
+import openapivisualizer.application.generation.structuremodel.TagGroupMD;
 import openapivisualizer.application.rest.client.ClientDataService;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
-import openapivisualizer.application.ui.controller.NotificationService;
+import openapivisualizer.application.ui.service.NotificationService;
 import openapivisualizer.application.ui.other.AccessPoint;
 import openapivisualizer.application.ui.view.View;
 import org.springframework.http.HttpMethod;
@@ -29,17 +28,21 @@ import java.util.Objects;
 @Slf4j
 @UIScope
 public class TagPresenter implements DetailLayout.NavigationListener {
-    private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>(); //TODO change to have path directly instead of tag as key
+    private final Map<String, MasterDetailPresenter> masterDetailPresenters = new HashMap<>();
     private final Map<String, ListPresenter> listPresenters = new HashMap<>();
     private final ClientDataService clientDataService;
+    private final StructureProviderService structureProviderService;
+    private final TagGroupConverterService tagGroupConverterService;
     private final NotificationService notificationService;
 
 
     @Getter
     private OpenApiStructure openApiStructure;
 
-    public TagPresenter(ClientDataService clientDataService, NotificationService notificationService) {
+    public TagPresenter(ClientDataService clientDataService, StructureProviderService structureProviderService, TagGroupConverterService tagGroupConverterService, NotificationService notificationService) {
         this.clientDataService = clientDataService;
+        this.structureProviderService = structureProviderService;
+        this.tagGroupConverterService = tagGroupConverterService;
         this.notificationService = notificationService;
     }
 
@@ -54,53 +57,53 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     }
 
     public void prepareStructure(String source, boolean onlyListViews, boolean showAllPaths) {
-        OpenApiStructure openApiStructure = StructureProviderService.generateApiStructure(source);
+        OpenApiStructure openApiStructure = structureProviderService.generateApiStructure(source);
         registerPresenters(openApiStructure, onlyListViews, showAllPaths);
     }
 
     public void registerPresenters(OpenApiStructure openApiStructure, boolean onlyListViews, boolean showAllPaths) {
         clearOldPresenters();
         log.info("Registering presenters...");
-        openApiStructure.getViewGroups().forEach(strucViewGroup -> {
-            if (ViewGroupConverterService.isMDVStructure(strucViewGroup) && !onlyListViews) {
-                ViewGroupMDV viewGroupMDV = ViewGroupConverterService.createStrucViewGroupMDV(strucViewGroup);
-                registerMasterDetailPresenter(viewGroupMDV, true);
+        openApiStructure.getTagGroups().forEach(tagGroup -> {
+            if (tagGroupConverterService.isMDVStructure(tagGroup) && !onlyListViews) {
+                TagGroupMD TagGroupMD = tagGroupConverterService.createMDTagGroup(tagGroup);
+                registerMasterDetailPresenter(TagGroupMD, true);
             } else {
-                ViewGroupLV strucViewGroupLV = ViewGroupConverterService.createViewGroupLV(strucViewGroup, showAllPaths);
-                registerListPresenter(strucViewGroupLV, showAllPaths);
+                TagGroupLV strucTagGroupLV = tagGroupConverterService.createTagGroupLV(tagGroup, showAllPaths);
+                registerListPresenter(strucTagGroupLV, showAllPaths);
             }
         });
         AccessPoint.getMainLayout().applyNavigationTargets();
         this.openApiStructure = openApiStructure;
     }
 
-    private void registerMasterDetailPresenter(ViewGroupMDV viewGroupMDV, boolean menuNavigationable) {
-        log.info("Registering Master-Detail Presenter for the {} view", viewGroupMDV.getTagName());
+    private void registerMasterDetailPresenter(TagGroupMD TagGroupMD, boolean menuNavigationable) {
+        log.info("Registering Master-Detail Presenter for the {} view", TagGroupMD.getTagName());
 
-        if(viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getResponseStrucSchema()!=null) {
-            MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService, this, clientDataService, viewGroupMDV);
+        if(TagGroupMD.getApiPathMap().get(HttpMethod.GET).getResponseStrucSchema()!=null) {
+            MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService, this, clientDataService, TagGroupMD);
 
-            masterDetailPresenters.put(viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
+            masterDetailPresenters.put(TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
 
             if (menuNavigationable)
-                AccessPoint.getMainLayout().addNavigationTarget(viewGroupMDV.getTagName(), true
-                        , viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+                AccessPoint.getMainLayout().addNavigationTarget(TagGroupMD.getTagName(), true
+                        , TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath());
         }else{
-            log.warn("{} has no valid response",viewGroupMDV.getPrimaryStrucPathMap().get(HttpMethod.GET).getPath());
+            log.warn("{} has no valid response", TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath());
         }
     }
 
-    private void registerListPresenter(ViewGroupLV viewGroupLV, boolean showAllPaths) {
-        log.info("Registering List Presenter for the {} view", viewGroupLV.getTagName());
+    private void registerListPresenter(TagGroupLV tagGroupLV, boolean showAllPaths) {
+        log.info("Registering List Presenter for the {} view", tagGroupLV.getTagName());
 
-        viewGroupLV.getStrucViewGroupMDVS().forEach((k, v) -> registerMasterDetailPresenter(v, false));
+        tagGroupLV.getStrucViewGroupMDVS().forEach((k, v) -> registerMasterDetailPresenter(v, false));
 
-        ListPresenter listPresenter = new ListPresenter(notificationService, clientDataService, viewGroupLV, this, showAllPaths);
+        ListPresenter listPresenter = new ListPresenter(notificationService, clientDataService, tagGroupLV, this, showAllPaths);
 
-        listPresenters.put(viewGroupLV.getTagName(), listPresenter);
+        listPresenters.put(tagGroupLV.getTagName(), listPresenter);
 
-        AccessPoint.getMainLayout().addNavigationTarget(viewGroupLV.getTagName(), false
-                , viewGroupLV.getTagName());
+        AccessPoint.getMainLayout().addNavigationTarget(tagGroupLV.getTagName(), false
+                , tagGroupLV.getTagName());
     }
 
     public MasterDetailPresenter getMasterDetailPresenter(String path) {
@@ -119,7 +122,6 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         log.info("Navigation to {}", path);
         log.info("CurrentServerURl: {}", clientDataService.getServerUrl());
         if (path.startsWith(clientDataService.getServerUrl())) {
-            //TODO kann es zu kollisionen kommen ? (glaube nich außer wenn path param = nem pfadteil ist)
 
             String pathWithoutServerURL = path.substring(clientDataService.getServerUrl().length());
 

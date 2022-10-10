@@ -2,12 +2,11 @@ package openapivisualizer.application.ui.view;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
-import openapivisualizer.application.generation.structuremodel.ViewGroupMDV;
+import openapivisualizer.application.generation.structuremodel.TagGroupMD;
 import org.springframework.http.HttpMethod;
 
 import java.util.Map;
@@ -26,14 +25,14 @@ public class ListView extends View {
 
     private final LActionListener actionListener;
 
-    public ListView(String tag,boolean showAllPaths, LActionListener actionListener, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    public ListView(String tag, boolean showAllPaths, LActionListener actionListener, Map<String, TagGroupMD> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         super(tag);
         this.actionListener = actionListener;
 
         add(createListContent(showAllPaths, mdvGroups, strucPathMap));
     }
 
-    private VerticalLayout createListContent(boolean showAllPaths, Map<String, ViewGroupMDV> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
+    private VerticalLayout createListContent(boolean showAllPaths, Map<String, TagGroupMD> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         VerticalLayout verticalLayout = new VerticalLayout();
 
         if (!showAllPaths)
@@ -43,7 +42,7 @@ public class ListView extends View {
             switch (httpMethod) {
                 case POST -> verticalLayout.add(createPostListComponent("POST: " + path, path));
                 case DELETE -> verticalLayout.add(createDeleteComponent("DELETE: " + path, path));
-                case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path)); //TODO überhaupt nötig?
+                case GET -> verticalLayout.add(createMDVComponent("GET: " + path, path));
                 case PUT -> verticalLayout.add(createPutListComponent("PUT: " + path, path));
                 default -> {
                     HorizontalLayout horizontalLayout = new HorizontalLayout();
@@ -60,28 +59,24 @@ public class ListView extends View {
 
     private Component createMDVComponent(String text, String path) {
         Button componentClicker = new Button(text);
-        //TODO was wenn externalSchema
         componentClicker.addClickListener(event -> actionListener.navigateFromListView(path));
         return componentClicker;
     }
 
     private Component createPostListComponent(String text, String path) {
         Button componentClicker = new Button(text);
-        //TODO was wenn externalSchema
         componentClicker.addClickListener(event -> actionListener.openPostDialog(path));
         return componentClicker;
     }
 
     private Component createPutListComponent(String text, String path) {
         Button componentClicker = new Button(text);
-        //TODO was wenn externalSchema
         componentClicker.addClickListener(event -> actionListener.openPutDialog(path));
         return componentClicker;
     }
 
     private Component createDeleteComponent(String text, String path) {
         Button componentClicker = new Button(text);
-        //TODO was wenn externalSchema
         componentClicker.addClickListener(event -> actionListener.openDeleteDialog(path));
         return componentClicker;
     }

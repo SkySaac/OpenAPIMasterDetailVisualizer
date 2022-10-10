@@ -14,7 +14,7 @@ import openapivisualizer.application.ui.view.View;
 
 
 @PageTitle("MasterDetail")
-@Route(value = "masterDetail", layout = MainLayout.class) //TODO klein schreiben
+@Route(value = "masterDetail", layout = MainLayout.class)
 @PreserveOnRefresh
 @Slf4j
 @UIScope
@@ -48,13 +48,13 @@ public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUr
     public void setParameter(BeforeEvent event, @WildcardParameter String parameter) {
         UI.getCurrent().getPage().setTitle("title");
         //String tag = event.getRouteParameters().get("tag").get().replace("%20", " "); //replace spaces
-        String targetedPath = "/" + parameter; //TODO besser machen
+        String targetedPath = "/" + parameter;
 
         log.info("targeted path {}", targetedPath);
 
         if (tagPresenter.hasMasterDetailPresenter(targetedPath)) {
             activeView = tagPresenter.getMasterDetailPresenter(targetedPath).getView();
-            AccessPoint.getMainLayout().setCurrentPageTitle(tagPresenter.getMasterDetailPresenter(targetedPath).getStrucViewGroup().getTagName());
+            AccessPoint.getMainLayout().setCurrentPageTitle(tagPresenter.getMasterDetailPresenter(targetedPath).getTagGroupMD().getTagName());
             add(activeView);
         } else {
             log.info("Route with parameter {} detected", targetedPath);
