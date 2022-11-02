@@ -6,6 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.spring.annotation.UIScope;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.parser.core.models.AuthorizationValue;
+import io.swagger.v3.parser.core.models.ParseOptions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -43,6 +44,19 @@ public class ClientDataService {
     public ClientDataService(ClientRequestService clientRequestService, NotificationService notificationService) {
         this.clientRequestService = clientRequestService;
         this.notificationService = notificationService;
+    }
+
+    public OpenAPI getOpenApi(String path) {
+        if (username != null && password != null && path.startsWith("http")) {
+            ResponseEntity<String> response = sendRequest(HttpMethod.GET, path, "", null, null, null);
+
+            OpenAPI openAPI = new OpenAPIV3Parser().readContents(response.getBody()).getOpenAPI();
+            return openAPI;
+        } else {
+            OpenAPI openAPI = new OpenAPIV3Parser().read(path);
+            return openAPI;
+        }
+
     }
 
     private ResponseEntity<String> sendRequest(HttpMethod httpMethod, String url, String path, Map<String, String> pathParams,
@@ -104,7 +118,7 @@ public class ClientDataService {
 
         ResponseEntity<String> response = sendRequest(HttpMethod.GET, serverUrl, strucPath.getPath(), pathParams, queryParameters, null);
 
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody()!=null) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             try {
                 JsonNode node = objectMapper.readTree(response.getBody());
                 DataSchema dataSchema = convertToDataSchema("root", node);
@@ -112,7 +126,7 @@ public class ClientDataService {
                     //String key = dataSchema.getValue().get("_embedded").getValue().getProperties().keySet().iterator().next();
                     //dataSchema = dataSchema.getValue().get("_embedded").getValue().get(key);
                     DataSchema tempSchema = dataSchema;
-                    for (String attributeName : wrappedPath.split(",")) {
+                    for (String attributeName : wrappedPath.split("/")) {
                         if (tempSchema.getValue().getProperties().containsKey(attributeName)) {
                             tempSchema = tempSchema.getValue().getProperties().get(attributeName);
                         } else {
@@ -124,11 +138,11 @@ public class ClientDataService {
                 }
                 return dataSchema;
             } catch (JsonProcessingException e) {
-                throw new RequestException("Server Antwort ist nicht gültig");
+                throw new RequestException("Server response not equaling OpenAPI Specification");
             }
-        } else if (response.getBody()==null){
-            throw new RequestException("Server Antwort ist leer");
-        }else {
+        } else if (response.getBody() == null) {
+            throw new RequestException("Server response empty");
+        } else {
             throw new RequestException(response.getStatusCode().toString());
         }
     }

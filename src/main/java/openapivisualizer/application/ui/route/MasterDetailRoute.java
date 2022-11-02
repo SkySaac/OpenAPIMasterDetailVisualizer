@@ -64,10 +64,11 @@ public class MasterDetailRoute extends Div implements BeforeLeaveObserver, HasUr
             if (activeView == null) {
                 add(notFoundPresenter.getView());
                 //UI.getCurrent().navigate("/404");
+                AccessPoint.getMainLayout().setCurrentPageTitle("404");
             } else {
                 add(activeView);
+                AccessPoint.getMainLayout().setCurrentPageTitle(activeView.getTag());
             }
-            AccessPoint.getMainLayout().setCurrentPageTitle(activeView.getTag());
 
         }
     }

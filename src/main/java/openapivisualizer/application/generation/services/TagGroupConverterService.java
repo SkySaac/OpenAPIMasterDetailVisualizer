@@ -40,15 +40,15 @@ public class TagGroupConverterService {
         });
 
         Map<String, Map<HttpMethod, StrucPath>> notMatchedPaths;
-        if (showAllPaths) {
-            notMatchedPaths = tagGroup.getPathMap();
-        } else {
+//        if (showAllPaths) {
+//            notMatchedPaths = tagGroup.getPathMap();
+//        } else {
             notMatchedPaths = tagGroup.getPathMap().entrySet().stream()
                     .filter(entry -> !tagGroup.getUriPaths().containsValue(entry.getKey())
                             && !tagGroup.getApiPaths().contains(entry.getKey())
                             && tagGroup.getRelationPaths().values().stream().noneMatch(values -> values.contains(entry.getKey())))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
+//        }
 
         notMatchedPaths.forEach((path, httpMethodStrucPathMap) -> {
             if (httpMethodStrucPathMap.containsKey(HttpMethod.GET)) {

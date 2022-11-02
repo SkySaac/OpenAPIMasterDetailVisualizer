@@ -1,14 +1,14 @@
 package openapivisualizer.application.ui.components.detaillayout.detailcomponents;
 
-import openapivisualizer.application.rest.client.restdatamodel.DataValue;
-import openapivisualizer.application.generation.structuremodel.DataPropertyType;
-import openapivisualizer.application.generation.structuremodel.StrucSchema;
-import openapivisualizer.application.ui.components.detaillayout.DetailSwitchListener;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import openapivisualizer.application.generation.structuremodel.DataPropertyType;
+import openapivisualizer.application.generation.structuremodel.StrucSchema;
+import openapivisualizer.application.rest.client.restdatamodel.DataValue;
+import openapivisualizer.application.ui.components.detaillayout.DetailSwitchListener;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,16 +31,16 @@ public class ObjectComponent extends DetailComponent {
         super(objectTitle);
         this.objectTitle = objectTitle;
         this.detailSwitchListener = detailSwitchListener;
-        if (schema == null)
-            System.out.println("hi");
-        this.additionalSchema = schema.getStrucValue().getAdditionalPropertySchema();
-
         formLayout = new FormLayout();
+        if (schema != null) {
+            this.additionalSchema = schema.getStrucValue().getAdditionalPropertySchema();
 
-        schema.getStrucValue().getProperties().keySet().forEach(key ->
-                formLayout.add(createDetailComponent(schema.getStrucValue().getProperties().get(key), key))
-        );
-
+            schema.getStrucValue().getProperties().keySet().forEach(key ->
+                    formLayout.add(createDetailComponent(schema.getStrucValue().getProperties().get(key), key))
+            );
+        }else{
+            this.additionalSchema = null;
+        }
         this.add(formLayout);
     }
 

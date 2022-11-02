@@ -39,10 +39,10 @@ public class ClientRequestWrapper {
         requestBuilder.queryParams.forEach(uriBuilder::queryParam);
 
         final var builder = RequestEntity.method(httpMethod, uriBuilder.build().toUri());
-        requestBuilder.headers.add("accept","application/json");
-        requestBuilder.headers.add("accept","application/hal+json");
-        requestBuilder.headers.add("accept","application/ld+json");
-        requestBuilder.headers.add("accept","*/*");
+        requestBuilder.headers.add("accept", "application/json");
+        requestBuilder.headers.add("accept", "application/hal+json");
+        requestBuilder.headers.add("accept", "application/ld+json");
+        requestBuilder.headers.add("accept", "*/*");
         builder.headers(requestBuilder.headers);
         builder.contentType(MediaType.APPLICATION_JSON);
         //builder.accept(MediaType.APPLICATION_JSON);
@@ -65,6 +65,7 @@ public class ClientRequestWrapper {
         RequestBuilder queryParam(String name, String value);
 
         RequestBuilder queryParams(MultiValueMap<String, String> params);
+
         RequestBuilder pathParams(Map<String, String> params);
 
         RequestBuilder header(String name, String value);
@@ -73,7 +74,7 @@ public class ClientRequestWrapper {
 
         RequestBuilder bearerAuth(String accessToken);
 
-        RequestBuilder basicAuth(String username,String password);
+        RequestBuilder basicAuth(String username, String password);
 
     }
 
@@ -87,13 +88,14 @@ public class ClientRequestWrapper {
 
         @Override
         public RequestBuilder body(String body) {
-            this.body = body;
+            if (body != null)
+                this.body = body;
             return this;
         }
 
         @Override
         public RequestBuilder accept(String mediaType) {
-            headers.add("accept",mediaType);
+            headers.add("accept", mediaType);
             return this;
         }
 
@@ -107,8 +109,7 @@ public class ClientRequestWrapper {
         public RequestBuilder queryParam(String name, String value) {
             if (queryParams.containsKey(name)) {
                 queryParams.get(name).add(value);
-            }
-            else {
+            } else {
                 queryParams.put(name, List.of(value));
             }
             return this;
@@ -116,13 +117,15 @@ public class ClientRequestWrapper {
 
         @Override
         public RequestBuilder queryParams(MultiValueMap<String, String> params) {
-            queryParams.putAll(params);
+            if (params != null)
+                queryParams.putAll(params);
             return this;
         }
 
         @Override
         public RequestBuilder pathParams(Map<String, String> params) {
-            pathParams.putAll(params);
+            if (params != null)
+                pathParams.putAll(params);
             return this;
         }
 
@@ -140,7 +143,7 @@ public class ClientRequestWrapper {
 
         @Override
         public RequestBuilder basicAuth(String username, String password) {
-            headers.setBasicAuth(username,password);
+            headers.setBasicAuth(username, password);
             return this;
         }
 

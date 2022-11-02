@@ -1,0 +1,36 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+
+TagPresenter -> StructureProviderService : generateOpenApi()
+activate StructureProviderService
+StructureProviderService -> StructureProviderService : getOpenAPI()
+
+StructureProviderService -> SchemaService : mapSchemasToStrucSchemas()
+activate SchemaService
+SchemaService --> StructureProviderService : schemas
+deactivate SchemaService
+StructureProviderService -> StructureProviderService : collectTags()
+loop tags
+    StructureProviderService -> PathService : getPathsForTag()
+    activate PathService
+    PathService --> StructureProviderService : paths
+    deactivate PathService
+    StructureProviderService -> PathService : getApiPaths(paths)
+    activate PathService
+    PathService --> StructureProviderService : apiPaths
+    deactivate PathService
+    StructureProviderService -> PathService : getUriPaths(paths,apiPaths)
+    activate PathService
+    PathService --> StructureProviderService : uriPaths
+    deactivate PathService
+    StructureProviderService -> PathService : getRelationPaths(paths,apiPaths)
+    activate PathService
+    PathService --> StructureProviderService : relationPaths
+    deactivate PathService
+    StructureProviderService -> StructureProviderService : create Tag Group
+end
+StructureProviderService --> TagPresenter : TagGroups
+deactivate StructureProviderService
+
+@enduml

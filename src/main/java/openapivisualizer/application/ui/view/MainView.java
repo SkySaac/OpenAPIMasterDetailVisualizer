@@ -40,7 +40,7 @@ public class MainView extends HorizontalLayout {
         VerticalLayout generationLayout = new VerticalLayout();
         generationLayout.setAlignItems(Alignment.CENTER);
 
-        Label title = new Label("OpenAPI Generierung");
+        Label title = new Label("OpenAPI frontend generation");
         title.getStyle().set("font-size", "large");
         generationLayout.add(title);
 
@@ -59,7 +59,8 @@ public class MainView extends HorizontalLayout {
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField serverInput = new TextField();
-        Button serverAddButton = new Button("Hinzufügen");
+        serverInput.setPlaceholder("Server URL");
+        Button serverAddButton = new Button("Add Server");
         serverAddButton.addClickListener(e -> actionListener.addServerToSelection(serverInput.getValue()));
         serverListBox.setItems(serverURLs);
         serverListBox.setValue(selectedServerURL);
@@ -94,16 +95,16 @@ public class MainView extends HorizontalLayout {
         PasswordField passwordField = new PasswordField("Password");
         credentialLayout.add(passwordField);
 
-        Button applyButton = new Button("Speichern");
+        Button applyButton = new Button("Save");
         applyButton.addClickListener(click -> actionListener.setCredential(usernameField.getValue(), passwordField.getValue()));
-        credentialLayout.add(applyButton);
-        Button clearButton = new Button("Löschen");
+        Button clearButton = new Button("Delete");
         clearButton.addClickListener(click -> {
             usernameField.clear();
             passwordField.clear();
             actionListener.setCredential(null, null);
         });
-        credentialLayout.add(clearButton);
+        HorizontalLayout credentialButtonsLayout = new HorizontalLayout(applyButton,clearButton);
+        credentialLayout.add(credentialButtonsLayout);
 
         return credentialLayout;
     }

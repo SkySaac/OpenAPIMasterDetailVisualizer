@@ -1,5 +1,6 @@
 package openapivisualizer.application.generation.services;
 
+import com.vaadin.flow.spring.annotation.UIScope;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.servers.Server;
@@ -10,6 +11,7 @@ import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.generation.structuremodel.TagGroup;
+import openapivisualizer.application.rest.client.ClientDataService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -19,41 +21,43 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@UIScope
 public class StructureProviderService {
     public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
 
     private final SchemaService schemaService;
     private final PathService pathService;
-
-    public StructureProviderService(SchemaService schemaService, PathService pathService) {
+    private final ClientDataService clientDataService;
+    public StructureProviderService(SchemaService schemaService, PathService pathService, ClientDataService clientDataService) {
         this.schemaService = schemaService;
         this.pathService = pathService;
+        this.clientDataService = clientDataService;
     }
 
     public OpenApiStructure generateApiStructure(String pathToOpenApiFile) {
-        OpenAPI openAPI = new OpenAPIV3Parser().read(pathToOpenApiFile);
+        OpenAPI openApi = clientDataService.getOpenApi(pathToOpenApiFile);
 
         OpenApiStructure openApiStructure = new OpenApiStructure();
 
-        if (openAPI.getSecurity() != null)
-            openApiStructure.setHasHttpBasic(openAPI.getSecurity().contains("basicAuth"));
+        if (openApi.getSecurity() != null)
+            openApiStructure.setHasHttpBasic(openApi.getSecurity().contains("basicAuth"));
 
-        if (openAPI.getServers() != null) //TODO change -> server url can also come from lower objects
-            openApiStructure.setServers(openAPI.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));
+        if (openApi.getServers() != null) //TODO change -> server url can also come from lower objects
+            openApiStructure.setServers(openApi.getServers().stream().map(Server::getUrl).collect(Collectors.toList()));
 
         List<TagGroup> tagGroupList = new ArrayList<>();
 
-        Map<String, StrucSchema> strucSchemaMap = schemaService.mapSchemasToStrucSchemas(openAPI.getComponents().getSchemas());
+        Map<String, StrucSchema> strucSchemaMap = schemaService.mapSchemasToStrucSchemas(openApi.getComponents().getSchemas());
 
         //TODO was wenn kein Tag vorhanden
 
-        Set<String> tagNames = collectTags(openAPI);
+        Set<String> tagNames = collectTags(openApi);
         log.info("Collected {} tags: {}", tagNames.size(), tagNames);
 
         tagNames.forEach(tag -> {
             log.info("Now looking for tag: " + tag);
 
-            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = pathService.getPathsForTag(tag, openAPI.getPaths(), strucSchemaMap);
+            Map<String, Map<HttpMethod, StrucPath>> pathsForTag = pathService.getPathsForTag(tag, openApi.getPaths(), strucSchemaMap);
             log.debug("A total of {} paths have been found for the tag {}", pathsForTag.size(), tag);
 
             Map<String, StrucSchema> strucViewGroupSchemaMap = createViewGroupSchemaMap(strucSchemaMap, pathsForTag);

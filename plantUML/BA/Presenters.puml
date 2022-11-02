@@ -1,0 +1,23 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class TagPresenter << (P,#fd6b6b) >>
+class ApiPfadPresenter << (P,#f4975f) >>
+class UriPfadPresenter << (P,#f4975f) >>
+class RelationPfadPresenter << (P,#f4975f) >>
+class ListPresenter << (P,#f4975f) >>
+class ApiPfadView << (V,#00e2ab) >>
+class UriPfadView << (V,#00e2ab) >>
+class RelationPfadView << (V,#00e2ab) >>
+class ListView << (V,#00e2ab) >>
+
+TagPresenter --> "0..*" ApiPfadPresenter
+ApiPfadPresenter --> "1" UriPfadPresenter
+ApiPfadPresenter --> "0..*" RelationPfadPresenter
+ApiPfadPresenter --> "1    " ApiPfadView
+UriPfadPresenter --> "1 " UriPfadView
+RelationPfadPresenter --> "1 " RelationPfadView
+TagPresenter --> "0..*    " ListPresenter
+ListPresenter --> "1  " ListView
+
+@enduml

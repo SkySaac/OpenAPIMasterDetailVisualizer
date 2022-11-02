@@ -66,11 +66,11 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         log.info("Registering presenters...");
         openApiStructure.getTagGroups().forEach(tagGroup -> {
             if (tagGroupConverterService.isMDVStructure(tagGroup) && !onlyListViews) {
-                TagGroupMD TagGroupMD = tagGroupConverterService.createMDTagGroup(tagGroup);
-                registerMasterDetailPresenter(TagGroupMD, true);
+                TagGroupMD tagGroupMD = tagGroupConverterService.createMDTagGroup(tagGroup);
+                registerMasterDetailPresenter(tagGroupMD, true);
             } else {
-                TagGroupLV strucTagGroupLV = tagGroupConverterService.createTagGroupLV(tagGroup, showAllPaths);
-                registerListPresenter(strucTagGroupLV, showAllPaths);
+                TagGroupLV tagGroupLV = tagGroupConverterService.createTagGroupLV(tagGroup, showAllPaths);
+                registerListPresenter(tagGroupLV, showAllPaths);
             }
         });
         AccessPoint.getMainLayout().applyNavigationTargets();

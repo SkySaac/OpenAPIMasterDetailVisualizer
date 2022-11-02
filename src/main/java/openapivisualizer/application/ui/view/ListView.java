@@ -35,8 +35,25 @@ public class ListView extends View {
     private VerticalLayout createListContent(boolean showAllPaths, Map<String, TagGroupMD> mdvGroups, Map<String, Map<HttpMethod, StrucPath>> strucPathMap) {
         VerticalLayout verticalLayout = new VerticalLayout();
 
-        if (!showAllPaths)
-            mdvGroups.forEach((path, v) -> verticalLayout.add(createMDVComponent("GET: " + path, path)));
+        mdvGroups.forEach((path, v) -> verticalLayout.add(createMDVComponent("GET: " + path, path)));
+        if (showAllPaths) {
+            mdvGroups.forEach((apiPath, apiTagGroupMD) -> {
+                if(apiTagGroupMD.getUriTagGroup()!=null){
+                    apiTagGroupMD.getUriTagGroup().getApiPathMap().forEach((httpMethod, strucPath) -> {
+                        verticalLayout.add(createMDVComponent(httpMethod.toString()+": " + strucPath.getPath(), strucPath.getPath()));
+                    });
+                }
+                if(apiTagGroupMD.getRelationTagGroup()!=null){
+                    apiTagGroupMD.getRelationTagGroup().forEach((path,relTagGroupMD)->{
+                        relTagGroupMD.getApiPathMap().forEach((httpMethod, strucPath) -> {
+                                verticalLayout.add(createMDVComponent(httpMethod.toString()+": " + strucPath.getPath(), strucPath.getPath()));
+                        });
+
+                    });
+                }
+            });
+        }
+
 
         strucPathMap.forEach((path, v) -> v.forEach((httpMethod, strucPath) -> {
             switch (httpMethod) {

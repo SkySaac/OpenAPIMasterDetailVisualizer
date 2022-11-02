@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+actor User
+
+User -> Route: Ruft Master-Detail-Ansicht auf
+activate Route
+Route -> Presenter: getView()
+activate Presenter
+Presenter -> Presenter: refreshData()
+Presenter -> ClientDataService: getData(pfad,queryParameter,pfadParameter)
+activate ClientDataService
+ClientDataService -> DataspaceConnector: HTTP-Anfrage
+DataspaceConnector --> ClientDataService: Daten
+ClientDataService -> ClientDataService: Übersetzen der Daten in DataSchema/DataValue
+ClientDataService --> Presenter: Daten
+Presenter -> View: setData()
+activate View
+View -> View: Ansicht mit Daten befüllen
+View --> Presenter: View
+Presenter --> Route: View
+
+
+@enduml

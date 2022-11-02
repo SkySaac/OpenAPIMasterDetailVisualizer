@@ -20,6 +20,7 @@ public class ArrayComponent extends CreateComponent implements ArrayElementCompo
     private final CreateComponent basicCreateComponent;
 
     public ArrayComponent(String label, DataPropertyType type, String format) {
+        format = "Array Element";
         this.label = label;
         this.getStyle().set("padding-top","0px");
         verticalLayout = new VerticalLayout(new Label(label));

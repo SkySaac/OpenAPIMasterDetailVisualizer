@@ -13,6 +13,7 @@ import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.ui.components.SettingsDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
+import openapivisualizer.application.ui.service.NotificationService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,12 +37,14 @@ public class MasterDetailView extends View {
 
         void refreshData();
 
+        void dataCorupted();
+
     }
 
     private final MDActionListener mdActionListener;
     private final Grid<DataSchema> grid = new Grid<>(DataSchema.class, false);
     private final DetailLayout detailLayout;
-    private final Label noDataLabel = new Label("Keine Daten erhalten");
+    private final Label noDataLabel = new Label("No Data");
     private final List<Grid.Column<DataSchema>> inlineGridColumns = new ArrayList<>();
 
     private List<Grid.Column<DataSchema>> initialGridColumns;
@@ -184,7 +187,11 @@ public class MasterDetailView extends View {
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
             if (event.getValue() != null) {
-                detailLayout.fillDetailLayout(event.getValue());
+                try {
+                    detailLayout.fillDetailLayout(event.getValue());
+                }catch (IndexOutOfBoundsException e){
+                    actionListener.dataCorupted();
+                }
             } else {
                 detailLayout.clearDetailLayout();
             }

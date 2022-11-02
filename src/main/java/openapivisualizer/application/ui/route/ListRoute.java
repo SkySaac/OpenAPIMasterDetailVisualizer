@@ -2,6 +2,7 @@ package openapivisualizer.application.ui.route;
 
 import openapivisualizer.application.ui.MainLayout;
 import openapivisualizer.application.ui.other.AccessPoint;
+import openapivisualizer.application.ui.presenter.NotFoundPresenter;
 import openapivisualizer.application.ui.presenter.TagPresenter;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
@@ -17,11 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObserver{
 
     private final TagPresenter presenter;
+    private final NotFoundPresenter notFoundPresenter;
 
     private Component activeView;
 
-    public ListRoute(TagPresenter presenter) {
+    public ListRoute(TagPresenter presenter, NotFoundPresenter notFoundPresenter) {
         this.presenter = presenter;
+        this.notFoundPresenter = notFoundPresenter;
         setSizeFull();
     }
 
@@ -29,11 +32,17 @@ public class ListRoute extends Div implements BeforeEnterObserver,BeforeLeaveObs
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent){
         String tag = beforeEnterEvent.getRouteParameters().get("tag").get().replace("%20"," "); //replace spaces
         System.out.println("Route tag:"+ tag);
+        if(presenter.getListPresenter(tag) !=null) {
+            activeView = presenter.getListPresenter(tag).getView();
+            AccessPoint.getMainLayout().setCurrentPageTitle(tag);
+            add(activeView);
+        }
+        else{
+            add(notFoundPresenter.getView());
+            activeView = null;
+            AccessPoint.getMainLayout().setCurrentPageTitle("404");
+        }
 
-        activeView = presenter.getListPresenter(tag).getView();
-        AccessPoint.getMainLayout().setCurrentPageTitle(tag);
-
-        add(activeView);
     }
 
     @Override

@@ -44,7 +44,7 @@ public class SettingsDialog extends Dialog {
 
     private final List<InputValueComponent> queryFieldComponents = new ArrayList<>();
     private final Grid<ColumnGridElement> grid = new Grid<>(ColumnGridElement.class);
-    private final TextField wrappedSchemaTextfield = new TextField("Pfad zum WrappedSchema");
+    private final TextField wrappedSchemaTextfield = new TextField("Path of wrapped data");
 
     public SettingsDialog(SettingsActionListener actionListener) {
         this.actionListener = actionListener;
@@ -73,9 +73,9 @@ public class SettingsDialog extends Dialog {
     }
 
     private void createWrappedSchemaSettings(String currentPath) {
-        Label currentPathLabel = new Label("Derzeitiger Pfad: " + currentPath);
+        Label currentPathLabel = new Label("Current path: " + currentPath);
 
-        wrappedSchemaTextfield.setPlaceholder("attribut1,attribut2,wrappedSchemaArray");
+        wrappedSchemaTextfield.setPlaceholder("path/path");
         if (currentPath != null)
             wrappedSchemaTextfield.setValue(currentPath);
 
@@ -141,8 +141,8 @@ public class SettingsDialog extends Dialog {
             checkBox.setValue(columnGridElement.isVisible());
             checkBox.addClickListener(event -> columnGridElement.setVisible(checkBox.getValue()));
             return checkBox;
-        }).setHeader("Sichtbar");
-        grid.addColumn(ColumnGridElement::getColumnName).setHeader("Spaltenname");
+        }).setHeader("Visible");
+        grid.addColumn(ColumnGridElement::getColumnName).setHeader("Column name");
         grid.setRowsDraggable(true);
         grid.setDropMode(GridDropMode.BETWEEN);
 

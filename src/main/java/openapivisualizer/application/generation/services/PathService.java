@@ -1,5 +1,6 @@
 package openapivisualizer.application.generation.services;
 
+import com.vaadin.flow.spring.annotation.UIScope;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.Content;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@UIScope
 public class PathService {
 
     private final SchemaService schemaService;
@@ -134,7 +136,8 @@ public class PathService {
                 else if (operation.getResponses().get("200").getContent().containsKey("application/hal+json"))
                     setResponseSchema(strucPath, operation, "200", "application/hal+json", strucSchemaMap);
             }
-        } else {
+        }
+        else {
             log.debug("The current path can only respond with the following http codes: {}", operation.getResponses().keySet());
         }
         return strucPath;
