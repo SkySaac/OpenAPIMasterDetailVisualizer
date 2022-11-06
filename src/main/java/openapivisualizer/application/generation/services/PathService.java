@@ -72,14 +72,12 @@ public class PathService {
     public MultiValueMap<String, String> getRelationPaths(Map<String, Map<HttpMethod, StrucPath>> pathsForTag, List<String> apiPaths) {
         MultiValueMap<String, String> relationPath = new LinkedMultiValueMap<>();
 
-        apiPaths.forEach(apiPath -> {
-            pathsForTag.keySet().forEach(path -> {
-                if (path.matches(apiPath + "/\\{(\\w)+}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
-                    relationPath.add(apiPath, path);
-                    log.info("Relation Path found {} for APIPath {}", path, apiPath);
-                }
-            });
-        });
+        apiPaths.forEach(apiPath -> pathsForTag.keySet().forEach(path -> {
+            if (path.matches(apiPath + "/\\{(\\w)+}/(\\w)+/?") && pathsForTag.get(path).containsKey(HttpMethod.GET)) {
+                relationPath.add(apiPath, path);
+                //log.info("Relation Path found {} for APIPath {}", path, apiPath);
+            }
+        }));
         return relationPath;
     }
 
@@ -173,6 +171,40 @@ public class PathService {
                 strucPath.setResponseStrucSchema(strucSchema);
             }
         }
+    }
+
+    public Map<String, Map<HttpMethod, StrucPath>> getPathsNoTag(Paths paths, Map<String, StrucSchema> strucSchemaMap) {
+        Map<String, Map<HttpMethod, StrucPath>> pathOperationMap = new HashMap<>(); //Path -> List
+        paths.keySet().forEach(path -> { //TODO all paths without recognised tags into one sonstiges tag
+            Map<HttpMethod, StrucPath> methodOperationMap = new HashMap<>();
+            if (paths.get(path).getGet() != null
+                    && (paths.get(path).getGet().getTags() == null
+                    || paths.get(path).getGet().getTags().isEmpty())) {
+                methodOperationMap.put(HttpMethod.GET,
+                        operationToStrucPath(path, HttpMethod.GET, paths.get(path).getGet(), strucSchemaMap));
+            }
+            if (paths.get(path).getPost() != null
+                    && (paths.get(path).getPost().getTags() == null
+                    || paths.get(path).getPost().getTags().isEmpty())) {
+                methodOperationMap.put(HttpMethod.POST,
+                        operationToStrucPath(path, HttpMethod.POST, paths.get(path).getPost(), strucSchemaMap));
+            }
+            if (paths.get(path).getPut() != null
+                    && (paths.get(path).getPut().getTags() == null
+                    || paths.get(path).getPut().getTags().isEmpty())) {
+                methodOperationMap.put(HttpMethod.PUT,
+                        operationToStrucPath(path, HttpMethod.PUT, paths.get(path).getPut(), strucSchemaMap));
+            }
+            if (paths.get(path).getDelete() != null
+                    && (paths.get(path).getDelete().getTags() == null
+                    || paths.get(path).getDelete().getTags().isEmpty())) {
+                methodOperationMap.put(HttpMethod.DELETE,
+                        operationToStrucPath(path, HttpMethod.DELETE, paths.get(path).getDelete(), strucSchemaMap));
+            }
+            if (methodOperationMap.size() > 0)
+                pathOperationMap.put(path, methodOperationMap);
+        });
+        return pathOperationMap;
     }
 
     public Map<String, Map<HttpMethod, StrucPath>> getPathsForTag(String tagName, Paths paths, Map<String, StrucSchema> strucSchemaMap) {

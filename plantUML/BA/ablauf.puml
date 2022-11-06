@@ -1,7 +1,0 @@
-@startuml
-:Nutzer: --> (Einlesen und Interpretation \n der OpenAPI Spezifikation) : " Nutzer gibt Spezifikation an"
-(Einlesen und Interpretation \n der OpenAPI Spezifikation) --> (Frontend wird generiert und angezeigt)
-(Frontend wird generiert und angezeigt) --> (Daten werden abgerufen/abgeschickt) : " Interaktion mit dem Frontend"
-(Daten werden abgerufen/abgeschickt) --> (Daten werden abgerufen/abgeschickt) : " Interaktion mit dem Frontend"
-@enduml
-

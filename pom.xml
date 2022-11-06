@@ -2,10 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <!-- Project from https://start.vaadin.com/project/acff0599-40bf-4b4d-b556-8727f4b6ec58 -->
-    <groupId>com.example.application</groupId>
-    <artifactId>mybachelor</artifactId>
-    <name>My Bachelor</name>
+    <groupId>de.application</groupId>
+    <artifactId>masterdetailwebview</artifactId>
+    <name>Master-Detail Web-Viewr</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 

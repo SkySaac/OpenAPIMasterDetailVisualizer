@@ -5,7 +5,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
-import io.swagger.v3.parser.OpenAPIV3Parser;
 import lombok.extern.slf4j.Slf4j;
 import openapivisualizer.application.generation.structuremodel.OpenApiStructure;
 import openapivisualizer.application.generation.structuremodel.StrucPath;
@@ -23,11 +22,13 @@ import java.util.stream.Collectors;
 @Service
 @UIScope
 public class StructureProviderService {
-    public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
+    public static final String DEFAULT_PARSE_OBJECT = "";
+    //public static final String DEFAULT_PARSE_OBJECT = "testOpenApi.yaml";
 
     private final SchemaService schemaService;
     private final PathService pathService;
     private final ClientDataService clientDataService;
+
     public StructureProviderService(SchemaService schemaService, PathService pathService, ClientDataService clientDataService) {
         this.schemaService = schemaService;
         this.pathService = pathService;
@@ -82,59 +83,76 @@ public class StructureProviderService {
 
             tagGroupList.add(tagGroup);
         });
-
-        openApiStructure.setTagGroups(tagGroupList);
-
-        return openApiStructure;
-    }
-
-    private Set<String> collectTags(OpenAPI openAPI) {
-        Set<String> tags = new HashSet<>();
-        if (openAPI.getTags() != null) {
-            tags.addAll(openAPI.getTags().stream().map(Tag::getName).toList());
+        Map<String, Map<HttpMethod, StrucPath>> pathsNoTag = pathService.getPathsNoTag(openApi.getPaths(), strucSchemaMap);
+        if (!pathsNoTag.isEmpty()) {
+            Map<String, StrucSchema> strucViewGroupSchemaMap = createViewGroupSchemaMap(strucSchemaMap, pathsNoTag);
+            List<String> apiPaths = pathService.getApiPaths(pathsNoTag);
+            Map<String, String> uriPaths = pathService.getUriPaths(pathsNoTag, apiPaths);
+            MultiValueMap<String, String> relationPaths = pathService.getRelationPaths(pathsNoTag, apiPaths);
+            TagGroup tagGroup = new TagGroup("Other",apiPaths, uriPaths, relationPaths, strucViewGroupSchemaMap, pathsNoTag);
+            log.info("Paths without Tag found");
+            tagGroupList.add(tagGroup);
         }
 
-        if (openAPI.getPaths() != null) {
-            openAPI.getPaths().forEach((key, value) -> tags.addAll(collectTags(value)));
+
+            openApiStructure.setTagGroups(tagGroupList);
+
+            return openApiStructure;
         }
-        return tags;
-    }
 
-    private Set<String> collectTags(PathItem pathItem) {
-        Set<String> tags = new HashSet<>();
-        if (pathItem.getGet() != null && pathItem.getGet().getTags() != null)
-            tags.addAll(pathItem.getGet().getTags());
-
-        if (pathItem.getPost() != null && pathItem.getPost().getTags() != null)
-            tags.addAll(pathItem.getPost().getTags());
-
-        if (pathItem.getPut() != null && pathItem.getPut().getTags() != null)
-            tags.addAll(pathItem.getPut().getTags());
-
-        if (pathItem.getDelete() != null && pathItem.getDelete().getTags() != null)
-            tags.addAll(pathItem.getDelete().getTags());
-
-        return tags;
-    }
-
-    private Map<String, StrucSchema> createViewGroupSchemaMap(Map<String, StrucSchema> strucSchemaMap, Map<String, Map<HttpMethod, StrucPath>> pathsForTag) {
-        Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
-        pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
-            //Check Request Body Schema
-            if (pathValue.getRequestStrucSchema() != null) {
-
-                strucViewGroupSchemaMap.put(pathValue.getRequestStrucSchema().getName(), pathValue.getRequestStrucSchema());
+        private Set<String> collectTags (OpenAPI openAPI){
+            Set<String> tags = new HashSet<>();
+            if (openAPI.getTags() != null) {
+                tags.addAll(openAPI.getTags().stream().map(Tag::getName).toList());
             }
-            //Check Response Body Schema
-            if (pathValue.getResponseStrucSchema() != null) {
-                strucViewGroupSchemaMap.put(pathValue.getResponseStrucSchema().getName(), pathValue.getResponseStrucSchema());
-                if (schemaService.isPagedSchema(pathValue.getResponseStrucSchema())) {
-                    String pagedSchemaName = schemaService.getPagedSchemaName(pathValue.getResponseStrucSchema());
-                    strucViewGroupSchemaMap.put(pagedSchemaName, strucSchemaMap.get(pagedSchemaName));
+
+            if (openAPI.getPaths() != null) {
+                openAPI.getPaths().forEach((key, value) -> tags.addAll(collectTags(value)));
+            }
+            return tags;
+        }
+
+        private Set<String> collectTags (PathItem pathItem){
+            Set<String> tags = new HashSet<>();
+            if (pathItem.getGet() != null && pathItem.getGet().getTags() != null)
+                tags.addAll(pathItem.getGet().getTags());
+
+            if (pathItem.getPost() != null && pathItem.getPost().getTags() != null)
+                tags.addAll(pathItem.getPost().getTags());
+
+            if (pathItem.getPut() != null && pathItem.getPut().getTags() != null)
+                tags.addAll(pathItem.getPut().getTags());
+
+            if (pathItem.getDelete() != null && pathItem.getDelete().getTags() != null)
+                tags.addAll(pathItem.getDelete().getTags());
+
+            return tags;
+        }
+
+        private Map<String, StrucSchema> createViewGroupSchemaMap
+        (Map < String, StrucSchema > strucSchemaMap, Map < String, Map < HttpMethod, StrucPath >> pathsForTag){
+            Map<String, StrucSchema> strucViewGroupSchemaMap = new HashMap<>();
+            pathsForTag.forEach((tag, paths) -> paths.forEach((path, pathValue) -> {
+                //Check Request Body Schema
+                if (pathValue.getRequestStrucSchema() != null) {
+
+                    strucViewGroupSchemaMap.put(pathValue.getRequestStrucSchema().getName(), pathValue.getRequestStrucSchema());
                 }
+                //Check Response Body Schema
+                if (pathValue.getResponseStrucSchema() != null) {
+                    strucViewGroupSchemaMap.put(pathValue.getResponseStrucSchema().getName(), pathValue.getResponseStrucSchema());
+                    /*if (schemaService.isPagedSchema(pathValue.getResponseStrucSchema())) {
+                        String pagedSchemaName = schemaService.getPagedSchemaName(pathValue.getResponseStrucSchema());
+                        if(pagedSchemaName!=null) {
+                            strucViewGroupSchemaMap.put(pagedSchemaName, strucSchemaMap.get(pagedSchemaName));
+                        }
+                        else{
+                            strucViewGroupSchemaMap.put(pagedSchemaName, pathValue);
+                        }
+                    }*/
 
-            }
-        }));
-        return strucViewGroupSchemaMap;
+                }
+            }));
+            return strucViewGroupSchemaMap;
+        }
     }
-}

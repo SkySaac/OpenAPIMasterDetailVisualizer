@@ -4,9 +4,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.TextField;
 import openapivisualizer.application.generation.structuremodel.DataPropertyType;
 import openapivisualizer.application.generation.structuremodel.StrucSchema;
 
@@ -34,6 +32,9 @@ public class ArrayNameDialog extends Dialog {
                     if (!select.isEmpty()) {
                         arrayNameDialogListener.setArrayName(select.getValue());
                         this.close();
+                    } else {
+                        arrayNameDialogListener.setArrayName(null);
+                        this.close();
                     }
                 }
         );
@@ -44,10 +45,10 @@ public class ArrayNameDialog extends Dialog {
 
     }
 
-    public void open(List<StrucSchema> arrayElements){
+    public void open(List<StrucSchema> arrayElements) {
         this.open();
         noSelectionLabel.setVisible(false);
-        if(arrayElements.get(0).getStrucValue().getType().equals(DataPropertyType.OBJECT))
+        if (arrayElements.get(0).getStrucValue().getType().equals(DataPropertyType.OBJECT))
             select.setItems(arrayElements.get(0).getStrucValue().getProperties().keySet());
         else {
             select.setItems(new ArrayList<>());
