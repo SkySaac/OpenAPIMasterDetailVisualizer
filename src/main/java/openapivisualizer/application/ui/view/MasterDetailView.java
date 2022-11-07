@@ -13,7 +13,6 @@ import openapivisualizer.application.generation.structuremodel.StrucSchema;
 import openapivisualizer.application.rest.client.restdatamodel.DataSchema;
 import openapivisualizer.application.ui.components.SettingsDialog;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
-import openapivisualizer.application.ui.service.NotificationService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class MasterDetailView extends View {
 
     private List<Grid.Column<DataSchema>> initialGridColumns;
 
-    public MasterDetailView(String tag,DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
+    public MasterDetailView(String tag, DetailLayout.NavigationListener navigationListener, MDActionListener actionListener, StrucSchema getSchema, boolean hasPost,
                             boolean hasPut, boolean hasDelete, boolean showInline) { //change to 2 schemas 1 create 1 get
         super(tag);
         this.mdActionListener = actionListener;
@@ -189,7 +188,7 @@ public class MasterDetailView extends View {
             if (event.getValue() != null) {
                 try {
                     detailLayout.fillDetailLayout(event.getValue());
-                }catch (IndexOutOfBoundsException e){
+                } catch (IndexOutOfBoundsException e) {
                     actionListener.dataCorupted();
                 }
             } else {
@@ -208,9 +207,15 @@ public class MasterDetailView extends View {
             } else {
                 grid.setItems(data.getValue().getDataSchemas());
             }
+            if (!grid.getSelectedItems().isEmpty()) {
+                detailLayout.fillDetailLayout(grid.getSelectedItems().iterator().next());
+            } else {
+                detailLayout.clearDetailLayout();
+            }
         } else {
             log.info("No data found");
             noDataLabel.setVisible(true);
+            grid.setItems(new ArrayList<>());
         }
     }
 

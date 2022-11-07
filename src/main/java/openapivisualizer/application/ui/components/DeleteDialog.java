@@ -94,8 +94,10 @@ public class DeleteDialog extends Dialog {
 
         Map<String, String> pathParams = collectPathParams();
 
-        if (areRequiredFieldsFilled(pathParams))
+        if (areRequiredFieldsFilled(pathParams)) {
             actionListener.deleteAction(path, pathParams, queryParams);
+            this.close();
+        }
     }
 
     private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {

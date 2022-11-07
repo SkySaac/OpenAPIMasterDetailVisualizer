@@ -1,5 +1,6 @@
 package openapivisualizer.application.ui.presenter;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,11 +47,14 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     private final Map<String, MasterDetailPresenter> relationPresenter = new HashMap<>();
     private MasterDetailPresenter uriMasterDetailPresenter = null;
 
+    private String parentPresenter;
 
-    public MasterDetailPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, TagGroupMD tagGroup) {
+
+    public MasterDetailPresenter(NotificationService notificationService, DetailLayout.NavigationListener navigationListener, ClientDataService clientDataService, TagGroupMD tagGroup, String parentPresenter) {
         this.clientDataService = clientDataService;
         this.navigationListener = navigationListener;
         this.notificationService = notificationService;
+        this.parentPresenter = parentPresenter;
         this.tagGroupMD = tagGroup;
 
         if (!tagGroup.getApiPathMap().containsKey(HttpMethod.GET))
@@ -59,11 +63,9 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
         createNewView();
 
         if (tagGroup.getUriTagGroup() != null)
-            uriMasterDetailPresenter = new MasterDetailPresenter(notificationService, navigationListener, clientDataService, tagGroup.getUriTagGroup());
+            uriMasterDetailPresenter = new MasterDetailPresenter(notificationService, navigationListener, clientDataService, tagGroup.getUriTagGroup(), "/masterDetail" + tagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath());
 
-        tagGroup.getRelationTagGroup().forEach((key, value) -> {
-            relationPresenter.put(key, new MasterDetailPresenter(notificationService, navigationListener, clientDataService, value));
-        });
+        tagGroup.getRelationTagGroup().forEach((key, value) -> relationPresenter.put(key, new MasterDetailPresenter(notificationService, navigationListener, clientDataService, value, "")));
 
     }
 
@@ -198,7 +200,7 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
 
     @Override
     public void dataCorupted() {
-        notificationService.postNotification("Data not equaling OpenAPI Specification",true);
+        notificationService.postNotification("Data not equaling OpenAPI Specification", true);
     }
 
     @Override
@@ -218,20 +220,23 @@ public class MasterDetailPresenter implements MasterDetailView.MDActionListener,
     @Override
     public void deleteAction(String path, Map<String, String> pathVariables, MultiValueMap<String, String> queryParameters) {
         if (tagGroupMD.getApiPathMap().containsKey(HttpMethod.DELETE)) {
-            //enthaltener parameter (in pfad) raussuchen
-            String firstParam = path.split("\\{")[1].split("}")[0];
-            //gucken ob param in dataSchema enthalten ist
             //löschanfrage senden
             try {
                 clientDataService.deleteData(tagGroupMD.getApiPathMap().get(HttpMethod.DELETE).getPath(),
                         pathVariables, queryParameters);
+                //if uri path -> needs to navigate away
+                if (parentPresenter != null && !parentPresenter.equals("")) {
+                    UI.getCurrent().navigate(parentPresenter);
+                } else {
+                    refreshData();
+                }
             } catch (ResourceAccessException e) {
                 log.error("Error trying to access: {}", e.getMessage());
                 e.printStackTrace();
                 notificationService.postNotification("Error trying to connect to server.", true);
+                refreshData();
             }
         }
-        refreshData();
     }
 
     @Override

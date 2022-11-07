@@ -107,8 +107,10 @@ public class PutDialog extends Dialog {
             dataSchema = new DataSchema(inputFieldComponents.get(0).getLabel(), inputFieldValue);
         }
 
-        if (areRequiredFieldsFilled(pathParams))
+        if (areRequiredFieldsFilled(pathParams)) {
             actionListener.putAction(path, queryParams, pathParams, dataSchema);
+            this.close();
+        }
     }
 
     private boolean areRequiredFieldsFilled(Map<String, String> pathParams) {

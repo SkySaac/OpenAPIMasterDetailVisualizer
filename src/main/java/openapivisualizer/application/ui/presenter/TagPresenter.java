@@ -12,8 +12,8 @@ import openapivisualizer.application.generation.structuremodel.TagGroupLV;
 import openapivisualizer.application.generation.structuremodel.TagGroupMD;
 import openapivisualizer.application.rest.client.ClientDataService;
 import openapivisualizer.application.ui.components.detaillayout.DetailLayout;
-import openapivisualizer.application.ui.service.NotificationService;
 import openapivisualizer.application.ui.other.AccessPoint;
+import openapivisualizer.application.ui.service.NotificationService;
 import openapivisualizer.application.ui.view.View;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Controller;
@@ -67,7 +67,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         openApiStructure.getTagGroups().forEach(tagGroup -> {
             if (tagGroupConverterService.isMDVStructure(tagGroup) && !onlyListViews) {
                 TagGroupMD tagGroupMD = tagGroupConverterService.createMDTagGroup(tagGroup);
-                registerMasterDetailPresenter(tagGroupMD, true);
+                registerMasterDetailPresenter(tagGroupMD, true, null);
             } else {
                 TagGroupLV tagGroupLV = tagGroupConverterService.createTagGroupLV(tagGroup, showAllPaths);
                 registerListPresenter(tagGroupLV, showAllPaths);
@@ -77,18 +77,18 @@ public class TagPresenter implements DetailLayout.NavigationListener {
         this.openApiStructure = openApiStructure;
     }
 
-    private void registerMasterDetailPresenter(TagGroupMD TagGroupMD, boolean menuNavigationable) {
+    private void registerMasterDetailPresenter(TagGroupMD TagGroupMD, boolean menuNavigationable, String parentPresenter) {
         log.info("Registering Master-Detail Presenter for the {} view", TagGroupMD.getTagName());
 
-        if(TagGroupMD.getApiPathMap().get(HttpMethod.GET).getResponseStrucSchema()!=null) {
-            MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService, this, clientDataService, TagGroupMD);
+        if (TagGroupMD.getApiPathMap().get(HttpMethod.GET).getResponseStrucSchema() != null) {
+            MasterDetailPresenter masterDetailPresenter = new MasterDetailPresenter(notificationService, this, clientDataService, TagGroupMD, parentPresenter);
 
             masterDetailPresenters.put(TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath(), masterDetailPresenter);
 
             if (menuNavigationable)
                 AccessPoint.getMainLayout().addNavigationTarget(TagGroupMD.getTagName(), true
                         , TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath());
-        }else{
+        } else {
             log.warn("{} has no valid response", TagGroupMD.getApiPathMap().get(HttpMethod.GET).getPath());
         }
     }
@@ -96,7 +96,7 @@ public class TagPresenter implements DetailLayout.NavigationListener {
     private void registerListPresenter(TagGroupLV tagGroupLV, boolean showAllPaths) {
         log.info("Registering List Presenter for the {} view", tagGroupLV.getTagName());
 
-        tagGroupLV.getStrucViewGroupMDVS().forEach((k, v) -> registerMasterDetailPresenter(v, false));
+        tagGroupLV.getStrucViewGroupMDVS().forEach((k, v) -> registerMasterDetailPresenter(v, false, "/list/" + tagGroupLV.getTagName()));
 
         ListPresenter listPresenter = new ListPresenter(notificationService, clientDataService, tagGroupLV, this, showAllPaths);
 
